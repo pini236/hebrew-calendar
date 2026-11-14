@@ -100,7 +100,7 @@ export function ZmanimCard({ date, now, rows, items, shaahZmanit, fmt, city, can
         })}
       </ol>
       <p className="fine">
-        שעה זמנית {Math.round(shaahZmanit)} דק׳ · {city.name} · {city.il ? 'ארץ ישראל' : 'חו״ל'} · הזמנים מעוגלים לכיוון המחמיר
+        שעה זמנית {Math.round(shaahZmanit)} דק׳ · {city.name} · {city.il ? 'ארץ ישראל' : 'חו״ל'} · מעוגל לכיוון המחמיר · KosherJava, נבדק מול Hebcal
       </p>
     </section>
   );

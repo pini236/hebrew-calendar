@@ -2,7 +2,6 @@ import {
   HebrewCalendar,
   HDate,
   Location,
-  Zmanim,
   gematriya,
   flags,
   tachanun,
@@ -11,6 +10,7 @@ import {
   type CalOptions,
 } from '@hebcal/core';
 import '@hebcal/learning';
+import * as KZ from 'kosher-zmanim';
 import type { City } from './cities';
 import type { MyEvent, Settings } from './store';
 
@@ -149,7 +149,7 @@ function classify(ev: Event): DayItem | null {
   }
   if (f & flags.ROSH_CHODESH) return { kind: 'roshchodesh', title: raw };
   if (f & flags.MODERN_HOLIDAY) return { kind: 'modern', title: raw };
-  if (f & (flags.MINOR_FAST | flags.MAJOR_FAST) && !(f & flags.EREV)) return { kind: 'fast', title: raw };
+  if (f & (flags.MINOR_FAST | flags.MAJOR_FAST) && !(f & (flags.EREV | flags.CHAG))) return { kind: 'fast', title: raw };
   if (f & flags.CHOL_HAMOED) return { kind: 'cholhamoed', title: raw };
   if (f & flags.CHAG) {
     // "ראש השנה 5788" → "ראש השנה תשפ״ח"
@@ -252,40 +252,58 @@ export function roundTo(d: Date, how: Rounding) {
   return new Date(v);
 }
 
+/**
+ * Daily zmanim from KosherJava (kosher-zmanim), the reference engine used by most zmanim apps.
+ * Every value is cross-checked against Hebcal by `npm run verify`.
+ */
 export function zmanim(d: Date, city: City, s: Settings) {
-  const loc = makeLocation(city);
-  const z = new Zmanim(loc, d, s.useElevation);
-  const sunset = z.sunset();
-  const sunrise = z.sunrise();
-  const nextSunrise = new Zmanim(loc, addDays(d, 1), s.useElevation).sunrise();
+  const elev = s.useElevation ? Math.max(0, city.elev) : 0;
+  const c = new KZ.ComplexZmanimCalendar(new KZ.GeoLocation(city.name, city.lat, city.lon, elev, city.tz));
+  c.setUseElevation(s.useElevation);
+  c.setDate(d);
+  const t = (x: { toJSDate(): Date } | null) => (x ? x.toJSDate() : null);
+  // the GRA (sunrise→sunset) overloads exist at runtime but are missing from the library's typings
+  type DT = { toJSDate(): Date } | null;
+  const gra = c as unknown as { getMinchaGedola(): DT; getMinchaKetana(): DT; getPlagHamincha(): DT };
   const hd = new HDate(d);
-  const rows: ZmanRow[] = [
-    { id: 'alot', name: 'עלות השחר', hint: '16.1° מתחת לאופק', time: z.alotHaShachar(), round: 'ceil' },
-    { id: 'misheyakir', name: 'משיכיר — זמן טלית ותפילין', hint: '11.5°', time: z.misheyakir(), round: 'ceil' },
-    { id: 'sunrise', name: 'הנץ החמה', hint: 'זריחה', time: sunrise, round: 'round', major: true },
-    { id: 'shmaMGA', name: 'סוף זמן ק״ש', hint: 'מגן אברהם', time: z.sofZmanShmaMGA(), round: 'floor' },
-    { id: 'shma', name: 'סוף זמן ק״ש', hint: 'הגר״א', time: z.sofZmanShma(), round: 'floor', major: true },
-    { id: 'tfillaMGA', name: 'סוף זמן תפילה', hint: 'מגן אברהם', time: z.sofZmanTfillaMGA(), round: 'floor' },
-    { id: 'tfilla', name: 'סוף זמן תפילה', hint: 'הגר״א', time: z.sofZmanTfilla(), round: 'floor' },
-    { id: 'chatzot', name: 'חצות היום', time: z.chatzot(), round: 'round', major: true },
-    { id: 'minchaG', name: 'מנחה גדולה', time: z.minchaGedola(), round: 'ceil' },
-    { id: 'minchaK', name: 'מנחה קטנה', time: z.minchaKetana(), round: 'ceil' },
-    { id: 'plag', name: 'פלג המנחה', time: z.plagHaMincha(), round: 'ceil' },
-    { id: 'sunset', name: 'שקיעה', time: sunset, round: 'floor', major: true },
-    { id: 'tzeit', name: 'צאת הכוכבים', hint: '8.5°', time: z.tzeit(8.5), round: 'ceil', major: true },
-    { id: 'tzeitRT', name: 'צאת הכוכבים', hint: 'רבנו תם · 72 דק׳', time: new Date(sunset.getTime() + 72 * 60000), round: 'ceil' },
-    { id: 'chatzotNight', name: 'חצות הלילה', time: new Date((sunset.getTime() + nextSunrise.getTime()) / 2), round: 'round' },
+  const sunrise = t(c.getSunrise());
+  const sunset = t(c.getSunset());
+  const chatzot = t(c.getChatzos()); // astronomical: the sun crosses the meridian
+  const list: (Omit<ZmanRow, 'time'> & { time: Date | null })[] = [
+    { id: 'alot', name: 'עלות השחר', hint: '16.1° מתחת לאופק', time: t(c.getAlos16Point1Degrees()), round: 'ceil' },
+    { id: 'misheyakir', name: 'משיכיר — זמן טלית ותפילין', hint: '11.5°', time: t(c.getMisheyakir11Point5Degrees()), round: 'ceil' },
+    { id: 'sunrise', name: 'הנץ החמה', hint: s.useElevation ? `זריחה · לפי גובה ${elev} מ׳` : 'זריחה · גובה פני הים', time: sunrise, round: 'round', major: true },
+    { id: 'shmaMGA', name: 'סוף זמן ק״ש', hint: 'מגן אברהם · 72 דק׳', time: t(c.getSofZmanShmaMGA()), round: 'floor' },
+    { id: 'shma', name: 'סוף זמן ק״ש', hint: 'הגר״א', time: t(c.getSofZmanShmaGRA()), round: 'floor', major: true },
+    { id: 'tfillaMGA', name: 'סוף זמן תפילה', hint: 'מגן אברהם · 72 דק׳', time: t(c.getSofZmanTfilaMGA()), round: 'floor' },
+    { id: 'tfilla', name: 'סוף זמן תפילה', hint: 'הגר״א', time: t(c.getSofZmanTfilaGRA()), round: 'floor' },
+    { id: 'chatzot', name: 'חצות היום', time: chatzot, round: 'round', major: true },
+    { id: 'minchaG', name: 'מנחה גדולה', time: t(gra.getMinchaGedola()), round: 'ceil' },
+    { id: 'minchaK', name: 'מנחה קטנה', time: t(gra.getMinchaKetana()), round: 'ceil' },
+    { id: 'plag', name: 'פלג המנחה', time: t(gra.getPlagHamincha()), round: 'ceil' },
+    { id: 'sunset', name: 'שקיעה', hint: s.useElevation ? `לפי גובה ${elev} מ׳` : undefined, time: sunset, round: 'floor', major: true },
+    { id: 'tzeit', name: 'צאת הכוכבים', hint: '8.5°', time: t(c.getTzaisGeonim8Point5Degrees()), round: 'ceil', major: true },
+    { id: 'tzeitRT', name: 'צאת הכוכבים', hint: 'רבנו תם · 72 דק׳', time: t(c.getTzais72()), round: 'ceil' },
+    { id: 'chatzotNight', name: 'חצות הלילה', time: chatzot ? new Date(chatzot.getTime() + 12 * 3600000) : null, round: 'round' },
   ];
   // Erev Pesach: chametz deadlines
   if (hd.getMonth() === 1 && hd.getDate() === 14) {
-    rows.push(
-      { id: 'chametzEat', name: 'סוף זמן אכילת חמץ', hint: 'הגר״א', time: z.sofZmanTfilla(), round: 'floor', major: true },
-      { id: 'chametzBurn', name: 'סוף זמן ביעור חמץ', hint: 'הגר״א', time: z.sofZmanBiurChametzGRA(), round: 'floor', major: true },
+    list.push(
+      { id: 'chametzEat', name: 'סוף זמן אכילת חמץ', hint: 'הגר״א', time: t(c.getSofZmanTfilaGRA()), round: 'floor', major: true },
+      { id: 'chametzBurn', name: 'סוף זמן ביעור חמץ', hint: 'הגר״א', time: t(c.getSofZmanBiurChametzGRA()), round: 'floor', major: true },
     );
   }
-  rows.sort((a, b) => a.time.getTime() - b.time.getTime());
-  const shaahZmanit = (sunset.getTime() - sunrise.getTime()) / 12 / 60000;
-  return { rows: rows.filter((r) => !isNaN(r.time.getTime())), sunrise, sunset, shaahZmanit, dawn: z.alotHaShachar(), dusk: z.tzeit(8.5) };
+  const rows = list.filter((r): r is ZmanRow => !!r.time).sort((a, b) => a.time.getTime() - b.time.getTime());
+  const rise = sunrise ?? new Date(d.getFullYear(), d.getMonth(), d.getDate(), 6);
+  const set = sunset ?? new Date(d.getFullYear(), d.getMonth(), d.getDate(), 18);
+  return {
+    rows,
+    sunrise: rise,
+    sunset: set,
+    shaahZmanit: (set.getTime() - rise.getTime()) / 12 / 60000,
+    dawn: rows.find((r) => r.id === 'alot')?.time ?? rise,
+    dusk: rows.find((r) => r.id === 'tzeit')?.time ?? set,
+  };
 }
 
 /* ---------- prayer notes ---------- */

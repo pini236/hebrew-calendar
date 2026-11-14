@@ -28,6 +28,15 @@ export interface Settings {
   recentPlaces: City[];
   textSize: TextSize;
   highContrast: boolean;
+  /** native apps: zman id → minutes before it to notify (a missing id = off) */
+  zmanAlerts: Record<string, number>;
+  /** native apps: reminder before candle lighting (Shabbat and Yom Tov) */
+  candleAlert: boolean;
+  candleAlertMins: number;
+  /** native apps: notification at the end of Shabbat / Yom Tov */
+  havdalahAlert: boolean;
+  /** native apps: notifications for the start and the end of fasts */
+  fastAlerts: boolean;
 }
 
 export const DEFAULT_SETTINGS: Settings = {
@@ -47,6 +56,11 @@ export const DEFAULT_SETTINGS: Settings = {
   recentPlaces: [],
   textSize: 'normal',
   highContrast: false,
+  zmanAlerts: {},
+  candleAlert: false,
+  candleAlertMins: 30,
+  havdalahAlert: false,
+  fastAlerts: false,
 };
 
 export type Repeat = 'none' | 'heb-yearly' | 'greg-yearly';
@@ -114,6 +128,8 @@ export function mergeSettings(s: Partial<Settings>): Settings {
   if (!isCity(m.place)) m.place = null;
   m.recentPlaces = Array.isArray(m.recentPlaces) ? m.recentPlaces.filter(isCity).slice(0, 5) : [];
   if (!['normal', 'large', 'xlarge'].includes(m.textSize)) m.textSize = 'normal';
+  if (!m.zmanAlerts || typeof m.zmanAlerts !== 'object' || Array.isArray(m.zmanAlerts)) m.zmanAlerts = {};
+  if (!Number.isFinite(m.candleAlertMins)) m.candleAlertMins = DEFAULT_SETTINGS.candleAlertMins;
   return m;
 }
 

@@ -29,6 +29,7 @@ interface ZProps {
   fmt: Intl.DateTimeFormat;
   city: City;
   candleMins: number;
+  onAlerts: () => void;
 }
 
 interface Row {
@@ -48,7 +49,7 @@ function countdown(ms: number) {
   return `${m}:${String(s).padStart(2, '0')}`;
 }
 
-export function ZmanimCard({ date, now, rows, items, shaahZmanit, fmt, city, candleMins }: ZProps) {
+export function ZmanimCard({ date, now, rows, items, shaahZmanit, fmt, city, candleMins, onAlerts }: ZProps) {
   const [full, setFull] = useState(true);
   const isToday = sameDay(date, now);
 
@@ -72,6 +73,9 @@ export function ZmanimCard({ date, now, rows, items, shaahZmanit, fmt, city, can
     <section className="card zmanim" aria-label="זמני היום">
       <header className="card-head">
         <h3>זמני היום</h3>
+        <button className="icon-btn small" onClick={onAlerts} aria-label="התראות לזמני היום">
+          <Icon name="bell" size={17} />
+        </button>
         <div className="seg small" role="tablist" aria-label="תצוגת זמנים">
           <button role="tab" aria-selected={!full} className={!full ? 'on' : ''} onClick={() => setFull(false)}>
             עיקריים

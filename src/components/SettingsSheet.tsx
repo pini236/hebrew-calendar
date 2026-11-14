@@ -12,11 +12,12 @@ interface Props {
   onChange: (s: Settings) => void;
   onImport: (list: MyEvent[]) => void;
   onNotify: () => void;
+  onAlerts: () => void;
   onLocation: () => void;
   onClose: () => void;
 }
 
-export function SettingsSheet({ settings, city, myEvents, onChange, onImport, onNotify, onLocation, onClose }: Props) {
+export function SettingsSheet({ settings, city, myEvents, onChange, onImport, onNotify, onAlerts, onLocation, onClose }: Props) {
   const [ioMsg, setIoMsg] = useState('');
   const fileRef = useRef<HTMLInputElement>(null);
   const set = (p: Partial<Settings>) => onChange({ ...settings, ...p });
@@ -68,6 +69,20 @@ export function SettingsSheet({ settings, city, myEvents, onChange, onImport, on
         <div className="row-btns">
           <button className="ghost-btn" onClick={onLocation}>
             <Icon name="search" size={16} /> שינוי מיקום (חיפוש בכל העולם או GPS)
+          </button>
+        </div>
+      </section>
+
+      <section className="set-sec">
+        <h3>התראות</h3>
+        <p className="fine">
+          {isNative()
+            ? 'התראה לפני כל זמן שתבחרו, תזכורת להדלקת נרות, צאת שבת וחג, צומות, ותזכורות לאירועים שלכם.'
+            : 'באפליקציה המותקנת לאנדרואיד ולאייפון: התראה לפני כל זמן, הדלקת נרות, צאת שבת, צומות ותזכורות לאירועים.'}
+        </p>
+        <div className="row-btns">
+          <button className="ghost-btn" onClick={onAlerts}>
+            <Icon name="bell" size={16} /> הגדרת התראות
           </button>
         </div>
       </section>

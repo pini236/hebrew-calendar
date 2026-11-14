@@ -5,7 +5,7 @@ import { alertText, buildShabbatIcs, shabbatAlerts } from '../lib/ics';
 import type { Settings } from '../lib/store';
 import { Sheet } from './Sheet';
 import { Icon } from './Icon';
-import { cancelAlerts, isNative, notificationPermission } from '../lib/native';
+import { cancelGroups, isNative, notificationPermission } from '../lib/native';
 
 interface Props {
   city: City;
@@ -47,7 +47,7 @@ function NativeNotify({ city, settings, onChange, onClose }: Props) {
         set({ nativeAlerts: true });
         setMsg('מופעל. ההתראות מתעדכנות אוטומטית בכל פתיחה של האפליקציה, גם אם תחליפו עיר.');
       } else {
-        await cancelAlerts();
+        await cancelGroups(['friday']);
         set({ nativeAlerts: false });
         setMsg('ההתראות כובו.');
       }

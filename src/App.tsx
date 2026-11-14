@@ -10,11 +10,12 @@ import { SettingsSheet } from './components/SettingsSheet';
 import { EventEditor } from './components/EventEditor';
 import { NotifySheet } from './components/NotifySheet';
 import { BrandMark, Icon } from './components/Icon';
+import { AlertsSheet } from './components/AlertsSheet';
 import { LocationSheet } from './components/LocationSheet';
-import { isNative, scheduleAlerts } from './lib/native';
-import { nativeAlerts, shabbatAlerts } from './lib/ics';
+import { isNative, syncNotifications } from './lib/native';
+import { planNotifications } from './lib/alerts';
 
-type SheetName = null | 'jump' | 'settings' | 'event' | 'notify' | 'location';
+type SheetName = null | 'jump' | 'settings' | 'event' | 'notify' | 'alerts' | 'location';
 
 export default function App() {
   const [settings, setSettings] = usePersistent<Settings>(SETTINGS_KEY, DEFAULT_SETTINGS, mergeSettings);
@@ -44,12 +45,13 @@ export default function App() {
 
   const city = settings.gps ?? settings.place ?? findCity(settings.cityId) ?? DEFAULT_CITY;
 
-  // native apps: keep about a year of Friday alerts scheduled, refreshed on every open / resume
+  // native apps: replace the pending notifications (Friday alerts, zmanim, candle lighting, fasts, my events)
+  // on every open / resume and whenever the location, the settings or the events change
   useEffect(() => {
-    if (!isNative() || !settings.nativeAlerts) return;
+    if (!isNative()) return;
     const run = () => {
-      const list = nativeAlerts(shabbatAlerts(today(), 56, city, settings), city, settings.alertTime);
-      scheduleAlerts(list).catch(() => {});
+      const plan = planNotifications({ now: new Date(), city, settings, events: myEvents });
+      syncNotifications(plan.list).catch(() => {});
     };
     const t = setTimeout(run, 600);
     window.addEventListener('luachi:resume', run);
@@ -57,7 +59,21 @@ export default function App() {
       clearTimeout(t);
       window.removeEventListener('luachi:resume', run);
     };
-  }, [city, settings.nativeAlerts, settings.alertTime, settings.candleMins, settings.havdalah, settings.useElevation]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [
+    city,
+    myEvents,
+    settings.nativeAlerts,
+    settings.alertTime,
+    settings.candleMins,
+    settings.havdalah,
+    settings.useElevation,
+    settings.showModern,
+    settings.zmanAlerts,
+    settings.candleAlert,
+    settings.candleAlertMins,
+    settings.havdalahAlert,
+    settings.fastAlerts,
+  ]); // eslint-disable-line react-hooks/exhaustive-deps
   const fmt = useMemo(() => timeFmt(city.tz), [city.tz]);
   const selKey = dateKey(selected);
   const items = useMemo(() => dayItems(selected, city, settings), [selKey, city, settings]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -142,7 +158,7 @@ export default function App() {
             />
           </div>
           <div className="o-zmanim">
-            <ZmanimCard date={selected} now={now} rows={z.rows} items={items} shaahZmanit={z.shaahZmanit} fmt={fmt} city={city} candleMins={settings.candleMins ?? city.candle} />
+            <ZmanimCard date={selected} now={now} rows={z.rows} items={items} shaahZmanit={z.shaahZmanit} fmt={fmt} city={city} candleMins={settings.candleMins ?? city.candle} onAlerts={() => setSheet('alerts')} />
           </div>
         </div>
         <div className="col col-cal">
@@ -196,6 +212,9 @@ export default function App() {
       </footer>
 
       {sheet === 'notify' && <NotifySheet city={city} settings={settings} onChange={setSettings} onClose={closeSheet} />}
+      {sheet === 'alerts' && (
+        <AlertsSheet city={city} settings={settings} myEvents={myEvents} onChange={setSettings} onFriday={() => setSheet('notify')} onClose={closeSheet} />
+      )}
       {sheet === 'location' && <LocationSheet city={city} settings={settings} onChange={setSettings} onClose={closeSheet} />}
       {sheet === 'jump' && <JumpSheet selected={selected} city={city} settings={settings} myEvents={myEvents} onGo={go} onClose={closeSheet} />}
       {sheet === 'settings' && (
@@ -211,6 +230,7 @@ export default function App() {
             })
           }
           onNotify={() => setSheet('notify')}
+          onAlerts={() => setSheet('alerts')}
           onLocation={() => setSheet('location')}
           onClose={closeSheet}
         />

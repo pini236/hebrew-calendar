@@ -8,9 +8,10 @@ import { LearningCard, MyEventsCard, PrayerCard, ShabbatCard, ZmanimCard } from 
 import { JumpSheet } from './components/JumpSheet';
 import { SettingsSheet } from './components/SettingsSheet';
 import { EventEditor } from './components/EventEditor';
+import { NotifySheet } from './components/NotifySheet';
 import { Icon } from './components/Icon';
 
-type SheetName = null | 'jump' | 'settings' | 'event';
+type SheetName = null | 'jump' | 'settings' | 'event' | 'notify';
 
 export default function App() {
   const [settings, setSettings] = usePersistent<Settings>(SETTINGS_KEY, DEFAULT_SETTINGS, mergeSettings);
@@ -143,7 +144,7 @@ export default function App() {
             />
           </div>
           <div className="o-shabbat">
-            <ShabbatCard date={selected} city={city} settings={settings} fmt={fmt} onJump={go} />
+            <ShabbatCard date={selected} city={city} settings={settings} fmt={fmt} onJump={go} onNotify={() => setSheet('notify')} />
           </div>
           <div className="o-mine">
             <MyEventsCard
@@ -174,6 +175,7 @@ export default function App() {
         לוחי · יומן עברי־לועזי ללא פרסומות · מקשי קיצור: ← → ימים, PgUp/PgDn חודשים, T היום, G קפיצה
       </footer>
 
+      {sheet === 'notify' && <NotifySheet city={city} settings={settings} onChange={setSettings} onClose={closeSheet} />}
       {sheet === 'jump' && <JumpSheet selected={selected} city={city} settings={settings} myEvents={myEvents} onGo={go} onClose={closeSheet} />}
       {sheet === 'settings' && (
         <SettingsSheet
@@ -187,6 +189,7 @@ export default function App() {
               return [...cur, ...list.filter((e) => !ids.has(e.id))];
             })
           }
+          onNotify={() => setSheet('notify')}
           onClose={closeSheet}
         />
       )}

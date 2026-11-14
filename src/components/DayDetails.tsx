@@ -108,7 +108,7 @@ export function ZmanimCard({ date, now, rows, items, shaahZmanit, fmt, city, can
 
 /* ---------------- Coming Shabbat / Yom Tov ---------------- */
 
-export function ShabbatCard({ date, city, settings, fmt, onJump }: { date: Date; city: City; settings: Settings; fmt: Intl.DateTimeFormat; onJump: (d: Date) => void }) {
+export function ShabbatCard({ date, city, settings, fmt, onJump, onNotify }: { date: Date; city: City; settings: Settings; fmt: Intl.DateTimeFormat; onJump: (d: Date) => void; onNotify: () => void }) {
   // on Shabbat itself, start from Friday so the current Shabbat is still shown
   const from = date.getDay() === 6 ? addDays(date, -1) : date;
   const map = rangeItems(from, addDays(from, 9), city, settings, false);
@@ -154,6 +154,9 @@ export function ShabbatCard({ date, city, settings, fmt, onJump }: { date: Date;
             <b>{fmt.format(havdalah.it.time!)}</b>
           </button>
         </div>
+        <button className="bell-btn" onClick={onNotify}>
+          <Icon name="bell" size={16} /> התראה עם הזמנים בכל יום שישי
+        </button>
       </div>
     </section>
   );

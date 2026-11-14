@@ -16,6 +16,9 @@ export interface Settings {
   showModern: boolean;
   theme: Theme;
   monthMode: 'greg' | 'heb';
+  /** Friday alert time HH:MM (phone local time) */
+  alertTime: string;
+  alertWeeks: number;
 }
 
 export const DEFAULT_SETTINGS: Settings = {
@@ -28,6 +31,8 @@ export const DEFAULT_SETTINGS: Settings = {
   showModern: true,
   theme: 'auto',
   monthMode: 'greg',
+  alertTime: '08:00',
+  alertWeeks: 52,
 };
 
 export type Repeat = 'none' | 'heb-yearly' | 'greg-yearly';

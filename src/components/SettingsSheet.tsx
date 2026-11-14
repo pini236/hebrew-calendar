@@ -10,10 +10,11 @@ interface Props {
   myEvents: MyEvent[];
   onChange: (s: Settings) => void;
   onImport: (list: MyEvent[]) => void;
+  onNotify: () => void;
   onClose: () => void;
 }
 
-export function SettingsSheet({ settings, city, myEvents, onChange, onImport, onClose }: Props) {
+export function SettingsSheet({ settings, city, myEvents, onChange, onImport, onNotify, onClose }: Props) {
   const [q, setQ] = useState('');
   const [gpsMsg, setGpsMsg] = useState('');
   const [ioMsg, setIoMsg] = useState('');
@@ -135,6 +136,9 @@ export function SettingsSheet({ settings, city, myEvents, onChange, onImport, on
             <option value="min72">רבנו תם (72 דקות)</option>
           </select>
         </label>
+        <button className="ghost-btn" onClick={onNotify}>
+          <Icon name="bell" size={16} /> התראה בכל יום שישי עם זמני השבת
+        </button>
       </section>
 
       <section className="set-sec">

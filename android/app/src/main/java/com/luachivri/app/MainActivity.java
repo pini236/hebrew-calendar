@@ -1,4 +1,4 @@
-package com.luachi.app;
+package com.luachivri.app;
 
 import com.getcapacitor.BridgeActivity;
 

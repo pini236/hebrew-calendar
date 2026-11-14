@@ -25,13 +25,13 @@ export default defineConfig(({ mode }) => {
             registerType: 'autoUpdate',
             includeAssets: ['icon.svg'],
             manifest: {
-              name: 'לוח — יומן עברי',
-              short_name: 'לוח',
+              name: 'לוח עברי',
+              short_name: 'לוח עברי',
               description: 'יומן עברי-לועזי עם זמני היום, חגים ואירועים אישיים',
               lang: 'he',
               dir: 'rtl',
-              theme_color: '#0f1630',
-              background_color: '#0f1630',
+              theme_color: '#1F3E9E',
+              background_color: '#1F3E9E',
               display: 'standalone',
               start_url: '.',
               icons: [

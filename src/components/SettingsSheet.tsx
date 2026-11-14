@@ -67,7 +67,7 @@ export function SettingsSheet({ settings, city, myEvents, onChange, onImport, on
     const data = JSON.stringify({ app: 'luach', version: 1, events: myEvents }, null, 2);
     if (isNative()) {
       try {
-        await shareTextFile('luachi-events.json', data, 'גיבוי האירועים שלי');
+        await shareTextFile('luach-ivri-backup.json', data, 'גיבוי האירועים שלי');
         setIoMsg(`נשמרו ${myEvents.length} אירועים. שמרו את הקובץ בדרייב, במייל או בוואטסאפ.`);
       } catch {
         setIoMsg('הייצוא בוטל.');

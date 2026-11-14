@@ -1,7 +1,7 @@
 <?xml version='1.0' encoding='utf-8'?>
 <resources>
-    <string name="app_name">לוחי</string>
-    <string name="title_activity_main">לוחי</string>
-    <string name="package_name">com.luachi.app</string>
-    <string name="custom_url_scheme">com.luachi.app</string>
+    <string name="app_name">לוח עברי</string>
+    <string name="title_activity_main">לוח עברי</string>
+    <string name="package_name">com.luachivri.app</string>
+    <string name="custom_url_scheme">com.luachivri.app</string>
 </resources>

@@ -9,7 +9,7 @@ import { JumpSheet } from './components/JumpSheet';
 import { SettingsSheet } from './components/SettingsSheet';
 import { EventEditor } from './components/EventEditor';
 import { NotifySheet } from './components/NotifySheet';
-import { Icon } from './components/Icon';
+import { BrandMark, Icon } from './components/Icon';
 import { isNative, scheduleAlerts } from './lib/native';
 import { nativeAlerts, shabbatAlerts } from './lib/ics';
 
@@ -100,10 +100,8 @@ export default function App() {
     <div className="app">
       <header className="topbar">
         <div className="brand">
-          <span className="brand-mark" aria-hidden="true">
-            ל
-          </span>
-          <span className="brand-name">לוחי</span>
+          <BrandMark />
+          <span className="brand-name">לוח עברי</span>
         </div>
         <div className="top-actions">
           <button className="chip-btn" onClick={() => setSheet('settings')} aria-label={`מיקום: ${city.name}. שינוי מיקום והגדרות`}>
@@ -189,7 +187,7 @@ export default function App() {
       </main>
 
       <footer className="foot">
-        לוחי · יומן עברי־לועזי ללא פרסומות · מקשי קיצור: ← → ימים, PgUp/PgDn חודשים, T היום, G קפיצה
+        לוח עברי · יומן עברי־לועזי ללא פרסומות · מקשי קיצור: ← → ימים, PgUp/PgDn חודשים, T היום, G קפיצה
       </footer>
 
       {sheet === 'notify' && <NotifySheet city={city} settings={settings} onChange={setSettings} onClose={closeSheet} />}

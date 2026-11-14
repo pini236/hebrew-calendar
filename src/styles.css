@@ -136,18 +136,10 @@ h3 {
   gap: 8px;
 }
 .brand-mark {
-  width: 34px;
-  height: 34px;
-  border-radius: 10px;
-  display: grid;
-  place-items: center;
-  font-family: var(--f-display);
-  font-weight: 900;
-  font-size: 22px;
-  line-height: 1;
-  padding-bottom: 3px;
-  color: #fff6e3;
-  background: linear-gradient(180deg, #0b1230, #2b2d68 60%, #e07a52);
+  display: block;
+  flex: none;
+  border-radius: 9px;
+  box-shadow: 0 2px 6px rgba(27, 58, 154, 0.3);
 }
 .brand-name {
   font-family: var(--f-display);

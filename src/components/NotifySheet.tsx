@@ -41,7 +41,7 @@ function NativeNotify({ city, settings, onChange, onClose }: Props) {
       if (on) {
         const p = await notificationPermission(true);
         if (p !== 'granted') {
-          setMsg('ההתראות חסומות. אפשר להפעיל אותן בהגדרות הטלפון ← אפליקציות ← לוחי ← התראות, ולנסות שוב.');
+          setMsg('ההתראות חסומות. אפשר להפעיל אותן בהגדרות הטלפון ← אפליקציות ← לוח עברי ← התראות, ולנסות שוב.');
           return;
         }
         set({ nativeAlerts: true });
@@ -94,7 +94,7 @@ function Preview({ alerts, city, time }: { alerts: ReturnType<typeof shabbatAler
           <div className="notif" key={a.friday.getTime()}>
             <div className="notif-head">
               <span className="notif-app">
-                <Icon name="candle" size={14} /> לוחי
+                <Icon name="candle" size={14} /> לוח עברי
               </span>
               <span>
                 יום {WEEKDAYS[5]}, {gregDateStr(a.friday, false)} · {time}
@@ -122,7 +122,7 @@ function WebNotify({ city, settings, onChange, onClose }: Props) {
 
   const makeFile = () => {
     const ics = buildShabbatIcs(alerts, city, settings.alertTime);
-    return new File([ics], 'shabbat-luachi.ics', { type: 'text/calendar' });
+    return new File([ics], 'shabbat-times.ics', { type: 'text/calendar' });
   };
 
   const addToCalendar = () => {
@@ -155,7 +155,7 @@ function WebNotify({ city, settings, onChange, onClose }: Props) {
 
   const share = async () => {
     try {
-      await navigator.share({ files: [makeFile()], title: 'זמני שבת — לוחי' });
+      await navigator.share({ files: [makeFile()], title: 'זמני שבת — לוח עברי' });
       setDone(true);
       setMsg('שותף. בחרו באפליקציית היומן כדי להוסיף את ההתראות.');
     } catch (e) {
@@ -244,7 +244,7 @@ function WebNotify({ city, settings, onChange, onClose }: Props) {
         {isAndroid || !isIOS ? (
           <ol>
             <li>
-              <b>אנדרואיד:</b> פותחים את הקובץ שירד (shabbat-luachi.ics) באפליקציית היומן, או משתפים אותו ישירות אליה. יומן Samsung
+              <b>אנדרואיד:</b> פותחים את הקובץ שירד (shabbat-times.ics) באפליקציית היומן, או משתפים אותו ישירות אליה. יומן Samsung
               ורוב היומנים מייבאים אותו מיד.
             </li>
             <li>

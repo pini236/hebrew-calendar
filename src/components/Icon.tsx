@@ -37,3 +37,23 @@ export function Icon({ name, size = 20, stroke = 1.8 }: { name: keyof typeof PAT
     </svg>
   );
 }
+
+/** The app icon (a calendar page), drawn inline so it uses the app's own fonts */
+export function BrandMark({ size = 34 }: { size?: number }) {
+  return (
+    <svg className="brand-mark" width={size} height={size} viewBox="0 0 1024 1024" aria-hidden="true">
+      <defs>
+        <linearGradient id="bm-bg" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stopColor="#2F5BD3" />
+          <stop offset="1" stopColor="#1B3A9A" />
+        </linearGradient>
+      </defs>
+      <rect width="1024" height="1024" rx="230" fill="url(#bm-bg)" />
+      <rect x="172" y="200" width="680" height="660" rx="96" fill="#fff" />
+      <path d="M172 296a96 96 0 0 1 96-96h488a96 96 0 0 1 96 96v84H172z" fill="#E0463C" />
+      <text x="512" y="720" textAnchor="middle" fontFamily="'Frank Ruhl Libre', serif" fontWeight={900} fontSize="360" fill="#1B2A55">
+        כ״ה
+      </text>
+    </svg>
+  );
+}

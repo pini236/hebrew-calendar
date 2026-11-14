@@ -1,14 +1,9 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
-  <defs>
-    <linearGradient id="g" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0" stop-color="#0b1230"/>
-      <stop offset="0.6" stop-color="#2b2d68"/>
-      <stop offset="1" stop-color="#e07a52"/>
-    </linearGradient>
-  </defs>
-  <rect width="512" height="512" rx="112" fill="url(#g)"/>
-  <path d="M96 392 Q256 150 416 392" fill="none" stroke="#ffffff" stroke-opacity=".35" stroke-width="10" stroke-linecap="round"/>
-  <mask id="m"><rect width="512" height="512" fill="#fff"/><circle cx="382" cy="130" r="48" fill="#000"/></mask>
-  <circle cx="356" cy="150" r="54" fill="#f6d58a" mask="url(#m)"/>
-  <text x="236" y="368" text-anchor="middle" font-family="'Frank Ruhl Libre', 'David', serif" font-weight="900" font-size="250" fill="#fff6e3">ל</text>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024">
+  <defs><linearGradient id="bg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#2F5BD3"/><stop offset="1" stop-color="#1B3A9A"/></linearGradient></defs>
+  <rect width="1024" height="1024" rx="224" fill="url(#bg)"/>
+  <rect x="172" y="200" width="680" height="660" rx="96" fill="#fff"/>
+  <path d="M172 296a96 96 0 0 1 96-96h488a96 96 0 0 1 96 96v84H172z" fill="#E0463C"/>
+  <rect x="330" y="150" width="44" height="120" rx="22" fill="#fff" stroke="#E0463C" stroke-width="14"/>
+  <rect x="650" y="150" width="44" height="120" rx="22" fill="#fff" stroke="#E0463C" stroke-width="14"/>
+  <text x="512" y="700" text-anchor="middle" font-family="'Frank Ruhl Libre', David, serif" font-weight="900" font-size="330" fill="#1B2A55">כ״ה</text>
 </svg>

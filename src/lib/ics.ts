@@ -47,7 +47,7 @@ export function alertText(a: ShabbatAlert, city: City) {
   const late = a.havdalahDay.getDay() !== 6 ? ` (ביום ${['א׳', 'ב׳', 'ג׳', 'ד׳', 'ה׳', 'ו׳', 'ש׳'][a.havdalahDay.getDay()]})` : '';
   return {
     summary: `🕯️ ${a.title} · כניסה ${f.format(a.candles)} · יציאה ${f.format(a.havdalah)}${late}`,
-    body: `${a.title} ב${city.name}\nהדלקת נרות: ${f.format(a.candles)}\nצאת השבת: ${f.format(a.havdalah)}${late}\n\nנשלח מלוחי`,
+    body: `${a.title} ב${city.name}\nהדלקת נרות: ${f.format(a.candles)}\nצאת השבת: ${f.format(a.havdalah)}${late}\n\nנשלח מלוח עברי`,
   };
 }
 
@@ -105,7 +105,7 @@ const utc = (d: Date) =>
 export function buildShabbatIcs(alerts: ShabbatAlert[], city: City, time: string) {
   const [hh, mm] = time.split(':').map(Number);
   const stamp = utc(new Date());
-  const lines = ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//Luachi//Shabbat alerts//HE', 'CALSCALE:GREGORIAN', 'METHOD:PUBLISH', 'X-WR-CALNAME:זמני שבת — לוחי'];
+  const lines = ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//LuachIvri//Shabbat alerts//HE', 'CALSCALE:GREGORIAN', 'METHOD:PUBLISH', 'X-WR-CALNAME:זמני שבת — לוח עברי'];
   for (const a of alerts) {
     const { summary, body } = alertText(a, city);
     const start = local(a.friday, hh, mm);

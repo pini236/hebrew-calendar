@@ -10,10 +10,11 @@ import { SettingsSheet } from './components/SettingsSheet';
 import { EventEditor } from './components/EventEditor';
 import { NotifySheet } from './components/NotifySheet';
 import { BrandMark, Icon } from './components/Icon';
+import { LocationSheet } from './components/LocationSheet';
 import { isNative, scheduleAlerts } from './lib/native';
 import { nativeAlerts, shabbatAlerts } from './lib/ics';
 
-type SheetName = null | 'jump' | 'settings' | 'event' | 'notify';
+type SheetName = null | 'jump' | 'settings' | 'event' | 'notify' | 'location';
 
 export default function App() {
   const [settings, setSettings] = usePersistent<Settings>(SETTINGS_KEY, DEFAULT_SETTINGS, mergeSettings);
@@ -41,7 +42,7 @@ export default function App() {
     else root.removeAttribute('data-contrast');
   }, [settings.theme, settings.textSize, settings.highContrast]);
 
-  const city = settings.gps ?? findCity(settings.cityId) ?? DEFAULT_CITY;
+  const city = settings.gps ?? settings.place ?? findCity(settings.cityId) ?? DEFAULT_CITY;
 
   // native apps: keep about a year of Friday alerts scheduled, refreshed on every open / resume
   useEffect(() => {
@@ -108,7 +109,7 @@ export default function App() {
           <span className="brand-name">לוח עברי</span>
         </div>
         <div className="top-actions">
-          <button className="chip-btn" onClick={() => setSheet('settings')} aria-label={`מיקום: ${city.name}. שינוי מיקום והגדרות`}>
+          <button className="chip-btn" onClick={() => setSheet('location')} aria-label={`מיקום: ${city.name}. שינוי מיקום`}>
             <Icon name="pin" size={16} />
             <span className="city-name">{city.name}</span>
           </button>
@@ -195,6 +196,7 @@ export default function App() {
       </footer>
 
       {sheet === 'notify' && <NotifySheet city={city} settings={settings} onChange={setSettings} onClose={closeSheet} />}
+      {sheet === 'location' && <LocationSheet city={city} settings={settings} onChange={setSettings} onClose={closeSheet} />}
       {sheet === 'jump' && <JumpSheet selected={selected} city={city} settings={settings} myEvents={myEvents} onGo={go} onClose={closeSheet} />}
       {sheet === 'settings' && (
         <SettingsSheet
@@ -209,6 +211,7 @@ export default function App() {
             })
           }
           onNotify={() => setSheet('notify')}
+          onLocation={() => setSheet('location')}
           onClose={closeSheet}
         />
       )}

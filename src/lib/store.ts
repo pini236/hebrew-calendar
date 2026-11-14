@@ -22,6 +22,10 @@ export interface Settings {
   alertWeeks: number;
   /** native apps: Friday notifications switched on */
   nativeAlerts: boolean;
+  /** a place picked from the worldwide search (overrides cityId; GPS overrides it) */
+  place: City | null;
+  /** the last places picked, newest first (max 5) */
+  recentPlaces: City[];
   textSize: TextSize;
   highContrast: boolean;
 }
@@ -39,6 +43,8 @@ export const DEFAULT_SETTINGS: Settings = {
   alertTime: '08:00',
   alertWeeks: 52,
   nativeAlerts: false,
+  place: null,
+  recentPlaces: [],
   textSize: 'normal',
   highContrast: false,
 };
@@ -96,9 +102,17 @@ export function usePersistent<T>(key: string, fallback: T, merge?: (stored: T) =
 export const SETTINGS_KEY = 'luach.settings.v1';
 export const EVENTS_KEY = 'luach.events.v1';
 
+const isCity = (c: unknown): c is City => {
+  const x = c as City;
+  return !!x && typeof x === 'object' && typeof x.name === 'string' && Number.isFinite(x.lat) && Number.isFinite(x.lon) && typeof x.tz === 'string';
+};
+
 /** Saved settings from any earlier version, filled up with the current defaults */
 export function mergeSettings(s: Partial<Settings>): Settings {
   const m: Settings = { ...DEFAULT_SETTINGS, ...(s && typeof s === 'object' ? s : {}) };
+  if (!isCity(m.gps)) m.gps = null;
+  if (!isCity(m.place)) m.place = null;
+  m.recentPlaces = Array.isArray(m.recentPlaces) ? m.recentPlaces.filter(isCity).slice(0, 5) : [];
   if (!['normal', 'large', 'xlarge'].includes(m.textSize)) m.textSize = 'normal';
   return m;
 }

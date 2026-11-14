@@ -3,6 +3,7 @@ import { CITIES, nearestCity, type City } from '../lib/cities';
 import type { MyEvent, Settings } from '../lib/store';
 import { Sheet } from './Sheet';
 import { Icon } from './Icon';
+import { isNative, nativePosition, shareTextFile } from '../lib/native';
 
 interface Props {
   settings: Settings;
@@ -23,39 +24,56 @@ export function SettingsSheet({ settings, city, myEvents, onChange, onImport, on
 
   const list = q.trim() ? CITIES.filter((c) => c.name.includes(q.trim())) : CITIES;
 
+  const applyPosition = (lat: number, lon: number, altitude: number | null | undefined) => {
+    const near = nearestCity(lat, lon);
+    const tz = Intl.DateTimeFormat().resolvedOptions().timeZone || near.city.tz;
+    const il = tz === 'Asia/Jerusalem';
+    const name = near.km < 15 ? near.city.name : `המיקום שלי (ליד ${near.city.name})`;
+    const gps: City = {
+      id: 'gps',
+      name,
+      lat: +lat.toFixed(5),
+      lon: +lon.toFixed(5),
+      tz,
+      elev: altitude && altitude > 0 ? Math.round(altitude) : near.km < 15 ? near.city.elev : 0,
+      candle: near.km < 15 ? near.city.candle : il ? 20 : 18,
+      il,
+    };
+    set({ gps });
+    setGpsMsg(`נמצא: ${name}`);
+  };
+  const denied = 'לא התקבלה הרשאה למיקום. אפשר לאשר מיקום בהגדרות, או לבחור עיר מהרשימה.';
+
   const locate = () => {
+    setGpsMsg('מאתר מיקום…');
+    if (isNative()) {
+      nativePosition()
+        .then((c) => applyPosition(c.latitude, c.longitude, c.altitude))
+        .catch(() => setGpsMsg(denied));
+      return;
+    }
     if (!('geolocation' in navigator)) {
       setGpsMsg('המכשיר לא תומך באיתור מיקום. בחרו עיר מהרשימה.');
       return;
     }
-    setGpsMsg('מאתר מיקום…');
     navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        const { latitude: lat, longitude: lon, altitude } = pos.coords;
-        const near = nearestCity(lat, lon);
-        const tz = Intl.DateTimeFormat().resolvedOptions().timeZone || near.city.tz;
-        const il = tz === 'Asia/Jerusalem';
-        const name = near.km < 15 ? near.city.name : `המיקום שלי (ליד ${near.city.name})`;
-        const gps: City = {
-          id: 'gps',
-          name,
-          lat: +lat.toFixed(4),
-          lon: +lon.toFixed(4),
-          tz,
-          elev: altitude && altitude > 0 ? Math.round(altitude) : near.km < 15 ? near.city.elev : 0,
-          candle: near.km < 15 ? near.city.candle : il ? 20 : 18,
-          il,
-        };
-        set({ gps });
-        setGpsMsg(`נמצא: ${name}`);
-      },
-      () => setGpsMsg('לא התקבלה הרשאה למיקום. אפשר לאשר מיקום בהגדרות הדפדפן, או לבחור עיר מהרשימה.'),
+      (pos) => applyPosition(pos.coords.latitude, pos.coords.longitude, pos.coords.altitude),
+      () => setGpsMsg(denied),
       { enableHighAccuracy: false, timeout: 15000, maximumAge: 600000 },
     );
   };
 
   const exportEvents = async () => {
     const data = JSON.stringify({ app: 'luach', version: 1, events: myEvents }, null, 2);
+    if (isNative()) {
+      try {
+        await shareTextFile('luachi-events.json', data, 'גיבוי האירועים שלי');
+        setIoMsg(`נשמרו ${myEvents.length} אירועים. שמרו את הקובץ בדרייב, במייל או בוואטסאפ.`);
+      } catch {
+        setIoMsg('הייצוא בוטל.');
+      }
+      return;
+    }
     try {
       const blob = new Blob([data], { type: 'application/json' });
       const a = document.createElement('a');

@@ -1501,3 +1501,25 @@ h3 {
   font-size: 14px;
   max-width: 64ch;
 }
+.toggle.big {
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: var(--surface-2);
+  font-weight: 700;
+}
+.field input[type='time'] {
+  max-width: 9em;
+}
+
+/* installed app (Android / iOS / home-screen PWA): keep content clear of the system bars */
+.native body {
+  padding-top: env(safe-area-inset-top, 0px);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+@media (display-mode: standalone) {
+  body {
+    padding-top: env(safe-area-inset-top, 0px);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+}

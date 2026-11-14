@@ -51,6 +51,21 @@ export function alertText(a: ShabbatAlert, city: City) {
   };
 }
 
+/** Notifications for the native apps: Friday at `time` (phone's local time) */
+export function nativeAlerts(alerts: ShabbatAlert[], city: City, time: string) {
+  const [hh, mm] = time.split(':').map(Number);
+  const f = timeFmt(city.tz);
+  return alerts.map((a) => {
+    const late = a.havdalahDay.getDay() !== 6 ? ` (ביום ${['א׳', 'ב׳', 'ג׳', 'ד׳', 'ה׳', 'ו׳', 'ש׳'][a.havdalahDay.getDay()]})` : '';
+    return {
+      id: Number(dateKey(a.friday).replace(/-/g, '')),
+      at: new Date(a.friday.getFullYear(), a.friday.getMonth(), a.friday.getDate(), hh, mm),
+      title: `🕯️ ${a.title}`,
+      body: `כניסה ${f.format(a.candles)} · יציאה ${f.format(a.havdalah)}${late} · ${city.name}`,
+    };
+  });
+}
+
 /* ---------- iCalendar ---------- */
 
 function esc(s: string) {

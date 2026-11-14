@@ -19,6 +19,8 @@ export interface Settings {
   /** Friday alert time HH:MM (phone local time) */
   alertTime: string;
   alertWeeks: number;
+  /** native apps: Friday notifications switched on */
+  nativeAlerts: boolean;
 }
 
 export const DEFAULT_SETTINGS: Settings = {
@@ -33,6 +35,7 @@ export const DEFAULT_SETTINGS: Settings = {
   monthMode: 'greg',
   alertTime: '08:00',
   alertWeeks: 52,
+  nativeAlerts: false,
 };
 
 export type Repeat = 'none' | 'heb-yearly' | 'greg-yearly';

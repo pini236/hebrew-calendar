@@ -35,9 +35,20 @@ npm run build      # בנייה ל-dist (PWA)
 npm run verify     # בדיקת דיוק מול ספרייה שנייה
 ```
 
+## אפליקציות לאנדרואיד ולאייפון
+
+אותו קוד בדיוק נארז כאפליקציה רגילה לשתי החנויות בעזרת [Capacitor](https://capacitorjs.com), בתיקיות `android/` ו־`ios/`.
+באפליקציה המותקנת התראת השבת היא התראה אמיתית של הטלפון, בלי לעבור דרך היומן, והיא מתעדכנת בכל פתיחה.
+
+```bash
+npm run cap:sync   # בנייה והעתקה לפרויקטים של אנדרואיד ואייפון
+```
+
+הבנייה וההעלאה לחנויות רצות ב־GitHub Actions. ההוראות המלאות, כולל הסודות שצריך להגדיר, נמצאות ב־[PUBLISHING.md](PUBLISHING.md).
+
 ## פרסום ב-GitHub Pages
 
-בכל push ל-`main` רץ ה-workflow שב-`.github/workflows/deploy.yml`.
+בכל push לענף הראשי של המאגר רץ ה-workflow שב-`.github/workflows/deploy.yml`.
 כדי להפעיל אותו פעם ראשונה: Settings → Pages → Source: **GitHub Actions**.
 אחרי הפרסום פותחים את הכתובת בטלפון ובוחרים "הוספה למסך הבית".
 

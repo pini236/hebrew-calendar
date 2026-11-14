@@ -10,6 +10,8 @@ import { SettingsSheet } from './components/SettingsSheet';
 import { EventEditor } from './components/EventEditor';
 import { NotifySheet } from './components/NotifySheet';
 import { Icon } from './components/Icon';
+import { isNative, scheduleAlerts } from './lib/native';
+import { nativeAlerts, shabbatAlerts } from './lib/ics';
 
 type SheetName = null | 'jump' | 'settings' | 'event' | 'notify';
 
@@ -36,6 +38,21 @@ export default function App() {
   }, [settings.theme]);
 
   const city = settings.gps ?? findCity(settings.cityId) ?? DEFAULT_CITY;
+
+  // native apps: keep about a year of Friday alerts scheduled, refreshed on every open / resume
+  useEffect(() => {
+    if (!isNative() || !settings.nativeAlerts) return;
+    const run = () => {
+      const list = nativeAlerts(shabbatAlerts(today(), 56, city, settings), city, settings.alertTime);
+      scheduleAlerts(list).catch(() => {});
+    };
+    const t = setTimeout(run, 600);
+    window.addEventListener('luachi:resume', run);
+    return () => {
+      clearTimeout(t);
+      window.removeEventListener('luachi:resume', run);
+    };
+  }, [city, settings.nativeAlerts, settings.alertTime, settings.candleMins, settings.havdalah, settings.useElevation]); // eslint-disable-line react-hooks/exhaustive-deps
   const fmt = useMemo(() => timeFmt(city.tz), [city.tz]);
   const selKey = dateKey(selected);
   const items = useMemo(() => dayItems(selected, city, settings), [selKey, city, settings]); // eslint-disable-line react-hooks/exhaustive-deps

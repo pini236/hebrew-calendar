@@ -7,15 +7,21 @@ import { viteSingleFile } from 'vite-plugin-singlefile';
 // the default build is an installable, offline-capable PWA.
 export default defineConfig(({ mode }) => {
   const single = mode === 'single';
+  const native = mode === 'native'; // web assets bundled into the Android / iOS apps
   return {
     base: process.env.BASE_PATH || './',
-    define: { __SINGLE__: JSON.stringify(single) },
-    build: { outDir: single ? 'dist-single' : 'dist' },
+    define: { __SINGLE__: JSON.stringify(single), __PWA__: JSON.stringify(!single && !native) },
+    build: {
+      outDir: single ? 'dist-single' : native ? 'dist-native' : 'dist',
+      assetsInlineLimit: single ? 100_000_000 : 4096,
+    },
     plugins: [
       react(),
       single
         ? viteSingleFile()
-        : VitePWA({
+        : native
+          ? null
+          : VitePWA({
             registerType: 'autoUpdate',
             includeAssets: ['icon.svg'],
             manifest: {

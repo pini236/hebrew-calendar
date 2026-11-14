@@ -29,6 +29,7 @@ interface ZProps {
   fmt: Intl.DateTimeFormat;
   city: City;
   candleMins: number;
+  onAlerts: () => void;
 }
 
 interface Row {
@@ -48,7 +49,7 @@ function countdown(ms: number) {
   return `${m}:${String(s).padStart(2, '0')}`;
 }
 
-export function ZmanimCard({ date, now, rows, items, shaahZmanit, fmt, city, candleMins }: ZProps) {
+export function ZmanimCard({ date, now, rows, items, shaahZmanit, fmt, city, candleMins, onAlerts }: ZProps) {
   const [full, setFull] = useState(true);
   const isToday = sameDay(date, now);
 
@@ -72,6 +73,9 @@ export function ZmanimCard({ date, now, rows, items, shaahZmanit, fmt, city, can
     <section className="card zmanim" aria-label="זמני היום">
       <header className="card-head">
         <h3>זמני היום</h3>
+        <button className="icon-btn small" onClick={onAlerts} aria-label="התראות לזמני היום">
+          <Icon name="bell" size={17} />
+        </button>
         <div className="seg small" role="tablist" aria-label="תצוגת זמנים">
           <button role="tab" aria-selected={!full} className={!full ? 'on' : ''} onClick={() => setFull(false)}>
             עיקריים
@@ -241,6 +245,11 @@ export function MyEventsCard({
                   {ev.title}
                   {ev.time && <small> · {ev.time}</small>}
                   {ev.repeat !== 'none' && years > 0 && <small> · {years} שנה</small>}
+                  {ev.remind && ev.remind !== 'none' && (
+                    <span className="m-bell" title="יש תזכורת" aria-label="יש תזכורת">
+                      <Icon name="bell" size={13} />
+                    </span>
+                  )}
                   {ev.note && <em>{ev.note}</em>}
                 </span>
                 <span className="m-kind">{ev.repeat === 'heb-yearly' ? 'שנתי עברי' : ev.repeat === 'greg-yearly' ? 'שנתי לועזי' : ''}</span>

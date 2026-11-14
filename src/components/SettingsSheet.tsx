@@ -1,9 +1,9 @@
 import { useRef, useState } from 'react';
-import { CITIES, nearestCity, type City } from '../lib/cities';
+import type { City } from '../lib/cities';
 import type { MyEvent, Settings } from '../lib/store';
 import { Sheet } from './Sheet';
 import { Icon } from './Icon';
-import { isNative, nativePosition, shareTextFile } from '../lib/native';
+import { isNative, shareTextFile } from '../lib/native';
 
 interface Props {
   settings: Settings;
@@ -12,56 +12,15 @@ interface Props {
   onChange: (s: Settings) => void;
   onImport: (list: MyEvent[]) => void;
   onNotify: () => void;
+  onAlerts: () => void;
+  onLocation: () => void;
   onClose: () => void;
 }
 
-export function SettingsSheet({ settings, city, myEvents, onChange, onImport, onNotify, onClose }: Props) {
-  const [q, setQ] = useState('');
-  const [gpsMsg, setGpsMsg] = useState('');
+export function SettingsSheet({ settings, city, myEvents, onChange, onImport, onNotify, onAlerts, onLocation, onClose }: Props) {
   const [ioMsg, setIoMsg] = useState('');
   const fileRef = useRef<HTMLInputElement>(null);
   const set = (p: Partial<Settings>) => onChange({ ...settings, ...p });
-
-  const list = q.trim() ? CITIES.filter((c) => c.name.includes(q.trim())) : CITIES;
-
-  const applyPosition = (lat: number, lon: number, altitude: number | null | undefined) => {
-    const near = nearestCity(lat, lon);
-    const tz = Intl.DateTimeFormat().resolvedOptions().timeZone || near.city.tz;
-    const il = tz === 'Asia/Jerusalem';
-    const name = near.km < 15 ? near.city.name : `המיקום שלי (ליד ${near.city.name})`;
-    const gps: City = {
-      id: 'gps',
-      name,
-      lat: +lat.toFixed(5),
-      lon: +lon.toFixed(5),
-      tz,
-      elev: altitude && altitude > 0 ? Math.round(altitude) : near.km < 15 ? near.city.elev : 0,
-      candle: near.km < 15 ? near.city.candle : il ? 20 : 18,
-      il,
-    };
-    set({ gps });
-    setGpsMsg(`נמצא: ${name}`);
-  };
-  const denied = 'לא התקבלה הרשאה למיקום. אפשר לאשר מיקום בהגדרות, או לבחור עיר מהרשימה.';
-
-  const locate = () => {
-    setGpsMsg('מאתר מיקום…');
-    if (isNative()) {
-      nativePosition()
-        .then((c) => applyPosition(c.latitude, c.longitude, c.altitude))
-        .catch(() => setGpsMsg(denied));
-      return;
-    }
-    if (!('geolocation' in navigator)) {
-      setGpsMsg('המכשיר לא תומך באיתור מיקום. בחרו עיר מהרשימה.');
-      return;
-    }
-    navigator.geolocation.getCurrentPosition(
-      (pos) => applyPosition(pos.coords.latitude, pos.coords.longitude, pos.coords.altitude),
-      () => setGpsMsg(denied),
-      { enableHighAccuracy: false, timeout: 15000, maximumAge: 600000 },
-    );
-  };
 
   const exportEvents = async () => {
     const data = JSON.stringify({ app: 'luach', version: 1, events: myEvents }, null, 2);
@@ -105,30 +64,26 @@ export function SettingsSheet({ settings, city, myEvents, onChange, onImport, on
       <section className="set-sec">
         <h3>מיקום</h3>
         <p className="fine">
-          כרגע: <b>{city.name}</b> · {city.lat.toFixed(3)}, {city.lon.toFixed(3)} · גובה {city.elev} מ׳
+          כרגע: <b>{city.name}</b> · <bdi dir="ltr">{city.lat.toFixed(3)}, {city.lon.toFixed(3)}</bdi> · גובה {city.elev} מ׳
         </p>
         <div className="row-btns">
-          <button className="ghost-btn" onClick={locate}>
-            <Icon name="locate" size={16} /> איתור לפי GPS
+          <button className="ghost-btn" onClick={onLocation}>
+            <Icon name="search" size={16} /> שינוי מיקום (חיפוש בכל העולם או GPS)
           </button>
-          {settings.gps && (
-            <button className="ghost-btn" onClick={() => set({ gps: null })}>
-              חזרה לעיר מהרשימה
-            </button>
-          )}
         </div>
-        {gpsMsg && <p className="fine" role="status">{gpsMsg}</p>}
-        <label className="search">
-          <Icon name="search" size={18} />
-          <input id="city-search" type="search" placeholder="חיפוש עיר…" value={q} onChange={(e) => setQ(e.target.value)} />
-        </label>
-        <div className="city-list">
-          {list.map((c) => (
-            <button key={c.id} className={!settings.gps && settings.cityId === c.id ? 'on' : ''} onClick={() => set({ cityId: c.id, gps: null })}>
-              {c.name}
-              {!c.il && <small> · חו״ל</small>}
-            </button>
-          ))}
+      </section>
+
+      <section className="set-sec">
+        <h3>התראות</h3>
+        <p className="fine">
+          {isNative()
+            ? 'התראה לפני כל זמן שתבחרו, תזכורת להדלקת נרות, צאת שבת וחג, צומות, ותזכורות לאירועים שלכם.'
+            : 'באפליקציה המותקנת לאנדרואיד ולאייפון: התראה לפני כל זמן, הדלקת נרות, צאת שבת, צומות ותזכורות לאירועים.'}
+        </p>
+        <div className="row-btns">
+          <button className="ghost-btn" onClick={onAlerts}>
+            <Icon name="bell" size={16} /> הגדרת התראות
+          </button>
         </div>
       </section>
 
@@ -165,8 +120,8 @@ export function SettingsSheet({ settings, city, myEvents, onChange, onImport, on
         <Toggle id="set-learn" label="הצגת לימוד יומי (דף יומי, משנה, רמב״ם…)" on={settings.showLearning} onChange={(v) => set({ showLearning: v })} />
         <Toggle id="set-modern" label="הצגת ימי זיכרון ומועדים ממלכתיים" on={settings.showModern} onChange={(v) => set({ showModern: v })} />
         <div className="field">
-          <span>ערכת צבעים</span>
-          <div className="seg small">
+          <span id="lbl-theme">ערכת צבעים</span>
+          <div className="seg small" role="group" aria-labelledby="lbl-theme">
             {(
               [
                 ['auto', 'אוטומטי'],
@@ -174,12 +129,30 @@ export function SettingsSheet({ settings, city, myEvents, onChange, onImport, on
                 ['dark', 'כהה'],
               ] as const
             ).map(([k, l]) => (
-              <button key={k} className={settings.theme === k ? 'on' : ''} onClick={() => set({ theme: k })}>
+              <button key={k} className={settings.theme === k ? 'on' : ''} aria-pressed={settings.theme === k} onClick={() => set({ theme: k })}>
                 {l}
               </button>
             ))}
           </div>
         </div>
+        <div className="field">
+          <span id="lbl-text-size">גודל טקסט</span>
+          <div className="seg small" role="group" aria-labelledby="lbl-text-size">
+            {(
+              [
+                ['normal', 'רגיל'],
+                ['large', 'גדול'],
+                ['xlarge', 'גדול מאוד'],
+              ] as const
+            ).map(([k, l]) => (
+              <button key={k} className={settings.textSize === k ? 'on' : ''} aria-pressed={settings.textSize === k} onClick={() => set({ textSize: k })}>
+                {l}
+              </button>
+            ))}
+          </div>
+        </div>
+        <Toggle id="set-contrast" label="ניגודיות גבוהה (טקסט וקווים כהים יותר)" on={settings.highContrast} onChange={(v) => set({ highContrast: v })} />
+        <p className="fine">הגודל "רגיל" מתאים את עצמו לגודל הגופן שנבחר בהגדרות הטלפון או הדפדפן.</p>
       </section>
 
       <section className="set-sec">

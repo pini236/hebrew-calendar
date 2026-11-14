@@ -27,6 +27,8 @@ jobs:
       - run: npm ci
       - name: Accuracy check (zmanim vs. a second library)
         run: npm run verify
+      - name: Unit tests (notification plan, location search)
+        run: npm test
       - name: Build web app and copy it into the iOS project
         run: npm run build:native && npx cap sync ios
 

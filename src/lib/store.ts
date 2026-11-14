@@ -3,6 +3,7 @@ import type { City } from './cities';
 
 export type HavdalahOpinion = 'deg8.5' | 'min42' | 'min50' | 'min72';
 export type Theme = 'auto' | 'light' | 'dark';
+export type TextSize = 'normal' | 'large' | 'xlarge';
 
 export interface Settings {
   cityId: string;
@@ -21,6 +22,21 @@ export interface Settings {
   alertWeeks: number;
   /** native apps: Friday notifications switched on */
   nativeAlerts: boolean;
+  /** a place picked from the worldwide search (overrides cityId; GPS overrides it) */
+  place: City | null;
+  /** the last places picked, newest first (max 5) */
+  recentPlaces: City[];
+  textSize: TextSize;
+  highContrast: boolean;
+  /** native apps: zman id → minutes before it to notify (a missing id = off) */
+  zmanAlerts: Record<string, number>;
+  /** native apps: reminder before candle lighting (Shabbat and Yom Tov) */
+  candleAlert: boolean;
+  candleAlertMins: number;
+  /** native apps: notification at the end of Shabbat / Yom Tov */
+  havdalahAlert: boolean;
+  /** native apps: notifications for the start and the end of fasts */
+  fastAlerts: boolean;
 }
 
 export const DEFAULT_SETTINGS: Settings = {
@@ -36,9 +52,20 @@ export const DEFAULT_SETTINGS: Settings = {
   alertTime: '08:00',
   alertWeeks: 52,
   nativeAlerts: false,
+  place: null,
+  recentPlaces: [],
+  textSize: 'normal',
+  highContrast: false,
+  zmanAlerts: {},
+  candleAlert: false,
+  candleAlertMins: 30,
+  havdalahAlert: false,
+  fastAlerts: false,
 };
 
 export type Repeat = 'none' | 'heb-yearly' | 'greg-yearly';
+/** reminder for a personal event: on the day, the evening before, or a week before */
+export type Remind = 'none' | 'day' | 'eve' | 'week';
 
 export interface MyEvent {
   id: string;
@@ -49,7 +76,14 @@ export interface MyEvent {
   color: string;
   note?: string;
   time?: string;
+  /** the event happened after sunset, so its Hebrew date is that of the next day */
+  afterSunset?: boolean;
+  remind?: Remind;
+  /** HH:MM, phone local time, for the reminder */
+  remindTime?: string;
 }
+
+export const REMIND_DEFAULT_TIME: Record<Exclude<Remind, 'none'>, string> = { day: '08:00', eve: '20:00', week: '08:00' };
 
 function read<T>(key: string, fallback: T): T {
   try {
@@ -82,8 +116,21 @@ export function usePersistent<T>(key: string, fallback: T, merge?: (stored: T) =
 export const SETTINGS_KEY = 'luach.settings.v1';
 export const EVENTS_KEY = 'luach.events.v1';
 
+const isCity = (c: unknown): c is City => {
+  const x = c as City;
+  return !!x && typeof x === 'object' && typeof x.name === 'string' && Number.isFinite(x.lat) && Number.isFinite(x.lon) && typeof x.tz === 'string';
+};
+
+/** Saved settings from any earlier version, filled up with the current defaults */
 export function mergeSettings(s: Partial<Settings>): Settings {
-  return { ...DEFAULT_SETTINGS, ...(s || {}) };
+  const m: Settings = { ...DEFAULT_SETTINGS, ...(s && typeof s === 'object' ? s : {}) };
+  if (!isCity(m.gps)) m.gps = null;
+  if (!isCity(m.place)) m.place = null;
+  m.recentPlaces = Array.isArray(m.recentPlaces) ? m.recentPlaces.filter(isCity).slice(0, 5) : [];
+  if (!['normal', 'large', 'xlarge'].includes(m.textSize)) m.textSize = 'normal';
+  if (!m.zmanAlerts || typeof m.zmanAlerts !== 'object' || Array.isArray(m.zmanAlerts)) m.zmanAlerts = {};
+  if (!Number.isFinite(m.candleAlertMins)) m.candleAlertMins = DEFAULT_SETTINGS.candleAlertMins;
+  return m;
 }
 
 export const EVENT_COLORS = ['#e0793c', '#3f8f6b', '#4a6fd1', '#b5487a', '#8a6ad6', '#c49a2c'];

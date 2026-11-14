@@ -354,10 +354,16 @@ export function eventOccursOn(e: MyEvent, d: Date, hd: HDate): number | null {
     if (m === 1 && day === 29 && new Date(d.getFullYear(), 1, 29).getMonth() !== 1) day = 28;
     return d.getMonth() === m && d.getDate() === day ? d.getFullYear() - orig.getFullYear() : null;
   }
-  const ohd = new HDate(orig);
-  const occ = HebrewCalendar.getBirthdayOrAnniversary(hd.getFullYear(), orig);
+  const ohd = eventHebDate(e);
+  const occ = HebrewCalendar.getBirthdayOrAnniversary(hd.getFullYear(), ohd);
   if (occ && occ.isSameDate(hd)) return hd.getFullYear() - ohd.getFullYear();
   return null;
+}
+
+/** The Hebrew date of an event: after sunset the Hebrew day has already moved on to the next one */
+export function eventHebDate(e: Pick<MyEvent, 'date' | 'afterSunset'>) {
+  const orig = fromKey(e.date);
+  return new HDate(e.afterSunset ? addDays(orig, 1) : orig);
 }
 
 export function eventsOn(list: MyEvent[], d: Date) {

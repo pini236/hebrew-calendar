@@ -1,4 +1,5 @@
 import { Capacitor } from '@capacitor/core';
+import { CHANNELS, IOS_LIMIT, groupOf, type Group, type PlannedNotification } from './alerts';
 
 export const isNative = () => Capacitor.isNativePlatform();
 
@@ -21,18 +22,7 @@ export async function initNative() {
   }
 }
 
-/* ---------------- Friday Shabbat notifications ---------------- */
-
-export interface NativeAlert {
-  id: number;
-  at: Date;
-  title: string;
-  body: string;
-}
-
-const CHANNEL = 'shabbat';
-// iOS keeps at most 64 pending local notifications per app
-const MAX_PENDING = 60;
+/* ---------------- local notifications ---------------- */
 
 export async function notificationPermission(request: boolean): Promise<'granted' | 'denied' | 'prompt'> {
   const { LocalNotifications } = await import('@capacitor/local-notifications');
@@ -41,41 +31,60 @@ export async function notificationPermission(request: boolean): Promise<'granted
   return p.display === 'granted' ? 'granted' : p.display === 'denied' ? 'denied' : 'prompt';
 }
 
-/** Replace every pending Shabbat alert with `alerts` (future ones only) */
-export async function scheduleAlerts(alerts: NativeAlert[]) {
+let channelsMade = false;
+async function ensureChannels() {
+  if (channelsMade || Capacitor.getPlatform() !== 'android') return;
   const { LocalNotifications } = await import('@capacitor/local-notifications');
-  if (Capacitor.getPlatform() === 'android') {
-    await LocalNotifications.createChannel({
-      id: CHANNEL,
-      name: 'זמני שבת',
-      description: 'התראה בבוקר יום שישי עם זמני כניסת השבת ויציאתה',
-      importance: 4,
-      visibility: 1,
-    });
+  for (const [id, c] of Object.entries(CHANNELS)) {
+    await LocalNotifications.createChannel({ id, name: c.name, description: c.description, importance: 4, visibility: 1 });
   }
-  await cancelAlerts();
-  const now = Date.now();
-  const list = alerts.filter((a) => a.at.getTime() > now + 30000).slice(0, MAX_PENDING);
-  if (!list.length) return 0;
-  await LocalNotifications.schedule({
-    notifications: list.map((a) => ({
-      id: a.id,
-      title: a.title,
-      body: a.body,
-      largeBody: a.body,
-      channelId: CHANNEL,
-      schedule: { at: a.at, allowWhileIdle: true },
-      // inexact on Android: may arrive a few minutes late, but needs no special "alarms" permission
-      isExactNotification: false,
-    })),
-  });
-  return list.length;
+  channelsMade = true;
 }
 
-export async function cancelAlerts() {
+/** Cancel the pending notifications of some groups (every group of the app when omitted) */
+export async function cancelGroups(groups?: Group[]) {
   const { LocalNotifications } = await import('@capacitor/local-notifications');
   const pending = await LocalNotifications.getPending();
-  if (pending.notifications.length) await LocalNotifications.cancel({ notifications: pending.notifications.map((n) => ({ id: n.id })) });
+  const mine = pending.notifications.filter((n) => {
+    const g = groupOf(n.id);
+    return g !== null && (!groups || groups.includes(g));
+  });
+  if (mine.length) await LocalNotifications.cancel({ notifications: mine.map((n) => ({ id: n.id })) });
+}
+
+let syncing: Promise<number> = Promise.resolve(0);
+
+/**
+ * Make the pending notifications exactly `list` (already within the iOS budget, see lib/alerts.ts).
+ * Does nothing without notification permission: the app asks for it only when the user switches an alert on.
+ * Calls run one after another, so two quick changes can't interleave their cancel / schedule steps.
+ */
+export function syncNotifications(list: PlannedNotification[]): Promise<number> {
+  syncing = syncing
+    .catch(() => 0)
+    .then(async () => {
+      if ((await notificationPermission(false)) !== 'granted') return 0;
+      const { LocalNotifications } = await import('@capacitor/local-notifications');
+      await ensureChannels();
+      await cancelGroups();
+      const now = Date.now();
+      const future = list.filter((a) => a.at.getTime() > now + 30000).slice(0, IOS_LIMIT);
+      if (!future.length) return 0;
+      await LocalNotifications.schedule({
+        notifications: future.map((a) => ({
+          id: a.id,
+          title: a.title,
+          body: a.body,
+          largeBody: a.body,
+          channelId: a.channel,
+          schedule: { at: a.at, allowWhileIdle: true },
+          // inexact on Android: may arrive a few minutes late, but needs no special "alarms" permission
+          isExactNotification: false,
+        })),
+      });
+      return future.length;
+    });
+  return syncing;
 }
 
 /* ---------------- location ---------------- */

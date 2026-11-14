@@ -241,6 +241,11 @@ export function MyEventsCard({
                   {ev.title}
                   {ev.time && <small> · {ev.time}</small>}
                   {ev.repeat !== 'none' && years > 0 && <small> · {years} שנה</small>}
+                  {ev.remind && ev.remind !== 'none' && (
+                    <span className="m-bell" title="יש תזכורת" aria-label="יש תזכורת">
+                      <Icon name="bell" size={13} />
+                    </span>
+                  )}
                   {ev.note && <em>{ev.note}</em>}
                 </span>
                 <span className="m-kind">{ev.repeat === 'heb-yearly' ? 'שנתי עברי' : ev.repeat === 'greg-yearly' ? 'שנתי לועזי' : ''}</span>

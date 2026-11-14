@@ -39,6 +39,8 @@ export const DEFAULT_SETTINGS: Settings = {
 };
 
 export type Repeat = 'none' | 'heb-yearly' | 'greg-yearly';
+/** reminder for a personal event: on the day, the evening before, or a week before */
+export type Remind = 'none' | 'day' | 'eve' | 'week';
 
 export interface MyEvent {
   id: string;
@@ -49,7 +51,14 @@ export interface MyEvent {
   color: string;
   note?: string;
   time?: string;
+  /** the event happened after sunset, so its Hebrew date is that of the next day */
+  afterSunset?: boolean;
+  remind?: Remind;
+  /** HH:MM, phone local time, for the reminder */
+  remindTime?: string;
 }
+
+export const REMIND_DEFAULT_TIME: Record<Exclude<Remind, 'none'>, string> = { day: '08:00', eve: '20:00', week: '08:00' };
 
 function read<T>(key: string, fallback: T): T {
   try {

@@ -9,9 +9,6 @@ import {
   fromKey,
   gregDateStr,
   hebDateStr,
-  hebMonthsOfYear,
-  hebNum,
-  hebYear,
   rangeItems,
   shortTitle,
   today,
@@ -21,6 +18,7 @@ import type { City } from '../lib/cities';
 import type { MyEvent, Settings } from '../lib/store';
 import { Sheet } from './Sheet';
 import { Icon } from './Icon';
+import { HebDatePicker, hebPartsOf, hebPartsToDate } from './HebDatePicker';
 
 interface Props {
   selected: Date;
@@ -76,14 +74,8 @@ export function JumpSheet({ selected, city, settings, myEvents, onGo, onClose }:
   const filtered = q.trim() ? upcoming.filter((u) => u.title.includes(q.trim())) : upcoming;
 
   /* ----- hebrew picker ----- */
-  const sh = new HDate(selected);
-  const [hy, setHy] = useState(sh.getFullYear());
-  const [hm, setHm] = useState(sh.getMonth());
-  const [hdd, setHdd] = useState(sh.getDate());
-  const months = hebMonthsOfYear(hy);
-  const safeM = months.some((m) => m.month === hm) ? hm : hm === 13 ? 12 : hm;
-  const maxD = HDate.daysInMonth(safeM, hy);
-  const hebTarget = new HDate(Math.min(hdd, maxD), safeM, hy).greg();
+  const [heb, setHeb] = useState(() => hebPartsOf(selected));
+  const hebTarget = hebPartsToDate(heb);
 
   /* ----- gregorian ----- */
   const [gk, setGk] = useState(dateKey(selected));
@@ -172,42 +164,7 @@ export function JumpSheet({ selected, city, settings, myEvents, onGo, onClose }:
         </div>
       )}
 
-      {tab === 'heb' && (
-        <div className="picker">
-          <label>
-            <span>יום</span>
-            <select id="jump-hd" value={Math.min(hdd, maxD)} onChange={(e) => setHdd(+e.target.value)}>
-              {Array.from({ length: maxD }, (_, i) => i + 1).map((d) => (
-                <option key={d} value={d}>
-                  {hebNum(d)}
-                </option>
-              ))}
-            </select>
-          </label>
-          <label>
-            <span>חודש</span>
-            <select id="jump-hm" value={safeM} onChange={(e) => setHm(+e.target.value)}>
-              {months.map((m) => (
-                <option key={m.month} value={m.month}>
-                  {m.name}
-                </option>
-              ))}
-            </select>
-          </label>
-          <label>
-            <span>שנה · {hebYear(hy)}</span>
-            <div className="stepper">
-              <button onClick={() => setHy(hy - 1)} aria-label="שנה קודמת">
-                −
-              </button>
-              <input id="jump-hy" type="number" inputMode="numeric" value={hy} onChange={(e) => setHy(Math.max(3762, Math.min(6500, +e.target.value || hy)))} />
-              <button onClick={() => setHy(hy + 1)} aria-label="שנה הבאה">
-                +
-              </button>
-            </div>
-          </label>
-        </div>
-      )}
+      {tab === 'heb' && <HebDatePicker idPrefix="jump" value={heb} onChange={setHeb} />}
 
       {tab === 'greg' && (
         <div className="picker one">

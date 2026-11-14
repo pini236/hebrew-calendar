@@ -1,8 +1,8 @@
 <?xml version='1.0' encoding='utf-8'?>
 <resources>
-    <string name="app_name">לוח עברי</string>
-    <string name="title_activity_main">לוח עברי</string>
-    <string name="package_name">com.luachivri.app</string>
-    <string name="custom_url_scheme">com.luachivri.app</string>
+    <string name="app_name">לוח יהודי</string>
+    <string name="title_activity_main">לוח יהודי</string>
+    <string name="package_name">com.luachyehudi.app</string>
+    <string name="custom_url_scheme">com.luachyehudi.app</string>
     <string name="widget_desc">תאריך עברי, הזמן הבא ושבת הקרובה</string>
 </resources>

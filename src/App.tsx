@@ -14,6 +14,7 @@ import { AlertsSheet } from './components/AlertsSheet';
 import { LocationSheet } from './components/LocationSheet';
 import { isNative, pushWidget, syncNotifications } from './lib/native';
 import { buildWidgetData } from './lib/widget';
+import { APP_NAME } from './lib/brand';
 import { planNotifications } from './lib/alerts';
 
 type SheetName = null | 'jump' | 'settings' | 'event' | 'notify' | 'alerts' | 'location';
@@ -140,7 +141,7 @@ export default function App() {
       <header className="topbar">
         <div className="brand">
           <BrandMark />
-          <span className="brand-name">לוח עברי</span>
+          <span className="brand-name">{APP_NAME}</span>
         </div>
         <div className="top-actions">
           <button className="chip-btn" onClick={() => setSheet('location')} aria-label={`מיקום: ${city.name}. שינוי מיקום`}>
@@ -226,7 +227,7 @@ export default function App() {
       </main>
 
       <footer className="foot">
-        לוח עברי · יומן עברי־לועזי ללא פרסומות · מקשי קיצור: ← → ימים, PgUp/PgDn חודשים, T היום, G קפיצה
+        {APP_NAME} · יומן עברי־לועזי ללא פרסומות · מקשי קיצור: ← → ימים, PgUp/PgDn חודשים, T היום, G קפיצה
       </footer>
 
       {sheet === 'notify' && <NotifySheet city={city} settings={settings} onChange={setSettings} onClose={closeSheet} />}

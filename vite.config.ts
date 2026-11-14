@@ -25,8 +25,8 @@ export default defineConfig(({ mode }) => {
             registerType: 'autoUpdate',
             includeAssets: ['icon.svg'],
             manifest: {
-              name: 'לוח עברי',
-              short_name: 'לוח עברי',
+              name: 'לוח יהודי',
+              short_name: 'לוח יהודי',
               description: 'יומן עברי-לועזי עם זמני היום, חגים ואירועים אישיים',
               lang: 'he',
               dir: 'rtl',

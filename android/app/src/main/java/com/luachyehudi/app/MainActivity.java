@@ -1,4 +1,4 @@
-package com.luachivri.app;
+package com.luachyehudi.app;
 
 import android.os.Bundle;
 import com.getcapacitor.BridgeActivity;

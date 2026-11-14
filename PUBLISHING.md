@@ -1,11 +1,11 @@
-# פרסום לוח עברי ב־Google Play וב־App Store
+# פרסום לוח יהודי ב־Google Play וב־App Store
 
 הקוד בנוי כך שהשרתים של GitHub בונים את שתי האפליקציות. אין צורך להתקין Android Studio או Xcode.
 צריך רק להגדיר פעם אחת כמה "סודות" (Secrets) במאגר, ואז ללחוץ על כפתור.
 
 איפה מגדירים סודות: במאגר ב־GitHub ← **Settings** ← **Secrets and variables** ← **Actions** ← **New repository secret**.
 
-> **מזהה האפליקציה** הוא `com.luachivri.app`, ואותו מזהה משמש בשתי החנויות. אחרי ההעלאה הראשונה אי אפשר לשנות אותו.
+> **מזהה האפליקציה** הוא `com.luachyehudi.app`, ואותו מזהה משמש בשתי החנויות. אחרי ההעלאה הראשונה אי אפשר לשנות אותו.
 > כדי לבחור מזהה אחר, משנים אותו לפני ההעלאה הראשונה ב־`capacitor.config.ts`, ב־`android/app/build.gradle` (namespace ו־applicationId) וב־`ios/App/App.xcodeproj/project.pbxproj` (PRODUCT_BUNDLE_IDENTIFIER).
 
 ---
@@ -34,7 +34,7 @@ Google Play מקבל רק קובץ ‎.aab חתום. קיבלת ממני קוב�
 מעכשיו כל ריצה של **Android app** מייצרת גם את `play-bundle`, כלומר את הקובץ `app-release.aab`.
 
 ### 3. יצירת האפליקציה ב־Play Console
-1. **Create app**. שם: לוח עברי – זמני היום ושבת. שפת ברירת מחדל: עברית. סוג: App. מחיר: חינם.
+1. **Create app**. שם: לוח יהודי – לוח עברי. שפת ברירת מחדל: עברית. סוג: App. מחיר: חינם.
 2. **App content**:
    - Privacy policy: `https://pini236.github.io/hebrew-calendar/privacy.html`
    - Ads: לא.
@@ -75,8 +75,8 @@ Google Play מקבל רק קובץ ‎.aab חתום. קיבלת ממני קוב�
 | `ASC_KEY_P8` | כל התוכן של קובץ ה־‎.p8, כולל השורות BEGIN ו־END |
 
 ### 2. רישום האפליקציה
-1. developer.apple.com ← **Certificates, IDs & Profiles** ← **Identifiers** ← **+** ← App IDs. Bundle ID: `com.luachivri.app`. לא צריך לסמן Capabilities.
-2. App Store Connect ← **Apps** ← **+** ← New App. פלטפורמה: iOS. שם: לוח עברי – זמני היום ושבת. שפה ראשית: Hebrew. Bundle ID: `com.luachivri.app`. SKU: `luach-ivri`.
+1. developer.apple.com ← **Certificates, IDs & Profiles** ← **Identifiers** ← **+** ← App IDs. Bundle ID: `com.luachyehudi.app`. לא צריך לסמן Capabilities.
+2. App Store Connect ← **Apps** ← **+** ← New App. פלטפורמה: iOS. שם: **לוח עברי**. כותרת משנה (Subtitle): לוח יהודי · זמני היום ושבת. שפה ראשית: Hebrew. Bundle ID: `com.luachyehudi.app`. SKU: `luach-ivri`.
 
 ### 3. בנייה והעלאה
 ב־Actions ← **iOS app** ← **Run workflow**.

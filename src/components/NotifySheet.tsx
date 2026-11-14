@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { APP_NAME } from '../lib/brand';
 import { WEEKDAYS, gregDateStr, today } from '../lib/cal';
 import type { City } from '../lib/cities';
 import { alertText, buildShabbatIcs, shabbatAlerts } from '../lib/ics';
@@ -41,7 +42,7 @@ function NativeNotify({ city, settings, onChange, onClose }: Props) {
       if (on) {
         const p = await notificationPermission(true);
         if (p !== 'granted') {
-          setMsg('ההתראות חסומות. אפשר להפעיל אותן בהגדרות הטלפון ← אפליקציות ← לוח עברי ← התראות, ולנסות שוב.');
+          setMsg(`ההתראות חסומות. אפשר להפעיל אותן בהגדרות הטלפון ← אפליקציות ← ${APP_NAME} ← התראות, ולנסות שוב.`);
           return;
         }
         set({ nativeAlerts: true });
@@ -94,7 +95,7 @@ function Preview({ alerts, city, time }: { alerts: ReturnType<typeof shabbatAler
           <div className="notif" key={a.friday.getTime()}>
             <div className="notif-head">
               <span className="notif-app">
-                <Icon name="candle" size={14} /> לוח עברי
+                <Icon name="candle" size={14} /> {APP_NAME}
               </span>
               <span>
                 יום {WEEKDAYS[5]}, {gregDateStr(a.friday, false)} · {time}
@@ -155,7 +156,7 @@ function WebNotify({ city, settings, onChange, onClose }: Props) {
 
   const share = async () => {
     try {
-      await navigator.share({ files: [makeFile()], title: 'זמני שבת — לוח עברי' });
+      await navigator.share({ files: [makeFile()], title: `זמני שבת — ${APP_NAME}` });
       setDone(true);
       setMsg('שותף. בחרו באפליקציית היומן כדי להוסיף את ההתראות.');
     } catch (e) {

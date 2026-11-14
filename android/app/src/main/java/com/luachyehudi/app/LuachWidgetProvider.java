@@ -1,4 +1,4 @@
-package com.luachivri.app;
+package com.luachyehudi.app;
 
 import android.app.AlarmManager;
 import android.app.PendingIntent;
@@ -26,7 +26,7 @@ public class LuachWidgetProvider extends AppWidgetProvider {
 
     static final String PREFS = "luach_widget";
     static final String KEY = "data";
-    static final String ACTION_TICK = "com.luachivri.app.WIDGET_TICK";
+    static final String ACTION_TICK = "com.luachyehudi.app.WIDGET_TICK";
     private static final long HALF_HOUR = 30L * 60L * 1000L;
 
     @Override

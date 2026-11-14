@@ -2,8 +2,8 @@ import type { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
   // The store identifier. It cannot be changed after the first upload to Google Play / App Store.
-  appId: 'com.luachivri.app',
-  appName: 'לוח עברי',
+  appId: 'com.luachyehudi.app',
+  appName: 'לוח יהודי',
   webDir: 'dist-native',
   backgroundColor: '#1F3E9E',
   android: {

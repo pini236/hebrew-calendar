@@ -45,7 +45,7 @@
             android:fontFamily="serif"
             android:gravity="start"
             android:maxLines="1"
-            android:text="לוח עברי"
+            android:text="לוח יהודי"
             android:textColor="#FFFFF4DC"
             android:textSize="26sp"
             android:textStyle="bold" />

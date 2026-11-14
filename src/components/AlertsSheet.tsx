@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { APP_NAME } from '../lib/brand';
 import { CANDLE_OFFSETS, IOS_LIMIT, ZMAN_ALERTS, ZMAN_OFFSETS, planNotifications, type PlannedNotification } from '../lib/alerts';
 import { WEEKDAYS_SHORT, roundTo, timeFmt, today, zmanim } from '../lib/cal';
 import type { City } from '../lib/cities';
@@ -31,7 +32,7 @@ export function AlertsSheet({ city, settings, myEvents, onChange, onFriday, onCl
       try {
         const p = await notificationPermission(true);
         if (p !== 'granted') {
-          setMsg('ההתראות חסומות. אפשר להפעיל אותן בהגדרות הטלפון ← אפליקציות ← לוח עברי ← התראות, ולנסות שוב.');
+          setMsg(`ההתראות חסומות. אפשר להפעיל אותן בהגדרות הטלפון ← אפליקציות ← ${APP_NAME} ← התראות, ולנסות שוב.`);
           return;
         }
       } catch {
@@ -206,7 +207,7 @@ function Preview({ list, fmt }: { list: PlannedNotification[]; fmt: Intl.DateTim
         <div className="notif" key={n.id}>
           <div className="notif-head">
             <span className="notif-app">
-              <Icon name={n.channel === 'zmanim' ? 'bell' : n.channel === 'reminders' ? 'today' : 'candle'} size={14} /> לוח עברי
+              <Icon name={n.channel === 'zmanim' ? 'bell' : n.channel === 'reminders' ? 'today' : 'candle'} size={14} /> {APP_NAME}
             </span>
             <span>
               יום {WEEKDAYS_SHORT[n.at.getDay()]} · {fmt.format(n.at)}

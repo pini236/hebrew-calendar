@@ -165,8 +165,8 @@ export function SettingsSheet({ settings, city, myEvents, onChange, onImport, on
         <Toggle id="set-learn" label="הצגת לימוד יומי (דף יומי, משנה, רמב״ם…)" on={settings.showLearning} onChange={(v) => set({ showLearning: v })} />
         <Toggle id="set-modern" label="הצגת ימי זיכרון ומועדים ממלכתיים" on={settings.showModern} onChange={(v) => set({ showModern: v })} />
         <div className="field">
-          <span>ערכת צבעים</span>
-          <div className="seg small">
+          <span id="lbl-theme">ערכת צבעים</span>
+          <div className="seg small" role="group" aria-labelledby="lbl-theme">
             {(
               [
                 ['auto', 'אוטומטי'],
@@ -174,12 +174,30 @@ export function SettingsSheet({ settings, city, myEvents, onChange, onImport, on
                 ['dark', 'כהה'],
               ] as const
             ).map(([k, l]) => (
-              <button key={k} className={settings.theme === k ? 'on' : ''} onClick={() => set({ theme: k })}>
+              <button key={k} className={settings.theme === k ? 'on' : ''} aria-pressed={settings.theme === k} onClick={() => set({ theme: k })}>
                 {l}
               </button>
             ))}
           </div>
         </div>
+        <div className="field">
+          <span id="lbl-text-size">גודל טקסט</span>
+          <div className="seg small" role="group" aria-labelledby="lbl-text-size">
+            {(
+              [
+                ['normal', 'רגיל'],
+                ['large', 'גדול'],
+                ['xlarge', 'גדול מאוד'],
+              ] as const
+            ).map(([k, l]) => (
+              <button key={k} className={settings.textSize === k ? 'on' : ''} aria-pressed={settings.textSize === k} onClick={() => set({ textSize: k })}>
+                {l}
+              </button>
+            ))}
+          </div>
+        </div>
+        <Toggle id="set-contrast" label="ניגודיות גבוהה (טקסט וקווים כהים יותר)" on={settings.highContrast} onChange={(v) => set({ highContrast: v })} />
+        <p className="fine">הגודל "רגיל" מתאים את עצמו לגודל הגופן שנבחר בהגדרות הטלפון או הדפדפן.</p>
       </section>
 
       <section className="set-sec">

@@ -3,6 +3,7 @@ import type { City } from './cities';
 
 export type HavdalahOpinion = 'deg8.5' | 'min42' | 'min50' | 'min72';
 export type Theme = 'auto' | 'light' | 'dark';
+export type TextSize = 'normal' | 'large' | 'xlarge';
 
 export interface Settings {
   cityId: string;
@@ -21,6 +22,8 @@ export interface Settings {
   alertWeeks: number;
   /** native apps: Friday notifications switched on */
   nativeAlerts: boolean;
+  textSize: TextSize;
+  highContrast: boolean;
 }
 
 export const DEFAULT_SETTINGS: Settings = {
@@ -36,6 +39,8 @@ export const DEFAULT_SETTINGS: Settings = {
   alertTime: '08:00',
   alertWeeks: 52,
   nativeAlerts: false,
+  textSize: 'normal',
+  highContrast: false,
 };
 
 export type Repeat = 'none' | 'heb-yearly' | 'greg-yearly';
@@ -91,8 +96,11 @@ export function usePersistent<T>(key: string, fallback: T, merge?: (stored: T) =
 export const SETTINGS_KEY = 'luach.settings.v1';
 export const EVENTS_KEY = 'luach.events.v1';
 
+/** Saved settings from any earlier version, filled up with the current defaults */
 export function mergeSettings(s: Partial<Settings>): Settings {
-  return { ...DEFAULT_SETTINGS, ...(s || {}) };
+  const m: Settings = { ...DEFAULT_SETTINGS, ...(s && typeof s === 'object' ? s : {}) };
+  if (!['normal', 'large', 'xlarge'].includes(m.textSize)) m.textSize = 'normal';
+  return m;
 }
 
 export const EVENT_COLORS = ['#e0793c', '#3f8f6b', '#4a6fd1', '#b5487a', '#8a6ad6', '#c49a2c'];

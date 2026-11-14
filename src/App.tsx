@@ -30,12 +30,16 @@ export default function App() {
     return () => clearInterval(id);
   }, []);
 
-  // theme
+  // theme, text size, contrast
   useEffect(() => {
     const root = document.documentElement;
     if (settings.theme === 'auto') root.removeAttribute('data-theme');
     else root.setAttribute('data-theme', settings.theme);
-  }, [settings.theme]);
+    if (settings.textSize === 'normal') root.removeAttribute('data-text');
+    else root.setAttribute('data-text', settings.textSize);
+    if (settings.highContrast) root.setAttribute('data-contrast', 'high');
+    else root.removeAttribute('data-contrast');
+  }, [settings.theme, settings.textSize, settings.highContrast]);
 
   const city = settings.gps ?? findCity(settings.cityId) ?? DEFAULT_CITY;
 

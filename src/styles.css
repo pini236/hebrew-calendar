@@ -21,7 +21,15 @@
 
   --r: 18px;
   --r-sm: 12px;
+  /* text size setting: every font size is in rem, so this (and the browser / phone font size) scales them all */
+  --text-scale: 1;
   color-scheme: light;
+}
+:root[data-text='large'] {
+  --text-scale: 1.15;
+}
+:root[data-text='xlarge'] {
+  --text-scale: 1.3;
 }
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme='light']) {
@@ -62,18 +70,79 @@
   color-scheme: dark;
 }
 
+/* high contrast: darker body text and lines, no light-grey text */
+:root[data-contrast='high'] {
+  --ink: #05070f;
+  --muted: #2c3249;
+  --line: #8a91ab;
+  --surface-2: #eef0f7;
+  --accent: #1f2fa8;
+  --accent-soft: #dde3ff;
+  --gold: #744600;
+  --chag: #a3140e;
+  --modern: #0b5146;
+  --fast: #463870;
+  --rc: #174a87;
+}
+@media (prefers-color-scheme: dark) {
+  :root[data-contrast='high']:not([data-theme='light']) {
+    --ink: #ffffff;
+    --muted: #d6daf0;
+    --line: #6f7aab;
+    --surface-2: #1b2348;
+    --accent: #b8c3ff;
+    --accent-soft: #2a3470;
+    --gold: #ffd58a;
+    --chag: #ffaa9e;
+    --modern: #8ae3cc;
+    --fast: #d4c8ff;
+    --rc: #a8ceff;
+  }
+}
+:root[data-contrast='high'][data-theme='dark'] {
+  --ink: #ffffff;
+  --muted: #d6daf0;
+  --line: #6f7aab;
+  --surface-2: #1b2348;
+  --accent: #b8c3ff;
+  --accent-soft: #2a3470;
+  --gold: #ffd58a;
+  --chag: #ffaa9e;
+  --modern: #8ae3cc;
+  --fast: #d4c8ff;
+  --rc: #a8ceff;
+}
+[data-contrast='high'] .cell.out {
+  opacity: 0.62;
+}
+[data-contrast='high'] .z.past {
+  opacity: 0.72;
+}
+[data-contrast='high'] .seg button,
+[data-contrast='high'] .card-head {
+  color: var(--ink);
+}
+[data-contrast='high'] .notif-head {
+  color: #2c3249;
+}
+[data-contrast='high'] .z {
+  border-bottom-style: solid;
+}
+
 * {
   box-sizing: border-box;
 }
 html {
   -webkit-text-size-adjust: 100%;
+  /* 100% = the browser's / phone's own font size, so "רגיל" follows the system setting */
+  font-size: calc(100% * var(--text-scale));
 }
 body {
   margin: 0;
   background: var(--bg);
   color: var(--ink);
   font-family: var(--f-body);
-  font-size: 15px;
+  font-size: 0.9375rem;
   line-height: 1.45;
   -webkit-font-smoothing: antialiased;
   -webkit-tap-highlight-color: transparent;
@@ -144,7 +213,7 @@ h3 {
 .brand-name {
   font-family: var(--f-display);
   font-weight: 700;
-  font-size: 22px;
+  font-size: 1.375rem;
 }
 .top-actions {
   display: flex;
@@ -170,7 +239,7 @@ h3 {
   transform: scale(0.94);
 }
 .chip-btn {
-  height: 40px;
+  min-height: 40px;
   border-radius: 999px;
   border: 1px solid var(--line);
   background: var(--surface);
@@ -241,23 +310,24 @@ h3 {
   color: var(--muted);
 }
 .card-head h3 {
+  margin-inline-end: auto;
   font-family: var(--f-display);
   font-weight: 700;
-  font-size: 19px;
+  font-size: 1.1875rem;
   color: var(--ink);
 }
 .fine {
-  font-size: 12.5px;
+  font-size: 0.7813rem;
   color: var(--muted);
   margin: 10px 0 0;
 }
 .empty {
   color: var(--muted);
   margin: 0;
-  font-size: 14px;
+  font-size: 0.875rem;
 }
 .eyebrow {
-  font-size: 12px;
+  font-size: 0.75rem;
   font-weight: 600;
   letter-spacing: 0.04em;
   color: var(--muted);
@@ -289,7 +359,7 @@ h3 {
 }
 .seg.small button {
   padding: 5px 10px;
-  font-size: 13px;
+  font-size: 0.8125rem;
 }
 .seg.wrap {
   flex-wrap: wrap;
@@ -349,7 +419,7 @@ h3 {
 }
 .hero-weekday {
   font-weight: 600;
-  font-size: 15px;
+  font-size: 0.9375rem;
   text-align: center;
   opacity: 0.95;
 }
@@ -386,7 +456,7 @@ h3 {
 .hero-date {
   font-family: var(--f-display);
   font-weight: 900;
-  font-size: clamp(46px, 11vw, 66px);
+  font-size: clamp(2.875rem, calc(11vw * var(--text-scale)), 4.125rem);
   line-height: 1.02;
   letter-spacing: -0.01em;
 }
@@ -396,14 +466,14 @@ h3 {
 .hero-year {
   font-family: var(--f-display);
   font-weight: 500;
-  font-size: 22px;
+  font-size: 1.375rem;
   opacity: 0.9;
   margin-top: 2px;
 }
 .tonight {
   display: inline-block;
   margin-top: 8px;
-  font-size: 13px;
+  font-size: 0.8125rem;
   font-weight: 600;
   padding: 3px 10px;
   border-radius: 999px;
@@ -418,7 +488,7 @@ h3 {
   margin-top: 10px;
 }
 .chip {
-  font-size: 13px;
+  font-size: 0.8125rem;
   font-weight: 600;
   padding: 3px 11px;
   border-radius: 999px;
@@ -478,20 +548,20 @@ h3 {
 .arc-labels {
   display: flex;
   justify-content: space-between;
-  font-size: 12.5px;
+  font-size: 0.7813rem;
   opacity: 0.92;
   font-variant-numeric: tabular-nums;
   margin-top: 2px;
 }
 .arc-labels b {
-  font-size: 14px;
+  font-size: 0.875rem;
 }
 .hero-foot {
   display: flex;
   justify-content: space-between;
   align-items: center;
   margin-top: 10px;
-  font-size: 13px;
+  font-size: 0.8125rem;
   gap: 8px;
 }
 .hero-city {
@@ -503,7 +573,7 @@ h3 {
 .clock {
   font-variant-numeric: tabular-nums;
   font-weight: 700;
-  font-size: 16px;
+  font-size: 1rem;
   letter-spacing: 0.02em;
 }
 .back-today {
@@ -531,12 +601,12 @@ h3 {
 }
 .month-title h2 {
   font-family: var(--f-display);
-  font-size: 24px;
+  font-size: 1.5rem;
   font-weight: 700;
 }
 .month-sub {
   color: var(--muted);
-  font-size: 13px;
+  font-size: 0.8125rem;
 }
 .month .seg {
   margin: 12px 0 8px;
@@ -545,7 +615,7 @@ h3 {
   display: grid;
   grid-template-columns: repeat(7, minmax(0, 1fr));
   text-align: center;
-  font-size: 12px;
+  font-size: 0.75rem;
   font-weight: 700;
   color: var(--muted);
   padding-bottom: 4px;
@@ -582,7 +652,7 @@ h3 {
   border: 1px solid transparent;
   background: var(--surface-2);
   border-radius: 10px;
-  min-height: 64px;
+  min-height: 4rem;
   padding: 5px 3px 4px;
   display: flex;
   flex-direction: column;
@@ -607,7 +677,7 @@ h3 {
   background: color-mix(in srgb, var(--chag) 13%, var(--surface));
 }
 .c-big {
-  font-size: 18px;
+  font-size: 1.125rem;
   font-weight: 700;
   line-height: 1.1;
   font-variant-numeric: tabular-nums;
@@ -617,7 +687,7 @@ h3 {
   font-family: var(--f-display);
 }
 .c-small {
-  font-size: 12px;
+  font-size: 0.75rem;
   color: var(--muted);
   line-height: 1.1;
   max-width: 100%;
@@ -626,7 +696,7 @@ h3 {
   text-overflow: ellipsis;
 }
 .c-label {
-  font-size: 10.5px;
+  font-size: 0.6563rem;
   line-height: 1.15;
   font-weight: 600;
   max-width: 100%;
@@ -736,12 +806,12 @@ h3 {
   margin-inline-start: 6px;
   color: var(--muted);
   font-weight: 400;
-  font-size: 12.5px;
+  font-size: 0.7813rem;
 }
 .z-time {
   font-variant-numeric: tabular-nums;
   font-weight: 700;
-  font-size: 17px;
+  font-size: 1.0625rem;
   letter-spacing: 0.01em;
 }
 .z.past {
@@ -771,7 +841,7 @@ h3 {
   }
 }
 .z-count {
-  font-size: 12.5px;
+  font-size: 0.7813rem;
   font-weight: 700;
   color: var(--accent);
   white-space: nowrap;
@@ -817,7 +887,7 @@ h3 {
 .sh-title {
   font-family: var(--f-display);
   font-weight: 700;
-  font-size: 21px;
+  font-size: 1.3125rem;
   margin: 2px 0 10px;
 }
 .sh-times {
@@ -836,10 +906,10 @@ h3 {
 }
 .sh-times small {
   color: var(--muted);
-  font-size: 12px;
+  font-size: 0.75rem;
 }
 .sh-times b {
-  font-size: 22px;
+  font-size: 1.375rem;
   font-variant-numeric: tabular-nums;
   color: var(--gold);
 }
@@ -855,7 +925,7 @@ h3 {
   background: var(--surface-2);
   border-radius: 999px;
   padding: 4px 12px;
-  font-size: 13.5px;
+  font-size: 0.8438rem;
   font-weight: 600;
 }
 .omer {
@@ -880,7 +950,7 @@ h3 {
 }
 .learn-list dt {
   color: var(--muted);
-  font-size: 13.5px;
+  font-size: 0.8438rem;
   flex: none;
 }
 .learn-list dd {
@@ -898,7 +968,7 @@ h3 {
   align-items: center;
   gap: 6px;
   font-weight: 600;
-  font-size: 13.5px;
+  font-size: 0.8438rem;
 }
 .ghost-btn:hover {
   background: var(--surface-2);
@@ -943,16 +1013,16 @@ h3 {
   font-style: normal;
   font-weight: 400;
   color: var(--muted);
-  font-size: 13px;
+  font-size: 0.8125rem;
 }
 .m-kind {
-  font-size: 12px;
+  font-size: 0.75rem;
 }
 
 .foot {
   text-align: center;
   color: var(--muted);
-  font-size: 12px;
+  font-size: 0.75rem;
   margin-top: 22px;
 }
 
@@ -1011,7 +1081,7 @@ h3 {
 }
 .sheet-head h2 {
   font-family: var(--f-display);
-  font-size: 22px;
+  font-size: 1.375rem;
 }
 .sheet-body {
   overflow-y: auto;
@@ -1031,7 +1101,7 @@ h3 {
   border-radius: 999px;
   padding: 6px 12px;
   font-weight: 600;
-  font-size: 13.5px;
+  font-size: 0.8438rem;
 }
 .quick button:hover {
   border-color: var(--accent);
@@ -1094,11 +1164,11 @@ h3 {
 }
 .s-date b {
   font-family: var(--f-display);
-  font-size: 16px;
+  font-size: 1rem;
 }
 .s-date small {
   color: var(--muted);
-  font-size: 11.5px;
+  font-size: 0.7188rem;
 }
 .s-title {
   font-weight: 700;
@@ -1115,7 +1185,7 @@ h3 {
 }
 .s-in {
   color: var(--muted);
-  font-size: 12.5px;
+  font-size: 0.7813rem;
   white-space: nowrap;
 }
 .picker {
@@ -1138,7 +1208,7 @@ h3 {
   display: flex;
   flex-direction: column;
   gap: 4px;
-  font-size: 13px;
+  font-size: 0.8125rem;
   color: var(--muted);
   min-width: 0;
 }
@@ -1156,7 +1226,7 @@ h3 {
 }
 .picker select {
   font-family: var(--f-display);
-  font-size: 17px;
+  font-size: 1.0625rem;
 }
 .stepper {
   display: flex;
@@ -1168,7 +1238,7 @@ h3 {
   border: 1px solid var(--line);
   background: var(--surface-2);
   border-radius: 10px;
-  font-size: 18px;
+  font-size: 1.125rem;
 }
 .stepper input {
   text-align: center;
@@ -1186,11 +1256,11 @@ h3 {
 .p-heb {
   font-family: var(--f-display);
   font-weight: 700;
-  font-size: 22px;
+  font-size: 1.375rem;
 }
 .p-greg {
   color: var(--muted);
-  font-size: 13.5px;
+  font-size: 0.8438rem;
 }
 .primary {
   border: 0;
@@ -1217,7 +1287,7 @@ h3 {
 }
 .set-sec h3 {
   font-family: var(--f-display);
-  font-size: 18px;
+  font-size: 1.125rem;
 }
 .set-sec .fine {
   margin: 0;
@@ -1239,7 +1309,7 @@ h3 {
   background: var(--surface-2);
   border-radius: 999px;
   padding: 5px 12px;
-  font-size: 14px;
+  font-size: 0.875rem;
 }
 .city-list button.on {
   background: var(--accent);
@@ -1268,7 +1338,7 @@ h3 {
   gap: 5px;
 }
 .field.col > span {
-  font-size: 13px;
+  font-size: 0.8125rem;
   color: var(--muted);
 }
 .toggle {
@@ -1373,13 +1443,13 @@ h3 {
 
 @media (max-width: 420px) {
   .cell {
-    min-height: 58px;
+    min-height: 3.625rem;
   }
   .c-big {
-    font-size: 16px;
+    font-size: 1rem;
   }
   .c-label {
-    font-size: 9.5px;
+    font-size: 0.5938rem;
   }
   .picker {
     grid-template-columns: 1fr 1fr;
@@ -1417,7 +1487,7 @@ h3 {
   align-items: center;
   gap: 6px;
   font-weight: 600;
-  font-size: 13.5px;
+  font-size: 0.8438rem;
 }
 .bell-btn:hover {
   background: var(--surface);
@@ -1447,7 +1517,7 @@ h3 {
   display: flex;
   justify-content: space-between;
   gap: 8px;
-  font-size: 11.5px;
+  font-size: 0.7188rem;
   color: #5f6681;
 }
 .notif-app {
@@ -1459,7 +1529,7 @@ h3 {
 }
 .notif-body {
   font-weight: 700;
-  font-size: 14px;
+  font-size: 0.875rem;
   margin-top: 2px;
 }
 .row-btns .primary {
@@ -1482,7 +1552,7 @@ h3 {
   padding-inline-start: 20px;
   display: grid;
   gap: 6px;
-  font-size: 14px;
+  font-size: 0.875rem;
 }
 
 .sources ul {
@@ -1490,7 +1560,7 @@ h3 {
   padding-inline-start: 18px;
   display: grid;
   gap: 6px;
-  font-size: 14px;
+  font-size: 0.875rem;
   max-width: 64ch;
 }
 .toggle.big {

@@ -275,3 +275,20 @@ def bloom(threshold=0.9, size=7, mix=0.0, strength=1.0):
                 pass
     tree.links.new(rl.outputs['Image'], gl.inputs['Image'])
     tree.links.new(gl.outputs['Image'], comp.inputs['Image'])
+
+
+def camera_up(loc, target=(0, 0, 0), lens=85, up=(0, 1, 0)):
+    """Camera that keeps world `up` pointing up in the frame (no roll)."""
+    from mathutils import Matrix
+    cam = bpy.data.cameras.new('cam')
+    cam.lens = lens
+    ob = bpy.data.objects.new('cam', cam)
+    bpy.context.collection.objects.link(ob)
+    ob.location = loc
+    f = (Vector(target) - Vector(loc)).normalized()
+    r = f.cross(Vector(up)).normalized()
+    u = r.cross(f).normalized()
+    m = Matrix((r, u, -f)).transposed()
+    ob.rotation_euler = m.to_euler()
+    bpy.context.scene.camera = ob
+    return ob

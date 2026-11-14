@@ -12,7 +12,8 @@ import { NotifySheet } from './components/NotifySheet';
 import { BrandMark, Icon } from './components/Icon';
 import { AlertsSheet } from './components/AlertsSheet';
 import { LocationSheet } from './components/LocationSheet';
-import { isNative, syncNotifications } from './lib/native';
+import { isNative, pushWidget, syncNotifications } from './lib/native';
+import { buildWidgetData } from './lib/widget';
 import { planNotifications } from './lib/alerts';
 
 type SheetName = null | 'jump' | 'settings' | 'event' | 'notify' | 'alerts' | 'location';
@@ -74,6 +75,23 @@ export default function App() {
     settings.havdalahAlert,
     settings.fastAlerts,
   ]); // eslint-disable-line react-hooks/exhaustive-deps
+  // native apps: refresh the home-screen widget's data (about two months ahead)
+  useEffect(() => {
+    if (!isNative()) return;
+    const run = () => {
+      try {
+        pushWidget(JSON.stringify(buildWidgetData(today(), 60, city, settings))).catch(() => {});
+      } catch {
+        /* never let the widget break the app */
+      }
+    };
+    const t = setTimeout(run, 900);
+    window.addEventListener('luachi:resume', run);
+    return () => {
+      clearTimeout(t);
+      window.removeEventListener('luachi:resume', run);
+    };
+  }, [city, settings.candleMins, settings.havdalah, settings.useElevation, settings.showModern]); // eslint-disable-line react-hooks/exhaustive-deps
   const fmt = useMemo(() => timeFmt(city.tz), [city.tz]);
   const selKey = dateKey(selected);
   const items = useMemo(() => dayItems(selected, city, settings), [selKey, city, settings]); // eslint-disable-line react-hooks/exhaustive-deps

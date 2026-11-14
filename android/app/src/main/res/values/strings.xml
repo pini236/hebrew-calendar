@@ -4,4 +4,5 @@
     <string name="title_activity_main">לוח עברי</string>
     <string name="package_name">com.luachivri.app</string>
     <string name="custom_url_scheme">com.luachivri.app</string>
+    <string name="widget_desc">תאריך עברי, הזמן הבא ושבת הקרובה</string>
 </resources>

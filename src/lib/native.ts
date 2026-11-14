@@ -105,3 +105,20 @@ export async function shareTextFile(filename: string, data: string, title: strin
   const res = await Filesystem.writeFile({ path: filename, data, directory: Directory.Cache, encoding: Encoding.UTF8 });
   await Share.share({ title, files: [res.uri] });
 }
+
+/* ---------------- home-screen widget (Android) ---------------- */
+
+interface LuachWidgetPlugin {
+  setData(o: { json: string }): Promise<void>;
+}
+let widgetPlugin: LuachWidgetPlugin | null = null;
+
+/** Hand the precomputed widget data to the native widget (Android only for now). */
+export async function pushWidget(json: string) {
+  if (Capacitor.getPlatform() !== 'android') return;
+  if (!widgetPlugin) {
+    const { registerPlugin } = await import('@capacitor/core');
+    widgetPlugin = registerPlugin<LuachWidgetPlugin>('LuachWidget');
+  }
+  await widgetPlugin.setData({ json });
+}

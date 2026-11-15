@@ -17,15 +17,18 @@
  * Real data: sky colours from skyAt() (the day ribbon's colours), the sun's place along the day from
  * KosherJava's sunrise and sunset, its height and the twilight from KosherJava's solar elevation,
  * the moon's phase from the Hebrew date (moonPhase), Shabbat candles from Hebcal's candle lighting to
- * havdalah (nextShabbat). For a day other than today the scene shows that day at the current time of day.
+ * havdalah (nextShabbat), and a season's touch from the seasons engine (skyDecor: the Chanukah lights).
+ * For a day other than today the scene shows that day at the current time of day.
  */
-import { useEffect, useLayoutEffect, useMemo, useRef, type ReactNode } from 'react';
+import { useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import * as KZ from 'kosher-zmanim';
 import * as SunCalc from 'suncalc';
 import { HDate, addDays, dateKey, daysBetween, fromKey, gregDateStr, hebDateStr, hebMonthName, hebNum, hebYear, sameDay, zmanim, type DayItem } from '../lib/cal';
 import type { City } from '../lib/cities';
 import { isHe, tr } from '../lib/i18n';
 import { skyAt } from '../lib/sky';
+import { skyDecor } from '../lib/seasons';
+import '../lib/seasons/all';
 import type { Settings } from '../lib/store';
 import { dayName, nextShabbat } from './dayinfo';
 import { Icon } from './Icon';
@@ -125,6 +128,13 @@ export function SkyScene({ selected, now, city, settings, z, at, children, class
   // live: repaint the layers once a minute (the sun moves a quarter of a degree); the clouds move every frame
   const moment = at ? at.getTime() : Math.floor(sceneMoment(selected, now, city.tz) / 60000) * 60000;
   const windows = useMemo(() => candleWindows(selected, city, settings), [key, city, settings.candleMins, settings.havdalah]); // eslint-disable-line react-hooks/exhaustive-deps
+  // a season's own state changed (e.g. "הדלקתי" on the Chanukah card): ask the engine again
+  const [seasonTick, setSeasonTick] = useState(0);
+  useEffect(() => {
+    const on = () => setSeasonTick((n) => n + 1);
+    window.addEventListener('luachi:season-state', on);
+    return () => window.removeEventListener('luachi:season-state', on);
+  }, []);
 
   const input = useMemo<SkyInput>(() => {
     const sky = rgbOf(skyAt(moment, z).background) as [RGB, RGB, RGB];
@@ -147,11 +157,13 @@ export function SkyScene({ selected, now, city, settings, z, at, children, class
       moonAlt: mpos.altitude,
       moonAz: mpos.azimuth - 180,
       candles: windows.some(([a, b]) => moment >= a && moment < b),
+      // the seasons' touch (Chanukah: tonight's candles), from the seasons engine
+      chanukah: skyDecor(new Date(moment), city, settings).chanukahCandles ?? 0,
       late,
       clouds: cloudsOf(key),
       rtl,
     };
-  }, [moment, z, city, key, windows, rtl]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [moment, z, city, key, windows, rtl, settings.seasons, seasonTick]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useLayoutEffect(() => {
     engine.current = startEngine(canvas.current!, host.current!);

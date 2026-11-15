@@ -171,6 +171,7 @@ export default function App() {
     settings.candleAlertMins,
     settings.havdalahAlert,
     settings.fastAlerts,
+    settings.seasons,
   ]); // eslint-disable-line react-hooks/exhaustive-deps
   // native apps: refresh the home-screen widget's data (about two months ahead)
   useEffect(() => {

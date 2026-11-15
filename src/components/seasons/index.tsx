@@ -26,6 +26,7 @@ type Card = LazyExoticComponent<ComponentType<SeasonCardProps>>;
 /** id → card. Seasons add theirs: omer: lazy(() => import('./OmerCard')), … */
 export const SEASON_CARDS: Partial<Record<SeasonId, Card>> = {
   omer: lazy(() => import('./OmerCard')),
+  chanukah: lazy(() => import('./ChanukahCard')),
 };
 
 // keep `lazy` imported for the season cards registered above

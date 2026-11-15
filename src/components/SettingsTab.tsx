@@ -176,9 +176,9 @@ export function SettingsTab({ settings, city, myEvents, onChange, onImport, onNo
                 <div className="seg" role="group" aria-labelledby="lbl-theme">
                   {(
                     [
-                      ['auto', 'כמו הטלפון'],
                       ['light', 'בהירה'],
                       ['dark', 'כהה'],
+                      ['auto', 'כמו הטלפון'],
                     ] as const
                   ).map(([k, l]) => (
                     <button key={k} className={settings.theme === k ? 'on' : ''} aria-pressed={settings.theme === k} onClick={() => set({ theme: k })}>

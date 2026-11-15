@@ -6,8 +6,19 @@
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <meta name="claude:viewport-fit-sides" content="cover" />
     <meta name="description" content="יומן עברי-לועזי עם זמני היום, חגים, לימוד יומי ואירועים אישיים — בלי פרסומות" />
-    <meta name="theme-color" content="#F5F4F0" media="(prefers-color-scheme: light)" />
-    <meta name="theme-color" content="#131311" media="(prefers-color-scheme: dark)" />
+    <meta name="theme-color" content="#F5F4F0" />
+    <script>
+      // the saved colour scheme before the first paint, so a dark phone doesn't flash dark (light is the default)
+      try {
+        var s = JSON.parse(localStorage.getItem('luach.settings.v1') || '{}');
+        var t = s.themeV === 2 ? s.theme : s.theme === 'dark' ? 'dark' : 'light';
+        if (t === 'light' || t === 'dark') document.documentElement.setAttribute('data-theme', t);
+        if (t === 'dark' || (t === 'auto' && matchMedia('(prefers-color-scheme: dark)').matches))
+          document.querySelector('meta[name=theme-color]').setAttribute('content', '#131311');
+      } catch (e) {
+        document.documentElement.setAttribute('data-theme', 'light');
+      }
+    </script>
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <meta name="apple-mobile-web-app-title" content="לוח יהודי" />

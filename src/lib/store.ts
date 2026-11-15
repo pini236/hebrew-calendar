@@ -16,6 +16,8 @@ export interface Settings {
   showLearning: boolean;
   showModern: boolean;
   theme: Theme;
+  /** 2 = saved after light became the default (an older 'auto' was never a choice) */
+  themeV?: number;
   monthMode: 'greg' | 'heb';
   /** Friday alert time HH:MM (phone local time) */
   alertTime: string;
@@ -47,7 +49,8 @@ export const DEFAULT_SETTINGS: Settings = {
   useElevation: false,
   showLearning: true,
   showModern: true,
-  theme: 'auto',
+  theme: 'light',
+  themeV: 2,
   monthMode: 'greg',
   alertTime: '08:00',
   alertWeeks: 52,
@@ -124,6 +127,12 @@ const isCity = (c: unknown): c is City => {
 /** Saved settings from any earlier version, filled up with the current defaults */
 export function mergeSettings(s: Partial<Settings>): Settings {
   const m: Settings = { ...DEFAULT_SETTINGS, ...(s && typeof s === 'object' ? s : {}) };
+  // light is the default since themeV 2: an 'auto' saved before then was the old default, not a choice
+  if (!(s && typeof s === 'object' && s.themeV === 2)) {
+    if (m.theme === 'auto') m.theme = 'light';
+    m.themeV = 2;
+  }
+  if (!['auto', 'light', 'dark'].includes(m.theme)) m.theme = 'light';
   if (!isCity(m.gps)) m.gps = null;
   if (!isCity(m.place)) m.place = null;
   m.recentPlaces = Array.isArray(m.recentPlaces) ? m.recentPlaces.filter(isCity).slice(0, 5) : [];

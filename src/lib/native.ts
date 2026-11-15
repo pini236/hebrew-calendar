@@ -6,7 +6,7 @@ export const isNative = () => Capacitor.isNativePlatform();
 /** One-time native setup: status bar, and a "resume" event the app listens to */
 export async function initNative() {
   document.documentElement.classList.add('native');
-  await setStatusBar(!!window.matchMedia?.('(prefers-color-scheme: dark)').matches);
+  // the status bar is set by the app once the theme is known (App.tsx)
   try {
     const { App } = await import('@capacitor/app');
     App.addListener('resume', () => window.dispatchEvent(new Event('luachi:resume')));

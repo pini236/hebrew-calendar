@@ -62,7 +62,11 @@ export default function App() {
   // the phone's status bar follows the theme chosen here, not only the phone's own
   useEffect(() => {
     const mq = window.matchMedia?.('(prefers-color-scheme: dark)');
-    const apply = () => setStatusBar(settings.theme === 'dark' || (settings.theme === 'auto' && !!mq?.matches));
+    const apply = () => {
+      const dark = settings.theme === 'dark' || (settings.theme === 'auto' && !!mq?.matches);
+      document.querySelector('meta[name=theme-color]')?.setAttribute('content', dark ? '#131311' : '#F5F4F0');
+      setStatusBar(dark);
+    };
     apply();
     mq?.addEventListener?.('change', apply);
     return () => mq?.removeEventListener?.('change', apply);

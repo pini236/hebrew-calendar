@@ -143,7 +143,7 @@ export default function App() {
   const fmt = useMemo(() => timeFmt(city.tz), [city.tz]);
   const selKey = dateKey(selected);
   const items = useMemo(() => dayItems(selected, city, settings), [selKey, city, settings]); // eslint-disable-line react-hooks/exhaustive-deps
-  const z = useMemo(() => zmanim(selected, city, settings), [selKey, city, settings.useElevation]); // eslint-disable-line react-hooks/exhaustive-deps
+  const z = useMemo(() => zmanim(selected, city, settings), [selKey, city, settings.useElevation, language]); // eslint-disable-line react-hooks/exhaustive-deps
   const mine = useMemo(() => eventsOn(myEvents, selected), [myEvents, selKey]); // eslint-disable-line react-hooks/exhaustive-deps
 
   /* ----- pushed screens: one history entry, so the phone's back gesture closes them ----- */

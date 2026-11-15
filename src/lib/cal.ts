@@ -199,7 +199,9 @@ export function shortItem(it: Pick<DayItem, 'title' | 'en'>) {
     .replace(/^Chanukah:\s*(\d+)\s+Candles?$/, 'Chanukah $1')
     .replace(/^Chanukah:\s*8th Day$/, 'Chanukah 8')
     .replace(/\s*\(Chol HaMoed\)/, '')
-    .replace(/^Shabbat Mevarchim Chodesh\s+/, 'Mevarchim ');
+    .replace(/^Shabbat Mevarchim Chodesh\s+/, 'Mevarchim ')
+    .replace(/^Rosh Chodesh\s+.*$/, 'Rosh Chodesh')
+    .replace(/^Asara B'Tevet$/, '10 Tevet');
 }
 
 function classifyHe(ev: Event): DayItem | null {

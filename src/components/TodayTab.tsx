@@ -191,8 +191,10 @@ function WeekStrip({ selected, now, city, settings, myEvents, onSelect, onToday 
 
 /* ---------------- what matters now ---------------- */
 
-function showShabbat(sh: ShabbatInfo | null, selected: Date) {
+function showShabbat(sh: ShabbatInfo | null, selected: Date, now: Date) {
   if (!sh) return false;
+  // after havdalah it is over, even though it is still the same day
+  if (sh.havdalah.it.time && now.getTime() >= sh.havdalah.it.time.getTime() && daysBetween(now, selected) <= 0) return false;
   const toCandle = daysBetween(selected, sh.candle.d);
   const toEnd = daysBetween(selected, sh.havdalah.d);
   return toCandle <= 1 && toEnd >= 0;
@@ -223,7 +225,7 @@ function NowHero({ selected, now, city, settings, fmt, z, isToday }: Props & { i
       if (tz) next = { name: tz.name, hint: tz.hint, time: roundTo(tz.time, tz.round), tomorrow: true };
     }
   }
-  const shab = showShabbat(sh, selected) ? sh : null;
+  const shab = showShabbat(sh, selected, now) ? sh : null;
   const inShabbat = shab && isToday && t >= shab.candle.it.time!.getTime();
 
   return (

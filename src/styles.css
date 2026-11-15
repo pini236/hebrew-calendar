@@ -2770,3 +2770,8 @@ button.pair-cell + button.pair-cell {
   color: inherit;
   opacity: 0.8;
 }
+/* English labels in the narrow month cells: break between words, not inside them */
+:lang(en) .c-label {
+  overflow-wrap: normal;
+  hyphens: auto;
+}

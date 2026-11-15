@@ -37,7 +37,8 @@
     "@stylexjs/stylex": "^0.19.2",
     "kosher-zmanim": "^0.9.0",
     "react": "^19.3.1",
-    "react-dom": "^19.3.1"
+    "react-dom": "^19.3.1",
+    "suncalc": "^2.1.4"
   },
   "devDependencies": {
     "@astryxdesign/cli": "^0.7.16",

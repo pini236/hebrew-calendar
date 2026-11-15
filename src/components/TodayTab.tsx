@@ -10,7 +10,6 @@ import {
   hebDateStr,
   hebMonthName,
   hebNum,
-  hebYear,
   itemTitle,
   learningLabel,
   prayerNotes,
@@ -23,10 +22,11 @@ import {
   type ZmanRow,
 } from '../lib/cal';
 import type { City } from '../lib/cities';
-import { isHe, lang, tr } from '../lib/i18n';
+import { isHe, tr } from '../lib/i18n';
 import type { MyEvent, Settings } from '../lib/store';
 import { Icon } from './Icon';
-import { agendaRows, dayFrac, dayName, dayRibbon, daysBetween, inTime, nextShabbat, weekParasha, yearsWord, type ShabbatInfo } from './dayinfo';
+import { SkyHeader, SkyScene } from './SkyScene';
+import { agendaRows, dayName, daysBetween, inTime, nextShabbat, weekParasha, yearsWord, type ShabbatInfo } from './dayinfo';
 
 type Z = ReturnType<typeof zmanim>;
 
@@ -53,7 +53,6 @@ const DAY_KINDS = new Set(['yomtov', 'cholhamoed', 'erev', 'fast', 'minor', 'ros
 
 export function TodayTab(p: Props) {
   const { selected, now, city, settings, items, z } = p;
-  const hd = new HDate(selected);
   const isToday = sameDay(selected, now);
   const afterSunset = isToday && now.getTime() > z.sunset.getTime();
   const tonight = new HDate(addDays(selected, 1));
@@ -61,29 +60,13 @@ export function TodayTab(p: Props) {
   const tonightDay = WEEKDAYS[tonightDow];
 
   return (
-    <div className="tab today-tab">
-      <header className="tab-head">
-        <button className="date-title" onClick={p.onJump} aria-label={tr(`${hebDateStr(hd)}. מעבר לתאריך אחר`, `${hebDateStr(hd)}. Go to another date`)}>
-          <span className="dt-sub">
-            {dayName(selected)} · {gregDateStr(selected)}
-          </span>
-          <span className="dt-main">
-            {hebNum(hd.getDate())} {hebMonthName(hd.getMonth(), hd.getFullYear())}
-            <span className="dt-year"> {hebYear(hd.getFullYear())}</span>
-            <Icon name="down" size={18} />
-          </span>
-        </button>
-        <div className="head-chips">
-          <button className="place-chip" onClick={p.onLocation} aria-label={tr(`מיקום${city.id === 'gps' ? ' לפי GPS' : ''}: ${city.name}. שינוי מיקום`, `Location${city.id === 'gps' ? ' (GPS)' : ''}: ${city.name}. Change location`)}>
-            <Icon name={city.id === 'gps' ? 'locate' : 'pin'} size={16} />
-            <span>{city.name}</span>
-          </button>
-          <button className="place-chip jump-chip" onClick={p.onJump}>
-            <Icon name="today" size={16} />
-            <span>{tr('תאריך אחר', 'Other date')}</span>
-          </button>
-        </div>
-      </header>
+    <>
+      <div className="today-sky">
+        <SkyScene selected={selected} now={now} city={city} settings={settings} z={z} items={items} className="card">
+          <SkyHeader selected={selected} city={city} onJump={p.onJump} onLocation={p.onLocation} />
+        </SkyScene>
+      </div>
+    <div className="tab today-tab sky-sheet">
       {afterSunset && (
         <p className="tonight">
           {tr(
@@ -105,6 +88,7 @@ export function TodayTab(p: Props) {
         </div>
       </div>
     </div>
+    </>
   );
 }
 
@@ -209,8 +193,6 @@ function NowHero({ selected, now, city, settings, fmt, z, isToday }: Props & { i
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [dateKey(selected), city, settings.candleMins, settings.havdalah, settings.useElevation],
   );
-  const l = lang();
-  const ribbon = useMemo(() => dayRibbon(selected, z), [z, selected, l]); // eslint-disable-line react-hooks/exhaustive-deps
   const t = now.getTime();
 
   // the next zman of today; after the last one, tomorrow's first. The same zmanim as the day's
@@ -285,26 +267,14 @@ function NowHero({ selected, now, city, settings, fmt, z, isToday }: Props & { i
         </div>
       )}
 
-      <div className="ribbon-wrap">
-        <div className="ribbon" style={{ background: ribbon }} role="img" aria-label={tr(
-            `היום: זריחה ${fmt.format(roundTo(z.sunrise, 'round'))}, שקיעה ${fmt.format(roundTo(z.sunset, 'floor'))}`,
-            `The day: sunrise ${fmt.format(roundTo(z.sunrise, 'round'))}, sunset ${fmt.format(roundTo(z.sunset, 'floor'))}`,
-          )}>
-          {[z.sunrise, z.sunset].map((d, i) => (
-            <i key={i} className="tick" style={{ insetInlineStart: `${dayFrac(d) * 100}%` }} />
-          ))}
-          {isToday && <i className="now-mark" style={{ insetInlineStart: `${dayFrac(now) * 100}%` }} />}
-        </div>
-        <div className="ribbon-labels" aria-hidden="true">
-          <span style={{ insetInlineStart: `${dayFrac(z.sunrise) * 100}%` }}>
-            <b>{fmt.format(roundTo(z.sunrise, 'round'))}</b>
-            {tr('זריחה', 'Sunrise')}
-          </span>
-          <span style={{ insetInlineStart: `${dayFrac(z.sunset) * 100}%` }}>
-            <b>{fmt.format(roundTo(z.sunset, 'floor'))}</b>
-            {tr('שקיעה', 'Sunset')}
-          </span>
-        </div>
+      {/* the colours of the day are in the sky above; here just its two edges */}
+      <div className="sun-times">
+        <span>
+          {tr('זריחה', 'Sunrise')} <b>{fmt.format(roundTo(z.sunrise, 'round'))}</b>
+        </span>
+        <span>
+          {tr('שקיעה', 'Sunset')} <b>{fmt.format(roundTo(z.sunset, 'floor'))}</b>
+        </span>
       </div>
     </section>
   );

@@ -172,9 +172,11 @@ export interface SkyInput {
   elev: number;
   /** the sky's three colours (top, middle, horizon) from skyAt() */
   sky: [RGB, RGB, RGB];
-  /** moon phase of the Hebrew date: 0..1 lit, waxing or waning */
+  /** the moon: lit fraction 0..1, waxing or waning, and its place (degrees; azimuth from south, west positive) */
   moonIllum: number;
   moonWaxing: boolean;
+  moonAlt: number;
+  moonAz: number;
   /** Shabbat or Yom Tov candles are burning (candle lighting → havdalah) */
   candles: boolean;
   /** 0 in the evening → 1 after chatzot halayla (most windows go dark) */
@@ -590,7 +592,8 @@ function paintSlot(slot: Slot, g: Geom, s: SkyInput) {
 
     // stars: bright ones come out first (from ~4° below the horizon), the faint ones by ~12°;
     // a bright moon washes the faintest out, and they dim near the horizon
-    const moonVis = s.moonIllum > 0.02 ? smooth(-1, -6, e) : 0;
+    // seen once the sky darkens, and only while it's above the horizon
+    const moonVis = s.moonIllum > 0.02 && s.moonAlt > 0 ? smooth(-1, -6, e) * clamp01(s.moonAlt / 3) : 0;
     const starsOn = smooth(-3, -12.5, e);
     if (starsOn > 0) {
       const hours = (s.at - s.set) / 3600000;
@@ -618,12 +621,12 @@ function paintSlot(slot: Slot, g: Geom, s: SkyInput) {
       }
     }
 
-    // the moon, in the phase of the Hebrew date; its lit side faces where the sun went down (waxing)
-    // or where it will come up (waning). Its place in the sky is fixed: the app has no lunar ephemeris.
+    // the moon at its real place: east on the morning side (right in Hebrew), height by its altitude;
+    // its lit side faces where the sun went down (waxing) or where it will come up (waning)
     if (moonVis > 0.01) {
-      const mu = 0.74;
-      const cx = g.rtl ? W * (1 - mu) : W * mu;
-      const cy = Math.max(30, yH * 0.32);
+      const east = Math.max(-1, Math.min(1, -s.moonAz / 120)); // 1 = due east-ish, -1 = west
+      const cx = W * (0.5 + (g.rtl ? 0.42 : -0.42) * east);
+      const cy = Math.max(24, yH - 8 - (Math.min(s.moonAlt, 70) / 70) * (yH - 36));
       const r = 10.5;
       const k = s.moonIllum;
       const a = moonVis;

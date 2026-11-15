@@ -114,12 +114,13 @@ export default function App() {
     const apply = () => {
       const dark = settings.theme === 'dark' || (settings.theme === 'auto' && !!mq?.matches);
       document.querySelector('meta[name=theme-color]')?.setAttribute('content', dark ? '#131311' : '#F5F4F0');
-      setStatusBar(dark);
+      // on היום the sky runs under the status bar: light icons over it
+      setStatusBar(dark || (tab === 'today' && !screen));
     };
     apply();
     mq?.addEventListener?.('change', apply);
     return () => mq?.removeEventListener?.('change', apply);
-  }, [settings.theme]);
+  }, [settings.theme, tab, screen]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const baseCity = settings.gps ?? settings.place ?? findCity(settings.cityId) ?? DEFAULT_CITY;
   // the listed cities carry an English name for the English interface

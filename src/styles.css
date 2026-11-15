@@ -2922,3 +2922,19 @@ button.pair-cell + button.pair-cell {
     animation: none;
   }
 }
+.sun-times {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--line);
+  color: var(--muted);
+  font-size: 0.875rem;
+}
+.sun-times b {
+  margin-inline-start: 4px;
+  color: var(--ink);
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+}

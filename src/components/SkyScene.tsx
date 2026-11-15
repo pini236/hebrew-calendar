@@ -21,7 +21,8 @@
  */
 import { useEffect, useLayoutEffect, useMemo, useRef, type ReactNode } from 'react';
 import * as KZ from 'kosher-zmanim';
-import { HDate, addDays, dateKey, daysBetween, fromKey, gregDateStr, hebDateStr, hebMonthName, hebNum, hebYear, moonPhase, sameDay, zmanim, type DayItem } from '../lib/cal';
+import * as SunCalc from 'suncalc';
+import { HDate, addDays, dateKey, daysBetween, fromKey, gregDateStr, hebDateStr, hebMonthName, hebNum, hebYear, sameDay, zmanim, type DayItem } from '../lib/cal';
 import type { City } from '../lib/cities';
 import { isHe, tr } from '../lib/i18n';
 import { skyAt } from '../lib/sky';
@@ -129,8 +130,9 @@ export function SkyScene({ selected, now, city, settings, z, at, children, class
     const sky = rgbOf(skyAt(moment, z).background) as [RGB, RGB, RGB];
     const rise = z.sunrise.getTime();
     const set = z.sunset.getTime();
-    // the Hebrew date moves on at sunset
-    const moon = moonPhase(new HDate(moment > set ? addDays(selected, 1) : selected));
+    // the moon's real place and phase at this moment (SunCalc, after Meeus' Astronomical Algorithms)
+    const mpos = SunCalc.getMoonPosition(new Date(moment), city.lat, city.lon);
+    const mill = SunCalc.getMoonIllumination(new Date(moment));
     const chatzot = z.rows.find((r) => r.id === 'chatzot')?.time.getTime() ?? (rise + set) / 2;
     const late = moment < chatzot ? 1 : Math.max(0, Math.min(1, (moment - (chatzot + 12 * 3600000)) / (40 * 60000)));
     return {
@@ -139,8 +141,11 @@ export function SkyScene({ selected, now, city, settings, z, at, children, class
       set,
       elev: solarElevation(moment, city),
       sky,
-      moonIllum: moon.illum,
-      moonWaxing: moon.waxing,
+      moonIllum: mill.fraction,
+      moonWaxing: mill.phase < 0.5,
+      // SunCalc 2 gives degrees, azimuth clockwise from north; the painter wants it from south, west positive
+      moonAlt: mpos.altitude,
+      moonAz: mpos.azimuth - 180,
       candles: windows.some(([a, b]) => moment >= a && moment < b),
       late,
       clouds: cloudsOf(key),
@@ -270,10 +275,18 @@ export function SkyHeader({ selected, city, onJump, onLocation }: { selected: Da
   const hd = new HDate(selected);
   return (
     <>
-      <button className="sky-place" onClick={onLocation} aria-label={tr(`מיקום: ${city.name}. שינוי מיקום`, `Location: ${city.name}. Change location`)}>
-        <Icon name={city.id === 'gps' ? 'locate' : 'pin'} size={16} />
-        <span>{city.name}</span>
-      </button>
+      <div className="sky-top">
+        <button className="sky-place" onClick={onLocation} aria-label={tr(`מיקום: ${city.name}. שינוי מיקום`, `Location: ${city.name}. Change location`)}>
+          <Icon name={city.id === 'gps' ? 'locate' : 'pin'} size={16} />
+          <span>{city.name}</span>
+        </button>
+        {onJump && (
+          <button className="sky-chip" onClick={onJump}>
+            <Icon name="today" size={16} />
+            <span>{tr('תאריך אחר', 'Other date')}</span>
+          </button>
+        )}
+      </div>
       <button className="sky-date" data-sky-ground onClick={onJump} aria-label={tr(`${hebDateStr(hd)}. מעבר לתאריך אחר`, `${hebDateStr(hd)}. Go to another date`)}>
         <span className="sky-greg" key={'g' + dateKey(selected)}>
           {dayName(selected)} · {gregDateStr(selected)}

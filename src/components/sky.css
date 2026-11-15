@@ -131,3 +131,63 @@
     --sky-sheet: 0px;
   }
 }
+
+/* ---------------- in היום ---------------- */
+.sky-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  width: 100%;
+}
+.sky-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 36px;
+  padding: 0 12px;
+  border-radius: 10px;
+  color: var(--sky-ink);
+  background: rgb(251 248 241 / 0.14);
+  box-shadow: inset 0 0 0 1px rgb(251 248 241 / 0.28);
+  font-size: 0.875rem;
+  font-weight: 500;
+  backdrop-filter: blur(6px);
+  transition: background-color 160ms var(--ease);
+}
+.sky-chip:hover {
+  background: rgb(251 248 241 / 0.22);
+}
+/* the sky hangs from the top of the screen, under the status bar; scrolling folds it into a strip that
+   keeps the date in view */
+.today-sky {
+  --sky-sheet: 0px;
+  --sky-h: calc(248px + 32px * var(--text-scale, 1));
+  --sky-strip: calc(64px + 30px * var(--text-scale, 1));
+  position: sticky;
+  top: calc(var(--sky-strip) - var(--sky-h));
+  z-index: 20;
+}
+.today-sky .sky {
+  border-radius: 0 0 20px 20px;
+  box-shadow: 0 1px 0 rgb(0 0 0 / 0.06);
+}
+.today-tab.sky-sheet {
+  margin-top: 0;
+  padding-top: 16px;
+  border-radius: 0;
+  background: transparent;
+}
+/* no page-colour strip under the status bar while the sky is there */
+body:has(.app.tab-today:not(.has-screen))::before {
+  display: none;
+}
+@media (min-width: 960px) {
+  .today-sky {
+    position: static;
+    padding: 24px 24px 0;
+  }
+  .today-sky .sky {
+    border-radius: 20px;
+  }
+}

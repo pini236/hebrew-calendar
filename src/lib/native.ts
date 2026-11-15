@@ -6,19 +6,24 @@ export const isNative = () => Capacitor.isNativePlatform();
 /** One-time native setup: status bar, and a "resume" event the app listens to */
 export async function initNative() {
   document.documentElement.classList.add('native');
-  try {
-    const { StatusBar, Style } = await import('@capacitor/status-bar');
-    const dark = window.matchMedia?.('(prefers-color-scheme: dark)').matches;
-    await StatusBar.setStyle({ style: dark ? Style.Dark : Style.Light });
-    if (Capacitor.getPlatform() === 'android') await StatusBar.setBackgroundColor({ color: dark ? '#131311' : '#f5f4f0' });
-  } catch {
-    /* status bar plugin unavailable */
-  }
+  await setStatusBar(!!window.matchMedia?.('(prefers-color-scheme: dark)').matches);
   try {
     const { App } = await import('@capacitor/app');
     App.addListener('resume', () => window.dispatchEvent(new Event('luachi:resume')));
   } catch {
     /* ignore */
+  }
+}
+
+/** Status bar icons to match the page: light icons on the dark theme, dark icons on the light one */
+export async function setStatusBar(dark: boolean) {
+  if (!isNative()) return;
+  try {
+    const { StatusBar, Style } = await import('@capacitor/status-bar');
+    await StatusBar.setStyle({ style: dark ? Style.Dark : Style.Light });
+    if (Capacitor.getPlatform() === 'android') await StatusBar.setBackgroundColor({ color: dark ? '#131311' : '#f5f4f0' });
+  } catch {
+    /* status bar plugin unavailable */
   }
 }
 

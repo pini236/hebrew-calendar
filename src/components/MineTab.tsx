@@ -153,10 +153,13 @@ function EventRow({ u, onEdit, onOpenDay }: { u: Upcoming; onEdit: (e: MyEvent) 
           {hebDateStr(hd, false)} · יום {WEEKDAYS[d.getDay()]}, {gregDateStr(d, false)}
           {ev.time ? ` · ${ev.time}` : ''}
         </small>
-        <small className="ev-meta">
-          {REPEAT_WORDS[ev.repeat]}
-          {ev.remind && ev.remind !== 'none' ? ` · תזכורת ${REMIND_WORDS[ev.remind]}` : ''}
-        </small>
+        {(ev.repeat !== 'none' || (ev.remind && ev.remind !== 'none')) && (
+          <small className="ev-meta">
+            {[ev.repeat !== 'none' ? REPEAT_WORDS[ev.repeat] : '', ev.remind && ev.remind !== 'none' ? `תזכורת ${REMIND_WORDS[ev.remind]}` : '']
+              .filter(Boolean)
+              .join(' · ')}
+          </small>
+        )}
       </button>
       {ev.remind && ev.remind !== 'none' && (
         <span className="ev-bell" aria-label="יש תזכורת">

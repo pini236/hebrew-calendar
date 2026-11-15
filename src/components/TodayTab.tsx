@@ -19,6 +19,7 @@ import {
   shortTitle,
   zmanim,
   type DayItem,
+  type ZmanRow,
 } from '../lib/cal';
 import type { City } from '../lib/cities';
 import type { MyEvent, Settings } from '../lib/store';
@@ -49,7 +50,7 @@ interface Props {
 const DAY_KINDS = new Set(['yomtov', 'cholhamoed', 'erev', 'fast', 'minor', 'roshchodesh', 'modern', 'special-shabbat', 'parasha', 'mevarchim']);
 
 export function TodayTab(p: Props) {
-  const { selected, now, city, settings, fmt, items, z, mine } = p;
+  const { selected, now, city, settings, items, z } = p;
   const hd = new HDate(selected);
   const isToday = sameDay(selected, now);
   const afterSunset = isToday && now.getTime() > z.sunset.getTime();
@@ -69,8 +70,8 @@ export function TodayTab(p: Props) {
             <Icon name="down" size={18} />
           </span>
         </button>
-        <button className="place-chip" onClick={p.onLocation} aria-label={`מיקום: ${city.name}. שינוי מיקום`}>
-          <Icon name="pin" size={16} />
+        <button className="place-chip" onClick={p.onLocation} aria-label={`מיקום${city.id === 'gps' ? ' לפי GPS' : ''}: ${city.name}. שינוי מיקום`}>
+          <Icon name={city.id === 'gps' ? 'locate' : 'pin'} size={16} />
           <span>{city.name}</span>
         </button>
       </header>
@@ -89,17 +90,8 @@ export function TodayTab(p: Props) {
         </div>
         <div className="today-side">
           <Notes date={selected} il={city.il} items={items} showLearning={settings.showLearning} />
-          {mine.length === 0 && (
-            <button className="add-row quiet" onClick={p.onAddEvent}>
-              <Icon name="plus" size={18} />
-              <span>
-                אירוע ב{hebDateStr(hd, false)}
-                <small>יום הולדת עברי, יארצייט או פגישה</small>
-              </span>
-            </button>
-          )}
           <p className="fine source-line">
-            {city.name} · שעה זמנית {Math.round(z.shaahZmanit)} דק׳ · {fmt.resolvedOptions().timeZone}
+            {city.name} · שעה זמנית {Math.round(z.shaahZmanit)} דק׳
           </p>
         </div>
       </div>
@@ -206,13 +198,18 @@ function NowHero({ selected, now, city, settings, fmt, z, isToday }: Props & { i
   const ribbon = useMemo(() => dayRibbon(selected, z), [z, selected]);
   const t = now.getTime();
 
-  // the next zman of today; after the last one, tomorrow's first
+  // the next zman of today; after the last one, tomorrow's first. The same zmanim as the day's
+  // schedule below (the main ones and those with an alert), so the two never name different times.
+  const shown = (r: ZmanRow) => !!r.major || settings.zmanAlerts[r.id] !== undefined;
   let next: { name: string; hint?: string; time: Date; tomorrow?: boolean } | null = null;
   if (isToday) {
-    const r = z.rows.map((x) => ({ ...x, time: roundTo(x.time, x.round) })).find((x) => x.time.getTime() > t);
+    const r = z.rows
+      .filter(shown)
+      .map((x) => ({ ...x, time: roundTo(x.time, x.round) }))
+      .find((x) => x.time.getTime() > t);
     if (r) next = r;
     else {
-      const tz = zmanim(addDays(selected, 1), city, settings).rows[0];
+      const tz = zmanim(addDays(selected, 1), city, settings).rows.filter(shown)[0];
       if (tz) next = { name: tz.name, hint: tz.hint, time: roundTo(tz.time, tz.round), tomorrow: true };
     }
   }

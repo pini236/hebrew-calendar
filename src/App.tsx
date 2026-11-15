@@ -14,7 +14,7 @@ const NotifyScreen = lazy(() => import('./components/NotifyScreen').then((m) => 
 const AlertsScreen = lazy(() => import('./components/AlertsScreen').then((m) => ({ default: m.AlertsScreen })));
 const LocationScreen = lazy(() => import('./components/LocationScreen').then((m) => ({ default: m.LocationScreen })));
 import { BrandMark, Icon } from './components/Icon';
-import { isNative, pushWidget, syncNotifications } from './lib/native';
+import { isNative, pushWidget, setStatusBar, syncNotifications } from './lib/native';
 import { buildWidgetData } from './lib/widget';
 import { APP_NAME } from './lib/brand';
 import { planNotifications } from './lib/alerts';
@@ -58,6 +58,15 @@ export default function App() {
     if (settings.highContrast) root.setAttribute('data-contrast', 'high');
     else root.removeAttribute('data-contrast');
   }, [settings.theme, settings.textSize, settings.highContrast]);
+
+  // the phone's status bar follows the theme chosen here, not only the phone's own
+  useEffect(() => {
+    const mq = window.matchMedia?.('(prefers-color-scheme: dark)');
+    const apply = () => setStatusBar(settings.theme === 'dark' || (settings.theme === 'auto' && !!mq?.matches));
+    apply();
+    mq?.addEventListener?.('change', apply);
+    return () => mq?.removeEventListener?.('change', apply);
+  }, [settings.theme]);
 
   const city = settings.gps ?? settings.place ?? findCity(settings.cityId) ?? DEFAULT_CITY;
 

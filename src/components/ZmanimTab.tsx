@@ -57,10 +57,11 @@ export function ZmanimTab({ selected, now, city, settings, fmt, items, z, onSele
       </header>
 
       <button className="place-row" onClick={onLocation}>
-        <Icon name="pin" size={18} />
+        <Icon name={city.id === 'gps' ? 'locate' : 'pin'} size={18} />
         <span className="pr-text">
           <b>{city.name}</b>
           <small>
+            {city.id === 'gps' ? 'לפי GPS · ' : ''}
             <bdi dir="ltr">
               {city.lat.toFixed(3)}, {city.lon.toFixed(3)}
             </bdi>

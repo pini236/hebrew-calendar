@@ -71,10 +71,11 @@ export function SettingsTab({ settings, city, myEvents, onChange, onImport, onNo
             <ul className="list card-list">
               <li>
                 <button className="link-row" onClick={onLocation}>
-                  <Icon name="pin" size={18} />
+                  <Icon name={city.id === 'gps' ? 'locate' : 'pin'} size={18} />
                   <span>
                     {city.name}
                     <small>
+            {city.id === 'gps' ? 'לפי GPS · ' : ''}
                       <bdi dir="ltr">
                         {city.lat.toFixed(3)}, {city.lon.toFixed(3)}
                       </bdi>

@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { CITIES, nearestCity, type City } from '../lib/cities';
+import { CITIES, findCity, nearestCity, type City } from '../lib/cities';
 import { loadPlaces, nearestPlace, placeSub, placeToCity, searchPlaces, type PlaceDB } from '../lib/places';
 import type { Settings } from '../lib/store';
 import { isNative, nativePosition } from '../lib/native';
@@ -47,13 +47,19 @@ export function LocationScreen({ settings, city, onChange, onClose }: Props) {
     const near = nearestCity(lat, lon);
     const tz = Intl.DateTimeFormat().resolvedOptions().timeZone || near.city.tz;
     const il = tz === 'Asia/Jerusalem';
-    let name = near.km < 15 ? near.city.name : '';
-    if (!name) {
-      // not next to one of the Hebrew-named cities: name it after the closest place in the worldwide list
-      const d = db ?? (await loadPlaces().catch(() => null));
-      const p = d && nearestPlace(d, lat, lon);
-      name = p && p.km < 25 ? `המיקום שלי (ליד ${p.place.name})` : `המיקום שלי (ליד ${near.city.name})`;
-    }
+    // the name of the place found: a Hebrew-named city when inside it, otherwise the closest place
+    // in the worldwide list (every locality in Israel is there), otherwise "near" the closest city
+    const d = db ?? (await loadPlaces().catch(() => null));
+    const p = d && nearestPlace(d, lat, lon);
+    const pName = p ? (p.place.cityId && findCity(p.place.cityId)?.name) || p.place.name : '';
+    const name =
+      near.km < 5 || (near.km < 10 && !(p && p.km < near.km))
+        ? near.city.name
+        : p && p.km < 10
+          ? pName
+          : p && p.km < 30
+            ? `ליד ${pName}`
+            : `ליד ${near.city.name}`;
     const gps: City = {
       id: 'gps',
       name,
@@ -65,7 +71,7 @@ export function LocationScreen({ settings, city, onChange, onClose }: Props) {
       il,
     };
     onChange({ ...settings, gps });
-    setGpsMsg(`נמצא: ${name}`);
+    setGpsMsg(''); // the card above now shows the place found
   };
   const denied = 'לא התקבלה הרשאה למיקום. אפשר לאשר מיקום בהגדרות, או לחפש עיר.';
 
@@ -93,19 +99,28 @@ export function LocationScreen({ settings, city, onChange, onClose }: Props) {
 
   return (
     <Screen title="מיקום" onClose={onClose}>
-      <p className="fine loc-now">
-        כרגע: <b>{city.name}</b> · <bdi dir="ltr">{city.lat.toFixed(3)}, {city.lon.toFixed(3)}</bdi> · {city.il ? 'ארץ ישראל' : 'חו״ל'} · {city.tz}
-        {city.elev ? ` · גובה ${city.elev} מ׳` : ''}
-      </p>
-      <div className="row-btns">
-        <button className="ghost-btn" onClick={locate}>
-          <Icon name="locate" size={16} /> איתור לפי GPS
-        </button>
+      <div className="loc-now">
+        <Icon name={settings.gps ? 'locate' : 'pin'} size={20} />
+        <span className="pr-text">
+          <small className="loc-kicker">{settings.gps ? 'המיקום שנמצא לפי GPS' : 'המיקום הנוכחי'}</small>
+          <b>{city.name}</b>
+          <small>
+            <bdi dir="ltr">
+              {city.lat.toFixed(3)}, {city.lon.toFixed(3)}
+            </bdi>
+            {city.elev ? ` · גובה ${city.elev} מ׳` : ''} · {city.il ? 'ארץ ישראל' : 'חו״ל'}
+          </small>
+        </span>
         {settings.gps && (
-          <button className="ghost-btn" onClick={() => onChange({ ...settings, gps: null })}>
-            ביטול ה־GPS
+          <button className="text-btn" onClick={() => onChange({ ...settings, gps: null })}>
+            ביטול
           </button>
         )}
+      </div>
+      <div className="row-btns">
+        <button className="ghost-btn" onClick={locate}>
+          <Icon name="locate" size={16} /> {settings.gps ? 'איתור מחדש לפי GPS' : 'איתור לפי GPS'}
+        </button>
       </div>
       {gpsMsg && (
         <p className="fine" role="status">
@@ -119,7 +134,7 @@ export function LocationScreen({ settings, city, onChange, onClose }: Props) {
           id="place-search"
           type="search"
           autoComplete="off"
-          placeholder="חיפוש עיר בעולם: ירושלים, London, Paris…"
+          placeholder="חיפוש עיר או יישוב, בעברית או באנגלית"
           aria-label="חיפוש עיר"
           value={q}
           onChange={(e) => setQ(e.target.value)}

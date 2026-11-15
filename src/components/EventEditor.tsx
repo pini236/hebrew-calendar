@@ -136,8 +136,8 @@ export function EventEditor({ initial, date, onSave, onDelete, onClose }: Props)
             {(
               [
                 ['none', 'חד־פעמי'],
-                ['heb-yearly', 'כל שנה לפי התאריך העברי'],
-                ['greg-yearly', 'כל שנה לפי התאריך הלועזי'],
+                ['heb-yearly', 'כל שנה · עברי'],
+                ['greg-yearly', 'כל שנה · לועזי'],
               ] as [Repeat, string][]
             ).map(([k, l]) => (
               <button type="button" key={k} className={repeat === k ? 'on' : ''} aria-pressed={repeat === k} onClick={() => setRepeat(k)}>
@@ -145,6 +145,9 @@ export function EventEditor({ initial, date, onSave, onDelete, onClose }: Props)
               </button>
             ))}
           </div>
+          {repeat !== 'none' && (
+            <small className="sub">{repeat === 'heb-yearly' ? 'חוזר כל שנה באותו תאריך עברי, כמו יום הולדת עברי או יארצייט' : 'חוזר כל שנה באותו תאריך לועזי'}</small>
+          )}
         </div>
 
         <div className="field col">

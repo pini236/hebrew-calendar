@@ -15,8 +15,8 @@ const CREAM = '#F6F0E2';
 const font = (p) => `data:font/woff2;base64,${readFileSync(`node_modules/@fontsource/${p}`).toString('base64')}`;
 const FONTS = `
 @font-face{font-family:F;font-weight:500;src:url(${font('frank-ruhl-libre/files/frank-ruhl-libre-hebrew-500-normal.woff2')})}
-@font-face{font-family:A;font-weight:400;src:url(${font('assistant/files/assistant-hebrew-400-normal.woff2')})}
-@font-face{font-family:A;font-weight:600;src:url(${font('assistant/files/assistant-hebrew-600-normal.woff2')})}`;
+@font-face{font-family:A;font-weight:400;src:url(${font('ibm-plex-sans-hebrew/files/ibm-plex-sans-hebrew-hebrew-400-normal.woff2')})}
+@font-face{font-family:A;font-weight:600;src:url(${font('ibm-plex-sans-hebrew/files/ibm-plex-sans-hebrew-hebrew-600-normal.woff2')})}`;
 const ICON = `data:image/png;base64,${readFileSync('assets/icon-only.png').toString('base64')}`;
 
 // sample events for the "שלי" tab (the picture is taken on Friday 20.11.2026)

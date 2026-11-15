@@ -7,9 +7,11 @@
 }
 .ch-stage {
   position: relative;
-  /* the scene is rendered at 6:5 (scripts/chanukah-scene) */
-  aspect-ratio: 6 / 5;
+  /* the scene's own shape (816:678, about 6:5; the card also sets it inline). The painter never stretches
+     the art: in any other shape it covers the box and keeps the chanukiah in view */
+  aspect-ratio: 816 / 678;
   isolation: isolate;
+  overflow: hidden;
   /* the window's colour before the first paint: night ink, as the sky's own */
   background: #0b1230;
 }
@@ -20,7 +22,7 @@
   width: 100%;
   height: 100%;
 }
-/* the flames: a band across the picture (top and height set by the card) */
+/* the flames: a band across the picture, and the light: the art's rectangle (both placed by the painter) */
 .ch-flames {
   bottom: auto;
 }

@@ -26,7 +26,7 @@ import {
 import { skyAt } from '../../lib/sky';
 import { inTime } from '../dayinfo';
 import { Icon } from '../Icon';
-import { ChanukiahPainter, FLAME_BAND, canAddLayers, type RGB, type StageState } from './chanukahPaint';
+import { ChanukiahPainter, canAddLayers, type RGB, type StageState } from './chanukahPaint';
 import { SCENE } from './chanukahScene';
 import { BLESSINGS, HANEROT_HALALU, MAOZ_TZUR } from './chanukahTexts';
 import type { SeasonCardProps } from './index';
@@ -175,10 +175,11 @@ export default function ChanukahCard({ day, now, city, settings, z, setPrefs }: 
 
   return (
     <section className="hero ch-card" aria-label={tr('חנוכה', 'Chanukah')}>
-      <div className="ch-stage" ref={host} role="img" aria-label={label}>
+      {/* the stage holds the art's own shape (6:5) from the first paint, before its stylesheet or pictures arrive */}
+      <div className="ch-stage" ref={host} role="img" aria-label={label} style={{ aspectRatio: `${SCENE.size[0]} / ${SCENE.size[1]}` }}>
         <canvas ref={base} aria-hidden="true" />
         {layers && <canvas ref={lightC} className="ch-light" aria-hidden="true" />}
-        <canvas ref={flamesC} className="ch-flames" aria-hidden="true" style={{ top: `${(FLAME_BAND[0] / SCENE.size[1]) * 100}%`, height: `${((FLAME_BAND[1] - FLAME_BAND[0]) / SCENE.size[1]) * 100}%` }} />
+        <canvas ref={flamesC} className="ch-flames" aria-hidden="true" />
       </div>
       <div className="ch-body">
         <div className="ch-head">

@@ -307,13 +307,17 @@ const canvas2d = (w: number, h: number) => {
  * The band of the picture the flames' canvas covers (base px): from above the raised shamash's flame (and
  * the flames' reflections) to below the bench, where the carried candle's foot goes
  */
-export const FLAME_BAND: readonly [number, number] = (() => {
+const FLAME_BAND: readonly [number, number] = (() => {
   const fh = (SCENE.flames[8].foot[1] - SCENE.flames[8].tip[1]) * 1.25 * 1.08;
   const shL = SCENE.shamash.foot[1] - SCENE.shamash.wick[1];
   const top = Math.min(SCENE.shamash.wick[1] - 34 - 2.6 * fh, ...SCENE.flames.map((f) => f.mirrorTip[1] - 2 * fh));
   const bottom = Math.max(...SCENE.cups.map((c) => c[3]), SCENE.shamash.foot[1] + 0.2 * shL) + 30;
   return [Math.max(0, Math.floor(top)), Math.min(BH, Math.ceil(bottom))];
 })();
+
+/** The point of the art kept in view when the box is not its shape: the chanukiah's middle (from the shamash's
+ * flame to under the bench, base px), and where in the box's height it goes */
+const ANCHOR: readonly [number, number] = [(SCENE.flames[8].tip[1] + Math.max(...SCENE.cups.map((c) => c[3])) + 40) / 2, 0.55];
 
 export const canAddLayers = () => typeof CSS !== 'undefined' && !!CSS.supports?.('mix-blend-mode', 'plus-lighter');
 
@@ -358,6 +362,11 @@ export class ChanukiahPainter {
   }
   private frameNo = 0;
   private band = FLAME_BAND;
+  /** where the art's top left lands on the canvases (device px), and the flames' canvas top */
+  private ox = 0;
+  private oy = 0;
+  private fy0 = 0;
+  private lightEl: HTMLCanvasElement | null;
   /** called once the pictures have loaded (the card's loop draws then) */
   onReady: (() => void) | null = null;
   stats: StageStats = { frames: 0, frameMs: 0, maxFrameMs: 0, builds: 0 };
@@ -379,6 +388,7 @@ export class ChanukiahPainter {
     this.lctx = lc.getContext('2d', { alpha: false })!;
     this.fctx = flamesC.getContext('2d')!;
     this.cache = light ? null : canvas2d(1, 1);
+    this.lightEl = light;
     for (let i = 0; i <= 8; i++) this.flames.set(i, new Flame(101 + i * 17));
     loadAssets().then(
       (a) => {
@@ -405,9 +415,28 @@ export class ChanukiahPainter {
       c.width = cw;
       c.height = ch;
     }
-    this.k = cw / BW;
+    // the art is scaled the same way across and down (never stretched), to cover the box: centred across,
+    // and down so that the chanukiah stays in the picture whatever the box's shape. At 6:5 it fits exactly
+    const k = Math.max(cw / BW, ch / BH);
+    this.k = k;
+    this.ox = (cw - BW * k) / 2;
+    this.oy = Math.min(0, Math.max(ch - BH * k, ch * ANCHOR[1] - ANCHOR[0] * k));
+    // the light canvas is stretched by the page over the art's own rectangle (the stage clips what is outside)
+    if (this.lightEl) {
+      const st = this.lightEl.style;
+      st.left = `${this.ox / dpr}px`;
+      st.top = `${this.oy / dpr}px`;
+      st.width = `${(BW * k) / dpr}px`;
+      st.height = `${(BH * k) / dpr}px`;
+    }
+    // the flames' canvas: the band of the art they move in, as much of it as the box shows
+    const y0 = Math.max(0, Math.floor(this.oy + this.band[0] * k));
+    const y1 = Math.min(ch, Math.ceil(this.oy + this.band[1] * k));
+    this.fy0 = y0;
     this.flamesC.width = cw;
-    this.flamesC.height = Math.round((this.band[1] - this.band[0]) * this.k);
+    this.flamesC.height = Math.max(1, y1 - y0);
+    this.flamesC.style.top = `${y0 / dpr}px`;
+    this.flamesC.style.height = `${Math.max(1, y1 - y0) / dpr}px`;
     // the sprites at the screen's own resolution
     const fh = this.flameH(0) * this.k * 1.25;
     if (Math.abs(fh - this.spriteH) > 0.5) {
@@ -469,14 +498,15 @@ export class ChanukiahPainter {
     // lifted clear of its socket
     const up: Pose = { x: fx, y: fy - 22, tilt: 0 };
     const at = (wx: number, wy: number, tilt: number): Pose => ({ x: wx - Math.sin(tilt) * L, y: wy + Math.cos(tilt) * L, tilt });
-    // it comes to each cup from the right, leaning in, and touches the floating wick with the foot of its flame
+    // it comes down to each cup from above and a little to the right, held nearly upright (a hand carries
+    // a candle level), and brings the foot of its flame to the cup's mouth, just over the floating wick
     const near = (slot: number): Pose => {
       const [wx, wy] = this.wick(slot);
-      return at(wx + 12, wy - 22, -0.2);
+      return at(wx + 9, wy - 28, -0.05);
     };
     const touch = (slot: number): Pose => {
       const [wx, wy] = this.wick(slot);
-      return at(wx + 4, wy - 6, -0.32);
+      return at(wx + 3, wy - 9, -0.12);
     };
 
     const keys: Key[] = [{ t: 0, pose: rest }];
@@ -665,7 +695,7 @@ export class ChanukiahPainter {
       if (items.length) {
         b.globalCompositeOperation = 'lighter';
         b.imageSmoothingQuality = 'low';
-        b.drawImage(lc.canvas, 0, 0, this.base.width, this.base.height);
+        b.drawImage(lc.canvas, this.ox, this.oy, BW * this.k, BH * this.k);
         b.globalCompositeOperation = 'source-over';
       }
     }
@@ -677,10 +707,10 @@ export class ChanukiahPainter {
       ctx.setTransform(1, 0, 0, 1, 0, 0);
       // clear what the last frame drew (the flames move within a few pixels; the carried shamash anywhere)
       const [cx0, cy0, cx1, cy1] = this.drawn;
-      if (cx1 > cx0) ctx.clearRect(cx0 * this.k - 2, (cy0 - this.band[0]) * this.k - 2, (cx1 - cx0) * this.k + 4, (cy1 - cy0) * this.k + 4);
+      if (cx1 > cx0) ctx.clearRect(this.ox + cx0 * this.k - 2, this.oy - this.fy0 + cy0 * this.k - 2, (cx1 - cx0) * this.k + 4, (cy1 - cy0) * this.k + 4);
       this.drawn = [Infinity, Infinity, -Infinity, -Infinity];
       this.flamesDrawn = items.length > 0 || !!carried;
-      ctx.setTransform(this.k, 0, 0, this.k, 0, -this.band[0] * this.k);
+      ctx.setTransform(this.k, 0, 0, this.k, this.ox, this.oy - this.fy0);
       if (carried) {
         const [sx, sy, sw, sh] = SCENE.shamash.sprite;
         const [fx, fy] = SCENE.shamash.foot;
@@ -735,9 +765,13 @@ export class ChanukiahPainter {
     t.globalAlpha = 1;
     t.globalCompositeOperation = 'copy';
     t.imageSmoothingQuality = 'medium';
-    t.drawImage(src, 0, 0, cw, ch);
+    t.fillStyle = '#000';
+    t.fillRect(0, 0, cw, ch);
+    const [ax, ay, aw, ah] = [this.ox, this.oy, BW * this.k, BH * this.k];
+    t.globalCompositeOperation = 'source-over';
+    t.drawImage(src, ax, ay, aw, ah);
     t.globalCompositeOperation = 'multiply';
-    t.drawImage(this.a!.detail, 0, 0, cw, ch);
+    t.drawImage(this.a!.detail, ax, ay, aw, ah);
     t.globalCompositeOperation = 'source-over';
     dst.setTransform(1, 0, 0, 1, 0, 0);
     dst.globalCompositeOperation = 'lighter';
@@ -812,7 +846,10 @@ export class ChanukiahPainter {
     x.globalAlpha = 1;
     // the sky: its horizon at the roofs opposite
     const [top, mid, low] = s.sky;
-    const hz = SCENE.horizon * k;
+    const { ox, oy } = this;
+    const aw = BW * k;
+    const ah = BH * k;
+    const hz = oy + SCENE.horizon * k;
     const g = x.createLinearGradient(0, 0, 0, hz);
     g.addColorStop(0, rgba(top));
     g.addColorStop(0.5, rgba(mid));
@@ -821,20 +858,20 @@ export class ChanukiahPainter {
     x.fillRect(0, 0, cw, ch);
     // the base: the late afternoon, and over it the night
     const n = s.night;
-    if (n < 1) x.drawImage(a.baseDay, 0, 0, cw, ch);
+    if (n < 1) x.drawImage(a.baseDay, ox, oy, aw, ah);
     if (n > 0) {
       x.globalAlpha = n;
-      x.drawImage(a.baseNight, 0, 0, cw, ch);
+      x.drawImage(a.baseNight, ox, oy, aw, ah);
       x.globalAlpha = 1;
     }
     // the cups that hold nothing tonight, and the shamash's empty socket while it is carried
     const patch = (b: readonly number[]) => {
       const [x0, y0, x1, y1] = b;
       const { x: sx, y: sy } = SCENE.strip;
-      if (n < 1) x.drawImage(a.emptyDay, x0 - sx, y0 - sy, x1 - x0, y1 - y0, x0 * k, y0 * k, (x1 - x0) * k, (y1 - y0) * k);
+      if (n < 1) x.drawImage(a.emptyDay, x0 - sx, y0 - sy, x1 - x0, y1 - y0, ox + x0 * k, oy + y0 * k, (x1 - x0) * k, (y1 - y0) * k);
       if (n > 0) {
         x.globalAlpha = n;
-        x.drawImage(a.emptyNight, x0 - sx, y0 - sy, x1 - x0, y1 - y0, x0 * k, y0 * k, (x1 - x0) * k, (y1 - y0) * k);
+        x.drawImage(a.emptyNight, x0 - sx, y0 - sy, x1 - x0, y1 - y0, ox + x0 * k, oy + y0 * k, (x1 - x0) * k, (y1 - y0) * k);
         x.globalAlpha = 1;
       }
     };
@@ -862,7 +899,7 @@ export class ChanukiahPainter {
       lc.globalCompositeOperation = 'source-over';
       lc.globalAlpha = 1;
       x.globalCompositeOperation = 'lighter';
-      x.drawImage(this.low, 0, 0, cw, ch);
+      x.drawImage(this.low, ox, oy, aw, ah);
       x.globalCompositeOperation = 'source-over';
     }
   }

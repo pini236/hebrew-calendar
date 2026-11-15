@@ -22,7 +22,7 @@ const OUT = __dirname;
 const FPS = 30;
 const at = (s) => Math.round(s * FPS);
 
-async function scene(browser, { theme = 'light', lang = 'he', time, dpr = 2, clip, script = {}, frames, dir, played, viewport = { width: 390, height: 844 } }) {
+async function scene(browser, { theme = 'light', lang = 'he', time, dpr = 2, clip, script = {}, frames, dir, played, center, viewport = { width: 390, height: 844 } }) {
   const ctx = await browser.newContext({ viewport, deviceScaleFactor: dpr, colorScheme: theme, timezoneId: 'Asia/Jerusalem', locale: 'he-IL', serviceWorkers: 'block' });
   await ctx.clock.install({ time: new Date(time) });
   // frozen: time moves only by runFor, one frame at a time, however long a screenshot takes
@@ -62,6 +62,10 @@ async function scene(browser, { theme = 'light', lang = 'he', time, dpr = 2, cli
       ),
     click: (sel) => page.locator(sel).first().click(),
   };
+  if (center) {
+    await page.evaluate((sel) => document.querySelector(sel).scrollIntoView({ block: 'center' }), center);
+    await page.clock.runFor(500);
+  }
   let n = fs.readdirSync(dir).length;
   for (let f = 0; f < frames; f++) {
     if (script[f]) await script[f](act);
@@ -72,7 +76,19 @@ async function scene(browser, { theme = 'light', lang = 'he', time, dpr = 2, cli
   await ctx.close();
 }
 
+// every frame must be the same size: given frames of different sizes, ffmpeg scales them all to the first
+// one's, which squashes the picture (v2's first lighting video had this: the card's clip was cut short by the
+// bottom of the screen while it scrolled into view)
+function pngSize(f) {
+  const b = Buffer.alloc(24);
+  const fd = fs.openSync(f, 'r');
+  fs.readSync(fd, b, 0, 24, 0);
+  fs.closeSync(fd);
+  return `${b.readUInt32BE(16)}x${b.readUInt32BE(20)}`;
+}
 function encode(dir, file, crf = 24) {
+  const sizes = new Set(fs.readdirSync(dir).filter((f) => f.endsWith('.png')).map((f) => pngSize(path.join(dir, f))));
+  if (sizes.size !== 1) throw new Error(`${file}: frames of different sizes (${[...sizes].join(', ')}); not encoding`);
   execFileSync('ffmpeg', ['-loglevel', 'error', '-y', '-framerate', String(FPS), '-i', path.join(dir, 'f%05d.png'), '-vf', 'scale=trunc(iw/2)*2:trunc(ih/2)*2,format=yuv420p', '-c:v', 'libx264', '-preset', 'slow', '-crf', String(crf), '-movflags', '+faststart', path.join(OUT, file)]);
   console.log(file, (fs.statSync(path.join(OUT, file)).size / 1e6).toFixed(2), 'MB');
 }
@@ -99,9 +115,9 @@ const cardClip = async (page) => {
   if (!ONLY || ONLY === 'lighting') {
     const dir = frameDir('lighting');
     await scene(browser, {
-      time: '2026-12-08T17:11:20+02:00', dir, dpr: 3, frames: at(18), clip: cardClip,
+      // the card whole on the screen from the first frame, so its clip is the same size in every frame
+      time: '2026-12-08T17:11:20+02:00', dir, dpr: 3, frames: at(+(process.env.SECS || 18)), clip: cardClip, center: '.ch-card',
       script: {
-        [at(0)]: (a) => a.scrollTo('.ch-card', 'center'),
         [at(2.2)]: (a) => a.click('.ch-lit'),
       },
     });

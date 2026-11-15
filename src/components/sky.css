@@ -1,0 +1,133 @@
+/*
+ * The live sky at the top of היום (SkyScene.tsx).
+ * The sky is the real sky, so it is the same in the light and the dark theme. The date sits on the
+ * near ground, which is always deep (bottle green by day, ink at night), so light text reads on it at
+ * every hour; the page itself rises over the scene's foot as a sheet with rounded corners.
+ */
+.sky {
+  /* text over the scene: paper white, never pure white */
+  --sky-ink: #fbf8f1;
+  --sky-ink-2: rgb(251 248 241 / 0.8);
+  --sky-shadow: 0 1px 2px rgb(4 8 16 / 0.35);
+  /* how far the page's sheet rises over the scene */
+  --sky-sheet: 20px;
+  --sky-h: calc(248px + 32px * var(--text-scale, 1));
+  position: relative;
+  height: calc(var(--sky-h) + env(safe-area-inset-top));
+  overflow: hidden;
+  /* the night sky's colour while the first frame paints */
+  background: #0b1230;
+  color: var(--sky-ink);
+  contain: layout paint;
+  isolation: isolate;
+}
+.sky-canvas {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+.sky-over {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: space-between;
+  padding: calc(env(safe-area-inset-top) + 12px) 16px calc(var(--sky-sheet) + 12px);
+  text-shadow: var(--sky-shadow);
+}
+.sky-place,
+.sky-date {
+  color: var(--sky-ink);
+  border-radius: 10px;
+  transition: background-color 160ms var(--ease);
+}
+.sky-place:hover,
+.sky-date:hover {
+  background: rgb(251 248 241 / 0.1);
+}
+.sky-place:focus-visible,
+.sky-date:focus-visible {
+  outline-color: var(--sky-ink);
+}
+.sky-place {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  max-width: 60%;
+  min-height: 36px;
+  padding: 0 8px;
+  margin: 0 -8px;
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+.sky-place span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.sky-place .ic {
+  filter: drop-shadow(var(--sky-shadow));
+}
+.sky-date {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  max-width: 100%;
+  padding: 4px 8px;
+  margin: 0 -8px;
+}
+.sky-greg {
+  color: var(--sky-ink-2);
+  font-size: 0.875rem;
+  font-variant-numeric: tabular-nums;
+}
+.sky-heb {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-family: var(--f-display);
+  font-size: 1.875rem;
+  font-weight: 500;
+  line-height: 1.15;
+  white-space: nowrap;
+}
+.sky-year {
+  color: var(--sky-ink-2);
+  font-size: 1.25rem;
+  margin-inline-start: 4px;
+}
+.sky-heb .ic {
+  color: var(--sky-ink-2);
+  margin-inline-start: 4px;
+}
+
+/* a new date settles in as the sky changes (the spans are keyed by date) */
+.sky-greg,
+.sky-heb {
+  animation: sky-date-in 420ms var(--ease) both;
+}
+@keyframes sky-date-in {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+}
+
+/* the page rises over the scene's foot */
+.sky-sheet {
+  position: relative;
+  margin-top: calc(-1 * var(--sky-sheet));
+  border-radius: 20px 20px 0 0;
+  background: var(--bg);
+}
+
+/* wide screens: the scene is a card at the head of the column */
+@media (min-width: 640px) {
+  .sky.card {
+    border-radius: 20px;
+    --sky-sheet: 0px;
+  }
+}

@@ -34,7 +34,7 @@ Google Play מקבל רק קובץ ‎.aab חתום. קיבלת ממני קוב�
 מעכשיו כל ריצה של **Android app** מייצרת גם את `play-bundle`, כלומר את הקובץ `app-release.aab`.
 
 ### 3. יצירת האפליקציה ב־Play Console
-1. **Create app**. שם: לוח יהודי – לוח עברי. שפת ברירת מחדל: עברית. סוג: App. מחיר: חינם.
+1. **Create app**. שם: **לוח יהודי**. שפת ברירת מחדל: עברית. סוג: App. מחיר: חינם.
 2. **App content**:
    - Privacy policy: `https://pini236.github.io/hebrew-calendar/privacy.html`
    - Ads: לא.
@@ -76,7 +76,7 @@ Google Play מקבל רק קובץ ‎.aab חתום. קיבלת ממני קוב�
 
 ### 2. רישום האפליקציה
 1. developer.apple.com ← **Certificates, IDs & Profiles** ← **Identifiers** ← **+** ← App IDs. Bundle ID: `com.luachyehudi.app`. לא צריך לסמן Capabilities.
-2. App Store Connect ← **Apps** ← **+** ← New App. פלטפורמה: iOS. שם: **לוח עברי**. כותרת משנה (Subtitle): לוח יהודי · זמני היום ושבת. שפה ראשית: Hebrew. Bundle ID: `com.luachyehudi.app`. SKU: `luach-ivri`.
+2. App Store Connect ← **Apps** ← **+** ← New App. פלטפורמה: iOS. שם: **לוח עברי**. כותרת משנה (Subtitle): לוח יהודי. שפה ראשית: Hebrew. Bundle ID: `com.luachyehudi.app`. SKU: `luach-ivri`.
 
 ### 3. בנייה והעלאה
 ב־Actions ← **iOS app** ← **Run workflow**.

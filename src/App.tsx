@@ -25,7 +25,7 @@ type Tab = 'today' | 'month' | 'zmanim' | 'mine' | 'settings';
 
 /* ---------- where the user was: the tab, the day and the month, kept across a reload or a resume ---------- */
 const VIEW_KEY = 'luach.view.v1';
-const VIEW_TTL = 3 * 3600000; // after three hours away the app opens on today again
+const VIEW_TTL = 30 * 60000; // a short break (a call, the phone closing the app) comes back; later, the app opens on today
 interface SavedView {
   tab: Tab;
   selected: string;

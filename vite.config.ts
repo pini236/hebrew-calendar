@@ -30,8 +30,8 @@ export default defineConfig(({ mode }) => {
               description: 'יומן עברי-לועזי עם זמני היום, חגים ואירועים אישיים',
               lang: 'he',
               dir: 'rtl',
-              theme_color: '#1F3E9E',
-              background_color: '#1F3E9E',
+              theme_color: '#F5F4F0',
+              background_color: '#1E5A45',
               display: 'standalone',
               start_url: '.',
               icons: [

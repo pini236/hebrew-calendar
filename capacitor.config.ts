@@ -5,18 +5,18 @@ const config: CapacitorConfig = {
   appId: 'com.luachyehudi.app',
   appName: 'לוח יהודי',
   webDir: 'dist-native',
-  backgroundColor: '#1F3E9E',
+  backgroundColor: '#1E5A45',
   android: {
-    backgroundColor: '#1F3E9E',
+    backgroundColor: '#1E5A45',
   },
   ios: {
-    backgroundColor: '#1F3E9E',
+    backgroundColor: '#1E5A45',
     contentInset: 'never',
   },
   plugins: {
     LocalNotifications: {
       smallIcon: 'ic_stat_luachi',
-      iconColor: '#E0A33A',
+      iconColor: '#E3A73A',
     },
   },
 };

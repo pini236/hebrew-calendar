@@ -263,7 +263,7 @@ body::before {
    ribbon's centre; --silk-half is half its width (it has room for the swing and the shadow) */
 .silk {
   position: absolute;
-  top: calc(0px - var(--silk-top));
+  top: -1px;
   z-index: 1;
   display: block;
   pointer-events: none;
@@ -833,9 +833,10 @@ input[type='time'] {
   border: 1px solid var(--line);
   box-shadow: var(--shadow);
 }
-/* the bookmark on "what matters now": sewn at the top edge, just past the rounded corner */
+/* the bookmark on "what matters now": sewn at the top edge, just past the rounded corner. The canvas
+   starts exactly at the card's outer edge (over its 1px border), so nothing shows above the card */
 .silk-hero {
-  top: calc(-1px - var(--silk-top));
+  top: -1px;
   inset-inline-end: calc(30px - var(--silk-half));
 }
 .hero-title {

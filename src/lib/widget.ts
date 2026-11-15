@@ -15,7 +15,8 @@ import { WEEKDAYS, WEEKDAYS_SHORT, addDays, dateKey, gregDateStr, hebDateStr, ra
 import type { City } from './cities';
 import { shabbatAlerts } from './ics';
 import type { Settings } from './store';
-import { EMPTY_STATE, SEFIRA_WORDS, countedHow, firstEve, offlineDay, omerYear, tzeitOn, type OmerState } from './seasons/omer';
+import { isHe, lang } from './i18n';
+import { EMPTY_STATE, SEFIRA_WORDS, countEnglish, countPlain, countedHow, firstEve, offlineDay, omerPrefs, omerYear, tzeitOn, type OmerState } from './seasons/omer';
 
 export interface WidgetZman {
   /** label, e.g. "סוף זמן ק״ש" */
@@ -72,6 +73,8 @@ export interface WidgetData {
   generated: number;
   /** the app's colour scheme: the widget follows it ('auto' = the phone's) */
   theme: 'light' | 'dark' | 'auto';
+  /** the app's language (the Omer widget writes in it; the main widget is Hebrew) */
+  lang?: 'he' | 'en';
   days: WidgetDay[];
   /** Shabbatot and Yamim Tovim in the range, in order */
   hol: WidgetHoly[];
@@ -89,9 +92,15 @@ export interface WidgetOmer {
   c: number;
   /** days on Shabbat or Yom Tov (the app can't be told about them), bit k-1 */
   f: number;
-  /** the seven sefirot, and their "within" forms ("שבחסד") */
+  /** the seven sefirot (also the weeks' labels) and their "within" forms ("שבחסד"), in the app's language */
   sw: string[];
   sp: string[];
+  /** the language of the texts */
+  l?: 'he' | 'en';
+  /** the 49 counts in the user's nusach, without niqqud: "היום שלושה ושלושים יום, שהם ארבעה שבועות וחמישה ימים לעומר" */
+  ct?: string[];
+  /** when the count begins: "ליל ט״ז בניסן · 22 באפריל" */
+  st?: string;
 }
 
 const LABEL_KINDS: Kind[] = ['yomtov', 'cholhamoed', 'fast', 'erev', 'minor', 'roshchodesh', 'special-shabbat', 'parasha', 'modern'];
@@ -209,7 +218,7 @@ export function buildWidgetData(from: Date, days: number, city: City, s: Setting
     if (!open && cn && (!hv || cn.getTime() > hv.getTime())) open = { c: cn, day: d };
   }
 
-  return { v: 1, city: city.name, tz: city.tz, generated: Date.now(), theme: s.theme ?? 'light', days: out, hol, om: widgetOmer(from, city, s, omer) };
+  return { v: 1, city: city.name, tz: city.tz, generated: Date.now(), theme: s.theme ?? 'light', lang: lang(), days: out, hol, om: widgetOmer(from, city, s, omer) };
 }
 
 /** The season the Omer widget shows: this year's until two weeks after Shavuot, then next year's */
@@ -225,7 +234,13 @@ export function widgetOmer(from: Date, city: City, s: Settings, state: OmerState
     if (countedHow(state, y, k)) c += 2 ** (k - 1);
     if (offlineDay(y, k, city.il)) f += 2 ** (k - 1);
   }
-  return { y, t, c, f, sw: SEFIRA_WORDS.he, sp: SEFIRA_WORDS.in };
+  const he = isHe();
+  const nusach = omerPrefs(s.seasons?.omer).nusach;
+  const ct = Array.from({ length: 49 }, (_, i) => (he ? countPlain(i + 1, nusach) : countEnglish(i + 1).replace(/\.$/, '')));
+  // the second night of Pesach: the evening of 15 Nisan begins the night of 16 Nisan
+  const eve = gregDateStr(firstEve(y), false);
+  const st = he ? `ליל ט״ז בניסן · ${eve}` : `Night of 16 Nisan · ${eve}`;
+  return { y, t, c, f, sw: he ? SEFIRA_WORDS.he : SEFIRA_WORDS.en, sp: he ? SEFIRA_WORDS.in : SEFIRA_WORDS.inEn, l: he ? 'he' : 'en', ct, st };
 }
 
 /** What the widget shows at `now` — mirrors the native logic, used by the tests and the in-app preview */
@@ -338,16 +353,33 @@ export function widgetModel(data: WidgetData, now: Date): WidgetModel | null {
 /** a cell of the 7×7 field */
 export const CELL = { future: 0, counted: 1, missed: 2, passed: 3, today: 4, todayCounted: 5, assumed: 6 } as const;
 
+/** Lag BaOmer: its cell in the field has a small saffron dot */
+export const LAG_BAOMER = 33;
+
 export interface OmerWidgetModel {
   state: 'before' | 'count' | 'after';
+  /** Hebrew: right to left, gematria; English: left to right, digits */
+  he: boolean;
   /** the day shown: 1–49 (49 after the count), 0 before it */
   n: number;
-  /** "ל״ג" ('' before the count) */
+  /** the large figure in Frank Ruhl Libre: the day ("ל״ג" / "33"); before and after: "158", "הלילה", "43" */
   num: string;
-  /** "הוד שבהוד", or "ספירת העומר" before it */
+  /** count: "הוד שבהוד"; before and after: "ספירת העומר" */
   sefira: string;
-  /** "4 שבועות ו־5 ימים" · "תתחיל בעוד 12 ימים" · "ספרתם 47 מתוך 49" */
+  /** count: the count in the nusach; before: "ליל ט״ז בניסן · 22 באפריל"; after: "הספירה הושלמה" */
   sub: string;
+  /** before and after: the words around the large figure ("בעוד" 158 "ימים", 43 "מתוך 49") */
+  pre: string;
+  post: string;
+  /** the day of now is marked as counted in the app */
+  done: boolean;
+  /** "ספרתי" */
+  doneText: string;
+  /** before nightfall: the next count ("הספירה הבאה", "19:58") and the sky from dawn to that nightfall */
+  next: { label: string; short: string; time: string } | null;
+  band: { from: number; to: number; sunrise: number; sunset: number; now: number } | null;
+  /** the weeks' labels (the seven sefirot) */
+  weeks: string[];
   /** the 49 cells (CELL), day 1 first */
   cells: number[];
   /** the week of the day shown (1–7), 0 for none */
@@ -368,7 +400,7 @@ export function omerGem(n: number) {
   return s.length === 1 ? s + '׳' : s.slice(0, -1) + '״' + s.slice(-1);
 }
 
-/** "4 שבועות ו־5 ימים" (the widget is Hebrew) */
+/** "4 שבועות ו־5 ימים" */
 export function omerWeeksHe(n: number) {
   const w = Math.floor(n / 7);
   const d = n % 7;
@@ -379,9 +411,14 @@ export function omerWeeksHe(n: number) {
   return d === 1 ? `${weeks} ויום אחד` : `${weeks} ו־${d} ימים`;
 }
 
+/** "19:58" in the place's time zone (OmerWidgetModel.hhmm) */
+const hhmm = (t: number, tz: string) => timeFmt(tz || 'Asia/Jerusalem').format(new Date(t));
+
 export function omerWidgetModel(data: WidgetData, now: Date): OmerWidgetModel | null {
   const om = data.om;
   if (!om || om.t.length !== 50) return null;
+  const he = om.l !== 'en';
+  const T = (h: string, e: string) => (he ? h : e);
   const t = now.getTime();
   let n = 0;
   while (n < 49 && om.t[n] <= t) n++;
@@ -413,18 +450,63 @@ export function omerWidgetModel(data: WidgetData, now: Date): OmerWidgetModel | 
     else if (first === 0 || k < first) cells.push(CELL.passed);
     else cells.push(bit(om.f, k) ? CELL.assumed : CELL.missed);
   }
+  const title = T('ספירת העומר', 'Sefirat HaOmer');
+  const base = { he, cells, weeks: om.sw, done: false, doneText: T('ספרתי', 'Counted'), next: null, band: null };
 
   if (n === 0) {
     // days from today to the evening the count begins
     const e = new Date(om.t[0]);
     const days = Math.round((new Date(e.getFullYear(), e.getMonth(), e.getDate()).getTime() - midnight) / 86400000);
-    const sub = days <= 0 ? 'מתחילה הלילה' : days === 1 ? 'מתחילה מחר בערב' : `תתחיל בעוד ${days} ימים`;
-    return { state: 'before', n: 0, num: '', sefira: 'ספירת העומר', sub, cells, week: 0, wake };
+    const big =
+      days <= 0
+        ? { pre: '', num: T('הלילה', 'Tonight'), post: '' }
+        : days === 1
+          ? { pre: '', num: T('מחר', 'Tomorrow'), post: T('בערב', 'evening') }
+          : days === 2 && he
+            ? { pre: 'בעוד', num: 'יומיים', post: '' }
+            : { pre: T('בעוד', 'in'), num: String(days), post: T('ימים', 'days') };
+    // tonight: the hour instead of the date ("ליל ט״ז בניסן · 19:51")
+    const st = om.st ?? '';
+    const sub = days <= 0 && st.includes(' · ') ? `${st.slice(0, st.indexOf(' · '))} · ${hhmm(om.t[0], data.tz)}` : st;
+    return { ...base, state: 'before', n: 0, sefira: title, sub, ...big, week: 0, wake };
   }
-  const sefira = `${om.sw[(n - 1) % 7]} ${om.sp[Math.floor((n - 1) / 7)]}`;
   if (after) {
-    const sub = first ? `ספרתם ${counted} מתוך 49` : 'הספירה הושלמה';
-    return { state: 'after', n: 49, num: omerGem(49), sefira, sub, cells, week: 0, wake };
+    // the summary: how many days were marked here, or (for someone who doesn't mark them) the whole count
+    const big = first ? { pre: '', num: String(counted), post: T('מתוך 49', 'of 49') } : { pre: '', num: he ? omerGem(49) : '49', post: '' };
+    const sub = first ? T('הספירה הושלמה', 'The count is complete') : T('שבע שבתות תמימות', 'Seven complete weeks');
+    return { ...base, state: 'after', n: 49, sefira: title, sub, ...big, week: 0, wake };
   }
-  return { state: 'count', n, num: omerGem(n), sefira, sub: omerWeeksHe(n), cells, week: Math.floor((n - 1) / 7) + 1, wake };
+
+  // the count of now began at nightfall (t[n-1]); the next one begins at the coming nightfall (t[n])
+  let next: OmerWidgetModel['next'] = null;
+  let band: OmerWidgetModel['band'] = null;
+  const today = (data.days ?? []).find((d) => d.d === dateKey(now));
+  if (n < 49 && today) {
+    const [dawn, sunrise, sunset] = today.sk;
+    const end = om.t[n];
+    // (after nightfall the next count is tomorrow's: no band until tomorrow's dawn)
+    if (t >= dawn && t < end && end - dawn < 20 * HOUR) {
+      // before nightfall: the day's sky from dawn to the next count, "now" moving toward it
+      next = { label: T('הספירה הבאה', 'Next count'), short: T('הבאה', 'Next'), time: hhmm(end, data.tz) };
+      band = { from: dawn, to: end, sunrise, sunset, now: t };
+      wake = Math.min(wake, t + 20 * 60000);
+    } else if (t < dawn) {
+      wake = Math.min(wake, dawn + 1000);
+    }
+  }
+  return {
+    ...base,
+    state: 'count',
+    n,
+    num: he ? omerGem(n) : String(n),
+    sefira: `${om.sw[(n - 1) % 7]} ${om.sp[Math.floor((n - 1) / 7)]}`,
+    sub: om.ct?.[n - 1] ?? (he ? omerWeeksHe(n) : ''),
+    pre: '',
+    post: '',
+    done: cells[n - 1] === CELL.todayCounted,
+    next,
+    band,
+    week: Math.floor((n - 1) / 7) + 1,
+    wake,
+  };
 }

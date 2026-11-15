@@ -3,6 +3,8 @@ import { CITIES } from '../src/lib/cities';
 import { DEFAULT_SETTINGS } from '../src/lib/store';
 import { gematriya } from '@hebcal/core';
 import { EMPTY_STATE, mark } from '../src/lib/seasons/omer';
+import { setLang } from '../src/lib/i18n';
+import { timeFmt } from '../src/lib/cal';
 import { CELL, buildWidgetData, omerGem, omerWeeksHe, omerWidgetModel, widgetModel, widgetOmer, widgetView, type WidgetData } from '../src/lib/widget';
 
 let pass = 0;
@@ -88,7 +90,10 @@ ok(rhEve.holy?.candlesToday === true, 'erev Rosh Hashana: candles today');
 
 /* ---------------- the Omer widget: omerWidgetModel (mirrors OmerWidgetModel.java) ---------------- */
 ok(!!data.om && data.om.t.length === 50 && data.om.y === 5787, 'widget data carries the coming Omer (5787)');
-ok(JSON.stringify(data.om).length < 1500, `omer block is small: ${JSON.stringify(data.om).length} bytes`);
+ok(JSON.stringify(data.om).length < 5000, `omer block is small: ${JSON.stringify(data.om).length} bytes`);
+ok(data.lang === 'he' && data.om!.l === 'he' && data.om!.ct!.length === 49 && data.om!.st === 'ליל ט״ז בניסן · 22 באפריל', `omer texts: ${data.om!.st}`);
+ok(data.om!.ct![32] === 'היום שלושה ושלושים יום, שהם ארבעה שבועות וחמישה ימים לעומר', `count line (sefard): ${data.om!.ct![32]}`);
+ok(buildWidgetData(new Date(2026, 10, 20, 12), 1, jer, { ...DEFAULT_SETTINGS, seasons: { omer: { nusach: 'ashkenaz' } } }).om!.ct![32].endsWith('בעומר'), 'count line (ashkenaz): בעומר');
 for (let n = 1; n <= 49; n++) ok(omerGem(n) === gematriya(n), `widget gematria ${n}: ${omerGem(n)} = ${gematriya(n)}`);
 ok(omerWeeksHe(1) === 'יום אחד' && omerWeeksHe(7) === 'שבוע אחד' && omerWeeksHe(8) === 'שבוע אחד ויום אחד' && omerWeeksHe(33) === '4 שבועות ו־5 ימים' && omerWeeksHe(49) === '7 שבועות', 'widget weeks text');
 
@@ -100,24 +105,51 @@ const ow = (iso: string) => omerWidgetModel({ om } as WidgetData, new Date(iso))
 ok(om.t.every((t, i) => i === 0 || t - om.t[i - 1] > 23 * 3600000), 'one nightfall a day');
 ok(new Date(om.t[0]).getDate() === 22 && new Date(om.t[0]).getHours() === 19, `first count: the evening of 22.4 (${new Date(om.t[0])})`);
 const before = ow('2027-04-10T12:00:00+03:00');
-ok(before.state === 'before' && before.sub === 'תתחיל בעוד 12 ימים' && before.cells[0] === CELL.today && before.n === 0, `before: ${before.sub}`);
-ok(ow('2027-04-21T12:00:00+03:00').sub === 'מתחילה מחר בערב' && ow('2027-04-22T12:00:00+03:00').sub === 'מתחילה הלילה', 'before: tomorrow evening, tonight');
+ok(before.state === 'before' && before.pre === 'בעוד' && before.num === '12' && before.post === 'ימים' && before.sefira === 'ספירת העומר' && before.sub === 'ליל ט״ז בניסן · 22 באפריל' && before.cells[0] === CELL.today && before.n === 0, `before: ${before.pre} ${before.num} ${before.post} · ${before.sub}`);
+const tomorrow = ow('2027-04-21T12:00:00+03:00');
+const tonight = ow('2027-04-22T12:00:00+03:00');
+ok(ow('2027-04-20T12:00:00+03:00').num === 'יומיים' && ow('2027-04-20T12:00:00+03:00').pre === 'בעוד', 'before: בעוד יומיים');
+ok(tomorrow.num === 'מחר' && tomorrow.post === 'בערב' && tonight.num === 'הלילה' && /^ליל ט״ז בניסן · 19:\d\d$/.test(tonight.sub), `before: tomorrow evening, tonight (${tonight.sub})`);
 const first = ow('2027-04-22T21:00:00+03:00');
-ok(first.state === 'count' && first.n === 1 && first.num === 'א׳' && first.sefira === 'חסד שבחסד' && first.sub === 'יום אחד', `first night: ${first.num} ${first.sefira}`);
+ok(first.state === 'count' && first.n === 1 && first.num === 'א׳' && first.sefira === 'חסד שבחסד' && first.sub === 'היום יום אחד לעומר' && !first.next && !first.band, `first night: ${first.num} ${first.sefira} ${first.sub}`);
 // Lag BaOmer: day 33 begins at nightfall on Monday 24.5; at 17:00 it is still day 32
 const day32 = ow('2027-05-24T17:00:00+03:00');
 const lag = ow('2027-05-24T21:00:00+03:00');
-ok(day32.n === 32 && lag.n === 33 && lag.num === 'ל״ג' && lag.sefira === 'הוד שבהוד' && lag.sub === '4 שבועות ו־5 ימים' && lag.week === 5, `day turns at nightfall: ${day32.n} → ${lag.n} ${lag.sefira}`);
+ok(day32.n === 32 && lag.n === 33 && lag.num === 'ל״ג' && lag.sefira === 'הוד שבהוד' && lag.sub === 'היום שלושה ושלושים יום, שהם ארבעה שבועות וחמישה ימים לעומר' && lag.week === 5, `day turns at nightfall: ${day32.n} → ${lag.n} ${lag.sefira}`);
 ok(day32.cells[31] === CELL.todayCounted && lag.cells[32] === CELL.today && lag.cells[31] === CELL.counted, 'the day of now: counted, then tonight');
 ok(lag.cells[19] === CELL.missed && lag.cells[1] === CELL.assumed && lag.cells[40] === CELL.future, 'missed day 20, Shabbat assumed, the future empty');
 ok(day32.wake <= om.t[32] + 1000 && day32.wake > Date.parse('2027-05-24T17:00:00+03:00'), 'the widget wakes at nightfall');
 const after = ow('2027-06-13T12:00:00+03:00');
-ok(after.state === 'after' && after.num === 'מ״ט' && after.sub === 'ספרתם 26 מתוך 49' && after.week === 0, `after: ${after.sub}`);
+ok(after.state === 'after' && after.num === '26' && after.post === 'מתוך 49' && after.sub === 'הספירה הושלמה' && after.week === 0, `after: ${after.num} ${after.post}`);
 const none = omerWidgetModel({ om: widgetOmer(new Date(2027, 3, 1, 12), jer, DEFAULT_SETTINGS) } as WidgetData, new Date('2027-05-03T10:00:00+03:00'))!;
 ok(none.cells.slice(0, none.n - 1).every((c) => c === CELL.passed) && none.cells[none.n - 1] === CELL.today, 'no marks: the days that went by are quiet, none missed');
 // two weeks after Shavuot the widget moves on to next year's count
 ok(widgetOmer(new Date(2027, 5, 30, 12), jer, DEFAULT_SETTINGS).y === 5788, 'after the season: next year');
 ok(omerWidgetModel({} as WidgetData, new Date()) === null, 'no Omer data: null');
+
+// before nightfall: the sky from dawn to the next count, and its hour; none after nightfall (the next count is tomorrow's)
+const may = buildWidgetData(new Date(2027, 4, 20, 12), 10, jer, DEFAULT_SETTINGS, st);
+const owd = (iso: string) => omerWidgetModel(may, new Date(iso))!;
+const lagDay = owd('2027-05-25T15:46:00+03:00');
+ok(lagDay.n === 33 && !!lagDay.band && !!lagDay.next && lagDay.next.label === 'הספירה הבאה' && lagDay.next.time === timeFmt(jer.tz).format(new Date(may.om!.t[33])), `day: next count ${lagDay.next?.time}`);
+ok(lagDay.band!.from === may.days.find((d) => d.d === '2027-05-25')!.sk[0] && lagDay.band!.to === may.om!.t[33], 'day: the sky from dawn to nightfall');
+ok(lagDay.wake <= Date.parse('2027-05-25T16:06:00+03:00'), 'day: the sky moves (wake within twenty minutes)');
+const lagNight = owd('2027-05-24T21:00:00+03:00');
+ok(lagNight.n === 33 && !lagNight.band && !lagNight.next, 'night: no sky, the next count is tomorrow');
+ok(!owd('2027-05-25T03:00:00+03:00').band && owd('2027-05-25T03:00:00+03:00').wake <= may.days.find((d) => d.d === '2027-05-25')!.sk[0] + 1000, 'before dawn: no sky, wake at dawn');
+// done: the day of now marked in the app
+const st33 = mark(st, 5787, 33, 'night', 0);
+const done = omerWidgetModel(buildWidgetData(new Date(2027, 4, 24, 12), 3, jer, DEFAULT_SETTINGS, st33), new Date('2027-05-24T21:00:00+03:00'))!;
+ok(done.done && done.doneText === 'ספרתי' && done.cells[32] === CELL.todayCounted && !lagNight.done, 'done: ספרתי');
+// the week's labels are the sefirot
+ok(lag.weeks.join(' ') === 'חסד גבורה תפארת נצח הוד יסוד מלכות', 'weeks');
+// English: digits, the sefira in transliteration, the count in English
+setLang('en');
+const en = buildWidgetData(new Date(2027, 4, 20, 12), 10, jer, DEFAULT_SETTINGS, st);
+setLang('he');
+const enLag = omerWidgetModel(en, new Date('2027-05-25T15:46:00+03:00'))!;
+ok(en.lang === 'en' && !enLag.he && enLag.num === '33' && enLag.sefira === "Hod sheb'Hod" && enLag.sub === 'Today is 33 days, which are 4 weeks and 5 days of the Omer' && enLag.next?.label === 'Next count', `English: ${enLag.num} ${enLag.sefira} · ${enLag.sub}`);
+ok(en.om!.st === 'Night of 16 Nisan · April 22' && enLag.weeks[4] === 'Hod', `English start: ${en.om!.st}`);
 
 console.log(`widget: ${data.days.length} days, ${Math.round(size / 1024)} KB json, built in ${ms} ms`);
 console.log('example:', JSON.stringify(morning));

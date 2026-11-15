@@ -1,8 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Sefirat HaOmer, 2×2: the day and its sefira above the 49 days.
-     The same page as the main widget (paper, hairline edge, the silk ribbon's frames, the day in Frank Ruhl Libre as
-     a bitmap) and the 7×7 field as three tinted masks (OmerWidgetDraw). OmerWidgetProvider sets the colours in code
-     (values/widget_colors.xml and values-night) so light and dark never mix. Its HTML twin: OmerWidgetMock.tsx. -->
+<!-- Sefirat HaOmer, 2×2: the day (or the countdown) and one line above the 49 days.
+     The same page as the main widget (paper, a hairline edge, the silk ribbon's frames, Frank Ruhl Libre as bitmaps from
+     WidgetDraw.date), the 7×7 field as three tinted masks (OmerWidgetDraw). OmerWidgetProvider sets the colours in code
+     (values/widget_colors.xml and values-night, chosen by the app's colour scheme) and shows the parts of the state.
+     Its HTML twin: src/components/seasons/OmerWidgetMock.tsx. -->
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@android:id/background"
     android:layout_width="match_parent"
@@ -27,108 +28,6 @@
         android:scaleType="fitXY"
         android:src="@drawable/widget_edge" />
 
-    <ViewFlipper
-        android:id="@+id/w_ribbon"
-        android:layout_width="22dp"
-        android:layout_height="22dp"
-        android:layout_gravity="top|left"
-        android:layout_marginLeft="8dp"
-        android:autoStart="true"
-        android:flipInterval="91"
-        android:importantForAccessibility="no">
-        <!-- the frames of scripts/build-widget-ribbon.mjs (copied from widget_s.xml): the silk ribbon at the top inline-end corner,
-             as on the app's "now" card, clear of the number -->
-        <ImageView android:layout_width="22dp" android:layout_height="22dp" android:src="@drawable/widget_ribbon_f00" />
-        <ImageView android:layout_width="22dp" android:layout_height="22dp" android:src="@drawable/widget_ribbon_f00" />
-        <ImageView android:layout_width="22dp" android:layout_height="22dp" android:src="@drawable/widget_ribbon_f00" />
-        <ImageView android:layout_width="22dp" android:layout_height="22dp" android:src="@drawable/widget_ribbon_f00" />
-        <ImageView android:layout_width="22dp" android:layout_height="22dp" android:src="@drawable/widget_ribbon_f00" />
-        <ImageView android:layout_width="22dp" android:layout_height="22dp" android:src="@drawable/widget_ribbon_f00" />
-        <ImageView android:layout_width="22dp" android:layout_height="22dp" android:src="@drawable/widget_ribbon_f00" />
-        <ImageView android:layout_width="22dp" android:layout_height="22dp" android:src="@drawable/widget_ribbon_f00" />
-        <ImageView android:layout_width="22dp" android:layout_height="22dp" android:src="@drawable/widget_ribbon_f00" />
-        <ImageView android:layout_width="22dp" android:layout_height="22dp" android:src="@drawable/widget_ribbon_f00" />
-        <ImageView android:layout_width="22dp" android:layout_height="22dp" android:src="@drawable/widget_ribbon_f00" />
-        <ImageView android:layout_width="22dp" android:layout_height="22dp" android:src="@drawable/widget_ribbon_f00" />
-        <ImageView android:layout_width="22dp" android:layout_height="22dp" android:src="@drawable/widget_ribbon_f00" />
-        <ImageView android:layout_width="22dp" android:layout_height="22dp" android:src="@drawable/widget_ribbon_f00" />
-        <ImageView android:layout_width="22dp" android:layout_height="22dp" android:src="@drawable/widget_ribbon_f00" />
-        <ImageView android:layout_width="22dp" android:layout_height="22dp" android:src="@drawable/widget_ribbon_f00" />
-        <ImageView android:layout_width="22dp" android:layout_height="22dp" android:src="@drawable/widget_ribbon_f00" />
-        <ImageView android:layout_width="22dp" android:layout_height="22dp" android:src="@drawable/widget_ribbon_f00" />
-        <ImageView android:layout_width="22dp" android:layout_height="22dp" android:src="@drawable/widget_ribbon_f00" />
-        <ImageView android:layout_width="22dp" android:layout_height="22dp" android:src="@drawable/widget_ribbon_f00" />
-        <ImageView android:layout_width="22dp" android:layout_height="22dp" android:src="@drawable/widget_ribbon_f00" />
-        <ImageView android:layout_width="22dp" android:layout_height="22dp" android:src="@drawable/widget_ribbon_f00" />
-        <ImageView android:layout_width="22dp" android:layout_height="22dp" android:src="@drawable/widget_ribbon_f00" />
-        <ImageView android:layout_width="22dp" android:layout_height="22dp" android:src="@drawable/widget_ribbon_f00" />
-        <ImageView android:layout_width="22dp" android:layout_height="22dp" android:src="@drawable/widget_ribbon_f00" />
-        <ImageView android:layout_width="22dp" android:layout_height="22dp" android:src="@drawable/widget_ribbon_f00" />
-        <ImageView android:layout_width="22dp" android:layout_height="22dp" android:src="@drawable/widget_ribbon_f00" />
-        <ImageView android:layout_width="22dp" android:layout_height="22dp" android:src="@drawable/widget_ribbon_f00" />
-        <ImageView android:layout_width="22dp" android:layout_height="22dp" android:src="@drawable/widget_ribbon_f00" />
-        <ImageView android:layout_width="22dp" android:layout_height="22dp" android:src="@drawable/widget_ribbon_f00" />
-        <ImageView android:layout_width="22dp" android:layout_height="22dp" android:src="@drawable/widget_ribbon_f00" />
-        <ImageView android:layout_width="22dp" android:layout_height="22dp" android:src="@drawable/widget_ribbon_f00" />
-        <ImageView android:layout_width="22dp" android:layout_height="22dp" android:src="@drawable/widget_ribbon_f00" />
-        <ImageView android:layout_width="22dp" android:layout_height="22dp" android:src="@drawable/widget_ribbon_f00" />
-        <ImageView android:layout_width="22dp" android:layout_height="22dp" android:src="@drawable/widget_ribbon_f00" />
-        <ImageView android:layout_width="22dp" android:layout_height="22dp" android:src="@drawable/widget_ribbon_f00" />
-        <ImageView android:layout_width="22dp" android:layout_height="22dp" android:src="@drawable/widget_ribbon_f00" />
-        <ImageView android:layout_width="22dp" android:layout_height="22dp" android:src="@drawable/widget_ribbon_f00" />
-        <ImageView android:layout_width="22dp" android:layout_height="22dp" android:src="@drawable/widget_ribbon_f00" />
-        <ImageView android:layout_width="22dp" android:layout_height="22dp" android:src="@drawable/widget_ribbon_f00" />
-        <ImageView android:layout_width="22dp" android:layout_height="22dp" android:src="@drawable/widget_ribbon_f01" />
-        <ImageView android:layout_width="22dp" android:layout_height="22dp" android:src="@drawable/widget_ribbon_f02" />
-        <ImageView android:layout_width="22dp" android:layout_height="22dp" android:src="@drawable/widget_ribbon_f03" />
-        <ImageView android:layout_width="22dp" android:layout_height="22dp" android:src="@drawable/widget_ribbon_f04" />
-        <ImageView android:layout_width="22dp" android:layout_height="22dp" android:src="@drawable/widget_ribbon_f05" />
-        <ImageView android:layout_width="22dp" android:layout_height="22dp" android:src="@drawable/widget_ribbon_f06" />
-        <ImageView android:layout_width="22dp" android:layout_height="22dp" android:src="@drawable/widget_ribbon_f07" />
-        <ImageView android:layout_width="22dp" android:layout_height="22dp" android:src="@drawable/widget_ribbon_f08" />
-        <ImageView android:layout_width="22dp" android:layout_height="22dp" android:src="@drawable/widget_ribbon_f09" />
-        <ImageView android:layout_width="22dp" android:layout_height="22dp" android:src="@drawable/widget_ribbon_f10" />
-        <ImageView android:layout_width="22dp" android:layout_height="22dp" android:src="@drawable/widget_ribbon_f11" />
-        <ImageView android:layout_width="22dp" android:layout_height="22dp" android:src="@drawable/widget_ribbon_f12" />
-        <ImageView android:layout_width="22dp" android:layout_height="22dp" android:src="@drawable/widget_ribbon_f13" />
-        <ImageView android:layout_width="22dp" android:layout_height="22dp" android:src="@drawable/widget_ribbon_f14" />
-        <ImageView android:layout_width="22dp" android:layout_height="22dp" android:src="@drawable/widget_ribbon_f15" />
-        <ImageView android:layout_width="22dp" android:layout_height="22dp" android:src="@drawable/widget_ribbon_f16" />
-        <ImageView android:layout_width="22dp" android:layout_height="22dp" android:src="@drawable/widget_ribbon_f17" />
-        <ImageView android:layout_width="22dp" android:layout_height="22dp" android:src="@drawable/widget_ribbon_f18" />
-        <ImageView android:layout_width="22dp" android:layout_height="22dp" android:src="@drawable/widget_ribbon_f19" />
-        <ImageView android:layout_width="22dp" android:layout_height="22dp" android:src="@drawable/widget_ribbon_f20" />
-        <ImageView android:layout_width="22dp" android:layout_height="22dp" android:src="@drawable/widget_ribbon_f21" />
-        <ImageView android:layout_width="22dp" android:layout_height="22dp" android:src="@drawable/widget_ribbon_f22" />
-        <ImageView android:layout_width="22dp" android:layout_height="22dp" android:src="@drawable/widget_ribbon_f23" />
-        <ImageView android:layout_width="22dp" android:layout_height="22dp" android:src="@drawable/widget_ribbon_f24" />
-        <ImageView android:layout_width="22dp" android:layout_height="22dp" android:src="@drawable/widget_ribbon_f25" />
-        <ImageView android:layout_width="22dp" android:layout_height="22dp" android:src="@drawable/widget_ribbon_f26" />
-        <ImageView android:layout_width="22dp" android:layout_height="22dp" android:src="@drawable/widget_ribbon_f27" />
-        <ImageView android:layout_width="22dp" android:layout_height="22dp" android:src="@drawable/widget_ribbon_f28" />
-        <ImageView android:layout_width="22dp" android:layout_height="22dp" android:src="@drawable/widget_ribbon_f29" />
-        <ImageView android:layout_width="22dp" android:layout_height="22dp" android:src="@drawable/widget_ribbon_f30" />
-        <ImageView android:layout_width="22dp" android:layout_height="22dp" android:src="@drawable/widget_ribbon_f31" />
-        <ImageView android:layout_width="22dp" android:layout_height="22dp" android:src="@drawable/widget_ribbon_f32" />
-        <ImageView android:layout_width="22dp" android:layout_height="22dp" android:src="@drawable/widget_ribbon_f33" />
-        <ImageView android:layout_width="22dp" android:layout_height="22dp" android:src="@drawable/widget_ribbon_f34" />
-        <ImageView android:layout_width="22dp" android:layout_height="22dp" android:src="@drawable/widget_ribbon_f35" />
-        <ImageView android:layout_width="22dp" android:layout_height="22dp" android:src="@drawable/widget_ribbon_f36" />
-        <ImageView android:layout_width="22dp" android:layout_height="22dp" android:src="@drawable/widget_ribbon_f37" />
-        <ImageView android:layout_width="22dp" android:layout_height="22dp" android:src="@drawable/widget_ribbon_f38" />
-        <ImageView android:layout_width="22dp" android:layout_height="22dp" android:src="@drawable/widget_ribbon_f39" />
-        <ImageView android:layout_width="22dp" android:layout_height="22dp" android:src="@drawable/widget_ribbon_f40" />
-        <ImageView android:layout_width="22dp" android:layout_height="22dp" android:src="@drawable/widget_ribbon_f41" />
-        <ImageView android:layout_width="22dp" android:layout_height="22dp" android:src="@drawable/widget_ribbon_f42" />
-        <ImageView android:layout_width="22dp" android:layout_height="22dp" android:src="@drawable/widget_ribbon_f43" />
-        <ImageView android:layout_width="22dp" android:layout_height="22dp" android:src="@drawable/widget_ribbon_f44" />
-        <ImageView android:layout_width="22dp" android:layout_height="22dp" android:src="@drawable/widget_ribbon_f45" />
-        <ImageView android:layout_width="22dp" android:layout_height="22dp" android:src="@drawable/widget_ribbon_f46" />
-        <ImageView android:layout_width="22dp" android:layout_height="22dp" android:src="@drawable/widget_ribbon_f47" />
-        <ImageView android:layout_width="22dp" android:layout_height="22dp" android:src="@drawable/widget_ribbon_f48" />
-        <ImageView android:layout_width="22dp" android:layout_height="22dp" android:src="@drawable/widget_ribbon_f49" />
-    </ViewFlipper>
-
     <LinearLayout
         android:id="@+id/w_content"
         android:layout_width="match_parent"
@@ -136,52 +35,115 @@
         android:orientation="vertical"
         android:paddingLeft="12dp"
         android:paddingRight="12dp"
-        android:paddingTop="18dp"
+        android:paddingTop="14dp"
         android:paddingBottom="12dp">
-        <ImageView
-            android:id="@+id/w_num"
-            android:layout_width="match_parent"
-            android:layout_height="30dp"
-            android:scaleType="fitEnd" />
-        <TextView
-            android:id="@+id/w_title"
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:fontFamily="serif"
-            android:gravity="start"
-            android:includeFontPadding="false"
-            android:maxLines="2"
-            android:textColor="@color/widget_date"
-            android:textSize="16sp"
-            android:visibility="gone" />
+            android:orientation="horizontal">
+            <ImageView
+                android:id="@+id/w_num"
+                android:layout_width="wrap_content"
+                android:layout_height="34dp"
+                android:adjustViewBounds="true"
+                android:importantForAccessibility="no"
+                android:scaleType="fitCenter" />
+            <ImageView
+                android:id="@+id/w_bignum"
+                android:layout_width="wrap_content"
+                android:layout_height="30dp"
+                android:adjustViewBounds="true"
+                android:importantForAccessibility="no"
+                android:scaleType="fitCenter" />
+            <FrameLayout
+                android:layout_width="0dp"
+                android:layout_height="1dp"
+                android:layout_weight="1" />
+            <LinearLayout
+                android:id="@+id/w_next"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:gravity="end"
+                android:orientation="vertical"
+                android:visibility="gone">
+                <TextView
+                    android:id="@+id/w_next_label"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:gravity="start"
+                    android:includeFontPadding="false"
+                    android:textColor="@color/widget_muted"
+                    android:textSize="11sp"
+                    android:maxLines="1" />
+                <TextView
+                    android:id="@+id/w_next_time"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:fontFamily="sans-serif-medium"
+                    android:gravity="start"
+                    android:includeFontPadding="false"
+                    android:textColor="@color/widget_ink"
+                    android:textSize="13sp"
+                    android:fontFeatureSettings="tnum"
+                    android:maxLines="1" />
+            </LinearLayout>
+            <LinearLayout
+                android:id="@+id/w_done"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="0dp"
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
+                android:visibility="gone">
+                <ImageView
+                    android:id="@+id/w_done_dot"
+                    android:layout_width="7dp"
+                    android:layout_height="7dp"
+                    android:importantForAccessibility="no"
+                    android:src="@drawable/widget_dot" />
+                <TextView
+                    android:id="@+id/w_done_text"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:fontFamily="sans-serif-medium"
+                    android:gravity="start"
+                    android:includeFontPadding="false"
+                    android:textColor="@color/widget_green"
+                    android:textSize="12sp"
+                    android:layout_marginStart="5dp"
+                    android:maxLines="1" />
+            </LinearLayout>
+            <TextView
+                android:id="@+id/w_post"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:gravity="start"
+                android:includeFontPadding="false"
+                android:textColor="@color/widget_muted"
+                android:textSize="13sp"
+                android:maxLines="1" />
+        </LinearLayout>
         <TextView
             android:id="@+id/w_sef"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="4dp"
-            android:ellipsize="end"
+            android:layout_height="16dp"
             android:fontFamily="sans-serif-medium"
-            android:gravity="start"
             android:includeFontPadding="false"
-            android:maxLines="1"
             android:textColor="@color/widget_ink"
-            android:textSize="11sp" />
-        <TextView
-            android:id="@+id/w_sub"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="2dp"
+            android:textSize="12sp"
+            android:layout_marginTop="4dp"
+            android:autoSizeMaxTextSize="12sp"
+            android:autoSizeMinTextSize="9sp"
+            android:autoSizeStepGranularity="1sp"
+            android:autoSizeTextType="uniform"
             android:ellipsize="end"
-            android:gravity="start"
-            android:includeFontPadding="false"
-            android:maxLines="2"
-            android:textColor="@color/widget_muted"
-            android:textSize="11sp" />
+            android:gravity="start|center_vertical"
+            android:maxLines="1" />
         <FrameLayout
             android:id="@+id/w_field"
             android:layout_width="match_parent"
             android:layout_height="0dp"
-            android:layout_marginTop="8dp"
+            android:layout_marginTop="6dp"
             android:layout_weight="1">
             <ImageView
                 android:id="@+id/w_f_muted"
@@ -190,7 +152,7 @@
                 android:importantForAccessibility="no"
                 android:scaleType="fitCenter" />
             <ImageView
-                android:id="@+id/w_f_date"
+                android:id="@+id/w_f_green"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
                 android:importantForAccessibility="no"

@@ -1,10 +1,10 @@
-import { Suspense, lazy, useCallback, useEffect, useMemo, useState } from 'react';
+import { Suspense, lazy, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { DEFAULT_CITY, cityLabel, findCity } from './lib/cities';
 import { isHe, resolveLang, setLang, tr } from './lib/i18n';
-import { addDays, dateKey, dayItems, eventsOn, timeFmt, today, zmanim } from './lib/cal';
+import { addDays, dateKey, dayItems, daysBetween, eventsOn, fromKey, sameDay, timeFmt, today, zmanim } from './lib/cal';
 import { DEFAULT_SETTINGS, EVENTS_KEY, SETTINGS_KEY, mergeSettings, usePersistent, type MyEvent, type Settings } from './lib/store';
 import { TodayTab } from './components/TodayTab';
-import { MonthTab, shiftMonth } from './components/MonthTab';
+import { MonthTab, monthBounds, shiftMonth } from './components/MonthTab';
 import { ZmanimTab } from './components/ZmanimTab';
 import { MineTab } from './components/MineTab';
 import { SettingsTab } from './components/SettingsTab';
@@ -22,6 +22,31 @@ import { planNotifications } from './lib/alerts';
 
 /** The five destinations, in thumb order (right to left) */
 type Tab = 'today' | 'month' | 'zmanim' | 'mine' | 'settings';
+
+/* ---------- where the user was: the tab, the day and the month, kept across a reload or a resume ---------- */
+const VIEW_KEY = 'luach.view.v1';
+const VIEW_TTL = 3 * 3600000; // after three hours away the app opens on today again
+interface SavedView {
+  tab: Tab;
+  selected: string;
+  anchor: string;
+  /** the selected day was today when saved: it follows the calendar to the new today */
+  wasToday: boolean;
+  at: number;
+}
+function loadView(): { tab: Tab; selected: Date; anchor: Date } {
+  const t = today();
+  try {
+    const v = JSON.parse(localStorage.getItem(VIEW_KEY) || 'null') as SavedView | null;
+    if (v && Date.now() - v.at < VIEW_TTL && /^\d{4}-\d{2}-\d{2}$/.test(v.selected) && /^\d{4}-\d{2}-\d{2}$/.test(v.anchor)) {
+      const tab = (['today', 'month', 'zmanim', 'mine', 'settings'] as Tab[]).includes(v.tab) ? v.tab : 'today';
+      return { tab, selected: v.wasToday ? t : fromKey(v.selected), anchor: fromKey(v.anchor) };
+    }
+  } catch {
+    /* storage unavailable */
+  }
+  return { tab: 'today', selected: t, anchor: t };
+}
 const TABS: { id: Tab; icon: string }[] = [
   { id: 'today', icon: 'tabToday' },
   { id: 'month', icon: 'tabMonth' },
@@ -48,9 +73,20 @@ export default function App() {
   // the interface language, set before anything renders text (Hebrew or English, from the phone or the settings)
   const language = resolveLang(settings.lang);
   setLang(language);
-  const [tab, setTab] = useState<Tab>('today');
-  const [selected, setSelected] = useState(today);
-  const [anchor, setAnchor] = useState(today);
+  const [initial] = useState(loadView);
+  const [tab, setTab] = useState<Tab>(initial.tab);
+  const [selected, setSelected] = useState(initial.selected);
+  const [anchor, setAnchor] = useState(initial.anchor);
+
+  // remember the view, so a reload, or the phone closing the app in the background, comes back to it
+  useEffect(() => {
+    try {
+      const v: SavedView = { tab, selected: dateKey(selected), anchor: dateKey(anchor), wasToday: sameDay(selected, today()), at: Date.now() };
+      localStorage.setItem(VIEW_KEY, JSON.stringify(v));
+    } catch {
+      /* storage unavailable */
+    }
+  }, [tab, selected, anchor]);
   const [now, setNow] = useState(() => new Date());
   const [screen, setScreen] = useState<ScreenState>(null);
   const [editing, setEditing] = useState<MyEvent | null>(null);
@@ -175,9 +211,20 @@ export default function App() {
     return () => window.removeEventListener('popstate', onPop);
   }, []);
 
+  // each tab keeps its own scroll position; tapping the open tab again goes back to its top
+  const scrolls = useRef<Partial<Record<Tab, number>>>({});
+  const tabRef = useRef(tab);
+  tabRef.current = tab;
   const showTab = useCallback((t: Tab) => {
+    const from = tabRef.current;
+    if (t === from) {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      return;
+    }
+    scrolls.current[from] = window.scrollY;
     setTab(t);
-    window.scrollTo({ top: 0 });
+    const y = scrolls.current[t] ?? 0;
+    requestAnimationFrame(() => window.scrollTo({ top: y }));
   }, []);
 
   /** go to a date: from the month and zmanim tabs stay there, from anywhere else open that day's agenda */
@@ -190,14 +237,14 @@ export default function App() {
     },
     [closeScreen],
   );
-  const openDay = useCallback(
-    (d: Date) => {
-      setSelected(d);
-      setAnchor(d);
-      showTab('today');
-    },
-    [showTab],
-  );
+  // a day's full agenda: Today, from its top
+  const openDay = useCallback((d: Date) => {
+    scrolls.current[tabRef.current] = window.scrollY;
+    setSelected(d);
+    setAnchor(d);
+    setTab('today');
+    requestAnimationFrame(() => window.scrollTo({ top: 0 }));
+  }, []);
   const select = useCallback((d: Date) => {
     setSelected(d);
     setAnchor(d);
@@ -297,8 +344,11 @@ export default function App() {
             onOpenDay={openDay}
             onMonth={(d) => setAnchor((a) => shiftMonth(a, d, settings.monthMode))}
             onMode={(m) => {
+              // keep the month in view: the selected day if it's on this page, otherwise the middle of the page
+              const { first, last } = monthBounds(anchor, settings.monthMode);
+              const onPage = dateKey(selected) >= dateKey(first) && dateKey(selected) <= dateKey(last);
+              setAnchor(onPage ? selected : addDays(first, Math.floor(daysBetween(first, last) / 2)));
               setSettings((s) => ({ ...s, monthMode: m }));
-              setAnchor(selected);
             }}
             onToday={toToday}
             onJump={jump}

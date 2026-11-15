@@ -74,17 +74,8 @@ export function SettingsTab({ settings, city, myEvents, onChange, onImport, onNo
               <li>
                 <button className="link-row" onClick={onLocation}>
                   <Icon name={city.id === 'gps' ? 'locate' : 'pin'} size={18} />
-                  <span>
-                    {city.name}
-                    <small>
-                      {city.id === 'gps' ? tr('לפי GPS · ', 'GPS · ') : ''}
-                      <bdi dir="ltr">
-                        {city.lat.toFixed(3)}, {city.lon.toFixed(3)}
-                      </bdi>
-                      {city.elev ? tr(` · גובה ${city.elev} מ׳`, ` · elevation ${city.elev} m`) : ''}
-                    </small>
-                  </span>
-                  <span className="row-val">{tr('שינוי', 'Change')}</span>
+                  <span>{city.name}</span>
+                  <Icon name="next" size={16} />
                 </button>
               </li>
             </ul>
@@ -96,24 +87,14 @@ export function SettingsTab({ settings, city, myEvents, onChange, onImport, onNo
               <li>
                 <button className="link-row" onClick={onAlerts}>
                   <Icon name="bell" size={18} />
-                  <span>
-                    {tr('התראות לזמנים, לשבת ולחג', 'Zmanim, Shabbat & holiday alerts')}
-                    <small>
-                      {isNative()
-                        ? tr('לפני כל זמן שתבחרו, הדלקת נרות, צאת שבת וצומות', 'Before any zman you choose, candle lighting, end of Shabbat and fasts')
-                        : tr('פועלות באפליקציה לאנדרואיד ולאייפון', 'Work in the Android and iPhone app')}
-                    </small>
-                  </span>
+                  <span>{tr('התראות', 'Alerts')}</span>
                   <Icon name="next" size={16} />
                 </button>
               </li>
               <li>
                 <button className="link-row" onClick={onNotify}>
                   <Icon name="candle" size={18} />
-                  <span>
-                    {tr('התראה בכל יום שישי', 'Every Friday alert')}
-                    <small>{tr('עם שעת כניסת השבת ויציאתה', 'With the times Shabbat begins and ends')}</small>
-                  </span>
+                  <span>{tr('התראה בכל יום שישי', 'Every Friday alert')}</span>
                   <Icon name="next" size={16} />
                 </button>
               </li>
@@ -152,12 +133,10 @@ export function SettingsTab({ settings, city, myEvents, onChange, onImport, onNo
               <Toggle
                 id="set-elev"
                 label={tr('זריחה ושקיעה לפי גובה המקום', 'Sunrise and sunset by elevation')}
-                sub={tr('ברירת המחדל: גובה פני הים', 'Default: sea level')}
                 on={settings.useElevation} onChange={(v) => set({ useElevation: v })} />
               <Toggle
                 id="set-learn"
                 label={tr('לימוד יומי', 'Daily learning')}
-                sub={tr('דף יומי, משנה, נ״ך, רמב״ם, תהילים וחפץ חיים', 'Daf Yomi, Mishna, Nach, Rambam, Tehillim and Chofetz Chaim')}
                 on={settings.showLearning} onChange={(v) => set({ showLearning: v })} />
               <Toggle id="set-modern" label={tr('ימי זיכרון ומועדים ממלכתיים', 'Israeli national days')} on={settings.showModern} onChange={(v) => set({ showModern: v })} />
             </div>
@@ -183,7 +162,6 @@ export function SettingsTab({ settings, city, myEvents, onChange, onImport, onNo
                     </button>
                   ))}
                 </div>
-                <small className="sub">{tr('"רגיל" הולך לפי גודל הגופן שבהגדרות הטלפון', '"Normal" follows the font size in your phone settings')}</small>
               </div>
               <div className="field stack">
                 <span id="lbl-theme">{tr('ערכת צבעים', 'Color scheme')}</span>
@@ -226,20 +204,13 @@ export function SettingsTab({ settings, city, myEvents, onChange, onImport, onNo
               <Toggle
                 id="set-contrast"
                 label={tr('ניגודיות גבוהה', 'High contrast')}
-                sub={tr('טקסט וקווים כהים יותר', 'Darker text and lines')}
                 on={settings.highContrast} onChange={(v) => set({ highContrast: v })} />
             </div>
           </section>
 
           <section className="set-group" aria-labelledby="sg-backup" id="backup">
-            <h3 className="group-label" id="sg-backup">{tr('גיבוי האירועים שלי', 'Back up my events')}</h3>
+            <h3 className="group-label" id="sg-backup">{tr('גיבוי', 'Backup')}</h3>
             <div className="card-list form-list">
-              <p className="fine">
-                {tr(
-                  'האירועים נשמרים רק במכשיר הזה. כדאי לייצא גיבוי מדי פעם, ולייבא אותו במכשיר חדש.',
-                  'Your events are stored only on this device. Export a backup now and then, and import it on a new device.',
-                )}
-              </p>
               <div className="row-btns">
                 <button className="btn" onClick={exportEvents}>
                   <Icon name="download" size={18} /> {tr('ייצוא', 'Export')} ({myEvents.length})
@@ -268,48 +239,10 @@ export function SettingsTab({ settings, city, myEvents, onChange, onImport, onNo
             </div>
           </section>
 
-          <section className="set-group" aria-labelledby="sg-src">
-            <h3 className="group-label" id="sg-src">{tr('דיוק ומקורות', 'Accuracy & sources')}</h3>
-            <div className="card-list sources">
-              {isHe() ? (
-                <ul>
-                  <li>
-                    <b>זמני היום</b> מחושבים בספריית KosherJava, מנוע הזמנים שרוב אפליקציות הזמנים בנויות עליו.
-                  </li>
-                  <li>
-                    <b>לוח השנה</b>: תאריכים עבריים, חגים, פרשות, הדלקת נרות וצאת שבת, בספריית Hebcal.
-                  </li>
-                  <li>
-                    <b>בדיקה צולבת</b>: כל זמן, בכל עיר ובכל יום בשנה, נבדק מול הספרייה השנייה. ההפרש הגדול ביותר: שנייה אחת. התאריכים העבריים בין 1950 ל־2100 זהים לחלוטין.
-                  </li>
-                  <li>
-                    <b>מיקום הערים</b> ממאגר GeoNames, אותו מאגר ש־Hebcal משתמש בו.
-                  </li>
-                </ul>
-              ) : (
-                <ul>
-                  <li>
-                    <b>Zmanim</b> are calculated with KosherJava, the zmanim engine most zmanim apps are built on.
-                  </li>
-                  <li>
-                    <b>The calendar</b>: Hebrew dates, holidays, parashot, candle lighting and Havdalah, with Hebcal.
-                  </li>
-                  <li>
-                    <b>Cross-checked</b>: every zman, in every city, on every day of the year, is checked against the other library. The largest difference: one second. Hebrew dates from 1950 to 2100 match exactly.
-                  </li>
-                  <li>
-                    <b>City locations</b> come from GeoNames, the same database Hebcal uses.
-                  </li>
-                </ul>
-              )}
-            </div>
-          </section>
-
           <div className="about">
             <BrandMark size={40} />
             <div>
               <b>{APP_NAME}</b>
-              <p className="fine">{tr('הכול מחושב במכשיר עצמו, גם בלי אינטרנט. אין פרסומות ואין מעקב.', 'Everything is calculated on the device, even offline. No ads and no tracking.')}</p>
               <p className="fine keys">
                 {isHe() ? (
                   <>

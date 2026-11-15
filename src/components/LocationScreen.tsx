@@ -5,7 +5,7 @@ import type { Settings } from '../lib/store';
 import { isNative, nativePosition } from '../lib/native';
 import { Screen } from './Screen';
 import { Icon } from './Icon';
-import { isHe, locale, tr } from '../lib/i18n';
+import { isHe, tr } from '../lib/i18n';
 
 interface Props {
   settings: Settings;
@@ -105,13 +105,13 @@ export function LocationScreen({ settings, city, onChange, onClose }: Props) {
       <div className="loc-now">
         <Icon name={settings.gps ? 'locate' : 'pin'} size={20} />
         <span className="pr-text">
-          <small className="loc-kicker">{settings.gps ? tr('המיקום שנמצא לפי GPS', 'Location found by GPS') : tr('המיקום הנוכחי', 'Current location')}</small>
+          {settings.gps && <small className="loc-kicker">GPS</small>}
           <b>{city.name}</b>
           <small>
             <bdi dir="ltr">
               {city.lat.toFixed(3)}, {city.lon.toFixed(3)}
             </bdi>
-            {city.elev ? tr(` · גובה ${city.elev} מ׳`, ` · elevation ${city.elev} m`) : ''} · {city.il ? tr('ארץ ישראל', 'Israel') : tr('חו״ל', 'Outside Israel')}
+            {city.elev ? tr(` · ${city.elev} מ׳`, ` · ${city.elev} m`) : ''}
           </small>
         </span>
         {settings.gps && (
@@ -181,8 +181,7 @@ export function LocationScreen({ settings, city, onChange, onClose }: Props) {
                 {settings.recentPlaces.map((c) => (
                   <button key={c.id} className={current(c) ? 'on' : ''} onClick={() => pick(c)}>
                     {cityLabel(c)}
-                    {!c.il && isHe() && <small> · חו״ל</small>}
-                  </button>
+                    </button>
                 ))}
               </div>
             </section>
@@ -193,24 +192,10 @@ export function LocationScreen({ settings, city, onChange, onClose }: Props) {
               {CITIES.map((c) => (
                 <button key={c.id} className={current(c) ? 'on' : ''} onClick={() => pick(c)}>
                   {cityLabel(c)}
-                  {!c.il && isHe() && <small> · חו״ל</small>}
                 </button>
               ))}
             </div>
           </section>
-          {isHe() ? (
-            <p className="fine">
-              {db ? `${db.places.length.toLocaleString(locale())} מקומות בעולם, ` : ''}כל הישובים בארץ, ובחו״ל כל עיר עם 15,000 תושבים ומעלה. הכול שמור במכשיר, ולכן החיפוש
-              עובד גם בלי אינטרנט. מקום שאינו ברשימת הערים מחושב בגובה פני הים, והדלקת הנרות בו לפי 20 דק׳ בארץ ו־18 בחו״ל
-              (אפשר לשנות בהגדרות).
-            </p>
-          ) : (
-            <p className="fine">
-              {db ? `${db.places.length.toLocaleString(locale())} places worldwide: ` : ''}every town in Israel, and abroad every city with
-              15,000 people or more. It is all stored on the device, so search works offline too. A place not in the city list is
-              calculated at sea level, with candle lighting 20 min before sunset in Israel and 18 abroad (you can change this in Settings).
-            </p>
-          )}
         </>
       )}
     </Screen>

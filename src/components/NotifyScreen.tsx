@@ -67,17 +67,6 @@ function NativeNotify({ city, settings, onChange, onClose }: Props) {
 
   return (
     <Screen title={tr('התראה בכל יום שישי', 'Every Friday alert')} onClose={onClose}>
-      <p className="lead">
-        {isHe() ? (
-          <>
-            בכל יום שישי בבוקר תקבלו התראה עם שעת כניסת השבת ושעת היציאה ב<b>{city.name}</b>.
-          </>
-        ) : (
-          <>
-            Every Friday morning you get an alert with the times Shabbat begins and ends in <b>{city.name}</b>.
-          </>
-        )}
-      </p>
       <label className="toggle big" htmlFor="native-alerts">
         <span>{tr('התראה בכל יום שישי', 'Every Friday alert')}</span>
         <input id="native-alerts" type="checkbox" checked={settings.nativeAlerts} disabled={busy} onChange={(e) => toggle(e.target.checked)} />
@@ -93,12 +82,6 @@ function NativeNotify({ city, settings, onChange, onClose }: Props) {
           {msg}
         </p>
       )}
-      <p className="fine">
-        {tr(
-          `הזמנים לפי הגדרות הדלקת הנרות וצאת השבת (כרגע ${settings.candleMins ?? city.candle} דק׳ לפני השקיעה). באנדרואיד ההתראה עשויה להגיע באיחור של כמה דקות כשהטלפון במצב חיסכון.`,
-          `Times follow your candle lighting and end-of-Shabbat settings (now ${settings.candleMins ?? city.candle} min before sunset). On Android an alert may arrive a few minutes late when the phone is in battery saver.`,
-        )}
-      </p>
     </Screen>
   );
 }
@@ -186,19 +169,6 @@ function WebNotify({ city, settings, onChange, onClose }: Props) {
 
   return (
     <Screen title={tr('התראה בכל יום שישי', 'Every Friday alert')} onClose={onClose}>
-      <p className="lead">
-        {isHe() ? (
-          <>
-            בכל יום שישי בבוקר תקבלו התראה עם שעת כניסת השבת ושעת היציאה ב<b>{city.name}</b>. ההתראות נכנסות ליומן של הטלפון,
-            ולכן הן מגיעות גם כשהאפליקציה סגורה.
-          </>
-        ) : (
-          <>
-            Every Friday morning you get an alert with the times Shabbat begins and ends in <b>{city.name}</b>. The alerts go into
-            your phone&apos;s calendar, so they arrive even when the app is closed.
-          </>
-        )}
-      </p>
 
       <div className="two">
         <label className="field col">
@@ -287,10 +257,6 @@ function WebNotify({ city, settings, onChange, onClose }: Props) {
                 </li>
               </ol>
             ) : null}
-            <p className="fine">
-              החלפתם עיר או שעה? יוצרים את הקובץ שוב, ומוחקים מהיומן את ההתראות הקודמות. כדי שיהיה קל למחוק, אפשר להוסיף אותן ליומן נפרד בשם "זמני שבת". הזמנים מחושבים לפי ההגדרות של הדלקת נרות וצאת שבת
-              (כרגע: {settings.candleMins ?? city.candle} דק׳ לפני השקיעה).
-            </p>
           </>
         ) : (
           <>
@@ -317,11 +283,6 @@ function WebNotify({ city, settings, onChange, onClose }: Props) {
                 </li>
               </ol>
             ) : null}
-            <p className="fine">
-              Changed city or time? Create the file again and delete the old alerts from the calendar. To make deleting easy, add them to
-              a separate calendar called &quot;Shabbat times&quot;. Times follow your candle lighting and end-of-Shabbat settings (now:{' '}
-              {settings.candleMins ?? city.candle} min before sunset).
-            </p>
           </>
         )}
       </details>

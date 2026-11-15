@@ -1,3 +1,5 @@
+import { isHe } from '../lib/i18n';
+
 /** One line-icon set: 24 grid, round caps, stroke 1.6, colour from the text role */
 const PATHS: Record<string, string> = {
   next: 'M15 18l-6-6 6-6', // points left (RTL "next")
@@ -29,7 +31,11 @@ const PATHS: Record<string, string> = {
 
 export type IconName = keyof typeof PATHS;
 
+// left-to-right (English): the direction arrows point the other way
+const LTR: Record<string, string> = { next: PATHS.prev, prev: PATHS.next, back: PATHS.next };
+
 export function Icon({ name, size = 18, stroke = 1.6 }: { name: IconName | string; size?: number; stroke?: number }) {
+  const d = (!isHe() && LTR[name]) || PATHS[name];
   return (
     <svg
       className="ic"
@@ -43,7 +49,7 @@ export function Icon({ name, size = 18, stroke = 1.6 }: { name: IconName | strin
       strokeLinejoin="round"
       aria-hidden="true"
     >
-      <path d={PATHS[name]} />
+      <path d={d} />
     </svg>
   );
 }

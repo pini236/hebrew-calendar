@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import type { City } from './cities';
+import type { LangPref } from './i18n';
 
 export type HavdalahOpinion = 'deg8.5' | 'min42' | 'min50' | 'min72';
 export type Theme = 'auto' | 'light' | 'dark';
@@ -16,6 +17,8 @@ export interface Settings {
   showLearning: boolean;
   showModern: boolean;
   theme: Theme;
+  /** interface language: 'auto' follows the phone */
+  lang: LangPref;
   /** 2 = saved after light became the default (an older 'auto' was never a choice) */
   themeV?: number;
   monthMode: 'greg' | 'heb';
@@ -50,6 +53,7 @@ export const DEFAULT_SETTINGS: Settings = {
   showLearning: true,
   showModern: true,
   theme: 'light',
+  lang: 'auto',
   themeV: 2,
   monthMode: 'greg',
   alertTime: '08:00',
@@ -133,6 +137,7 @@ export function mergeSettings(s: Partial<Settings>): Settings {
     m.themeV = 2;
   }
   if (!['auto', 'light', 'dark'].includes(m.theme)) m.theme = 'light';
+  if (!['auto', 'he', 'en'].includes(m.lang)) m.lang = 'auto';
   if (!isCity(m.gps)) m.gps = null;
   if (!isCity(m.place)) m.place = null;
   m.recentPlaces = Array.isArray(m.recentPlaces) ? m.recentPlaces.filter(isCity).slice(0, 5) : [];

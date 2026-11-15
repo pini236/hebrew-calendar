@@ -2561,3 +2561,39 @@ kbd {
 button.pair-cell + button.pair-cell {
   border-radius: 0;
 }
+
+/* ---------------- English: left-to-right ---------------- */
+/* most of the layout uses logical properties and flips by itself; these use physical ones */
+[dir='ltr'] input[type='date'],
+[dir='ltr'] input[type='time'] {
+  text-align: left;
+}
+[dir='ltr'] .toggle i::after {
+  right: auto;
+  left: 3px;
+}
+[dir='ltr'] .toggle input:checked + i::after {
+  transform: translateX(18px);
+}
+[dir='ltr'] .screen {
+  animation-name: screen-in-ltr;
+}
+@keyframes screen-in-ltr {
+  from {
+    opacity: 0;
+    transform: translateX(24px);
+  }
+}
+[dir='ltr'] .grid.slide-f {
+  animation-name: slide-b;
+}
+[dir='ltr'] .grid.slide-b {
+  animation-name: slide-f;
+}
+[dir='ltr'] .ribbon-labels span {
+  transform: translateX(-50%);
+}
+/* English text is set in the Latin cuts of the same families */
+[dir='ltr'] body {
+  line-height: 1.4;
+}

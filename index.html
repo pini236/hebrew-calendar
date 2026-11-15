@@ -13,6 +13,13 @@
         var s = JSON.parse(localStorage.getItem('luach.settings.v1') || '{}');
         var t = s.themeV === 2 ? s.theme : s.theme === 'dark' ? 'dark' : 'light';
         if (t === 'light' || t === 'dark') document.documentElement.setAttribute('data-theme', t);
+        // the interface language: Hebrew when the phone's first language is Hebrew, otherwise English
+        var nl = (navigator.languages && navigator.languages[0]) || navigator.language || 'he';
+        var l = s.lang === 'he' || s.lang === 'en' ? s.lang : /^(he|iw)\b/i.test(nl) ? 'he' : 'en';
+        if (l === 'en') {
+          document.documentElement.lang = 'en';
+          document.documentElement.dir = 'ltr';
+        }
         if (t === 'dark' || (t === 'auto' && matchMedia('(prefers-color-scheme: dark)').matches))
           document.querySelector('meta[name=theme-color]').setAttribute('content', '#131311');
       } catch (e) {

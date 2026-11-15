@@ -1,3 +1,5 @@
+import { isHe } from './i18n';
+
 export interface City {
   id: string;
   name: string;
@@ -76,6 +78,66 @@ export const CITIES: City[] = [
 ];
 
 export const DEFAULT_CITY = CITIES[0];
+
+/** English names of the listed cities, for the English interface */
+const NAME_EN: Record<string, string> = {
+  'jerusalem': 'Jerusalem',
+  'tel-aviv': 'Tel Aviv-Yafo',
+  'haifa': 'Haifa',
+  'bnei-brak': 'Bnei Brak',
+  'petah-tikva': 'Petah Tikva',
+  'beer-sheva': "Be'er Sheva",
+  'ashdod': 'Ashdod',
+  'netanya': 'Netanya',
+  'rishon': 'Rishon LeZion',
+  'holon': 'Holon',
+  'ramat-gan': 'Ramat Gan',
+  'rehovot': 'Rehovot',
+  'herzliya': 'Herzliya',
+  'kfar-saba': 'Kfar Saba',
+  'raanana': "Ra'anana",
+  'modiin': "Modi'in",
+  'modiin-illit': "Modi'in Illit",
+  'elad': 'Elad',
+  'beit-shemesh': 'Beit Shemesh',
+  'beitar': 'Beitar Illit',
+  'maale-adumim': "Ma'ale Adumim",
+  'ashkelon': 'Ashkelon',
+  'kiryat-gat': 'Kiryat Gat',
+  'hadera': 'Hadera',
+  'zichron': "Zichron Ya'akov",
+  'afula': 'Afula',
+  'tiberias': 'Tiberias',
+  'safed': 'Safed',
+  'nahariya': 'Nahariya',
+  'akko': 'Akko',
+  'karmiel': 'Karmiel',
+  'kiryat-shmona': 'Kiryat Shmona',
+  'katzrin': 'Katzrin',
+  'ariel': 'Ariel',
+  'dimona': 'Dimona',
+  'arad': 'Arad',
+  'eilat': 'Eilat',
+  'new-york': 'New York',
+  'lakewood': 'Lakewood',
+  'miami': 'Miami',
+  'los-angeles': 'Los Angeles',
+  'toronto': 'Toronto',
+  'montreal': 'Montreal',
+  'london': 'London',
+  'manchester': 'Manchester',
+  'paris': 'Paris',
+  'antwerp': 'Antwerp',
+  'moscow': 'Moscow',
+  'buenos-aires': 'Buenos Aires',
+  'johannesburg': 'Johannesburg',
+  'melbourne': 'Melbourne',
+};
+
+/** A city's name in the interface language (places from the worldwide list keep their own name) */
+export function cityLabel(c: City): string {
+  return (!isHe() && NAME_EN[c.id]) || c.name;
+}
 
 export function findCity(id: string): City | undefined {
   return CITIES.find((x) => x.id === id);

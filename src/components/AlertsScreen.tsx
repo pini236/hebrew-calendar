@@ -19,7 +19,7 @@ interface Props {
   onClose: () => void;
 }
 
-const offsetLabel = (m: number) => (m === 0 ? tr('בזמן', 'On time') : tr(`${m} דק׳ לפני`, `${m} min`));
+const offsetLabel = (m: number) => (m === 0 ? tr('בזמן', 'On time') : tr(`${m} דק׳`, `${m} min`));
 
 export function AlertsScreen({ city, settings, myEvents, onChange, onFriday, onClose, focus }: Props & { focus?: string }) {
   // opened from a zman's bell: bring that zman's row into view
@@ -122,7 +122,7 @@ export function AlertsScreen({ city, settings, myEvents, onChange, onFriday, onC
             >
               {CANDLE_OFFSETS.map((m) => (
                 <option key={m} value={m}>
-                  {tr(`${m} דק׳ לפני`, `${m} min`)}
+                  {tr(`${m} דק׳`, `${m} min`)}
                 </option>
               ))}
             </select>

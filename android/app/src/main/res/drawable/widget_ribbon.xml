@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- the saffron silk ribbon of the diary (the icon's, and the app's mark for today), hanging from the top edge -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="10dp" android:height="18dp" android:viewportWidth="10" android:viewportHeight="18">
+    <path android:fillColor="@color/widget_ribbon" android:pathData="M0,0 L10,0 L10,18 L5,12.96 L0,18 Z" />
+</vector>

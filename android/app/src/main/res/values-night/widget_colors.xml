@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Home-screen widget, dark: the same page at night (the app's dark ramp). -->
+<resources>
+    <color name="widget_paper">#FF1B1A18</color>
+    <color name="widget_edge">#FF353331</color>
+    <color name="widget_line">#1FEEEBE4</color>
+    <color name="widget_ink">#FFEEEBE4</color>
+    <color name="widget_muted">#FF9A958B</color>
+    <color name="widget_date">#FFF3ECDD</color>
+    <color name="widget_ribbon">#FFE2AE4C</color>
+    <color name="widget_ribbon_ink">#FFEBBD62</color>
+    <color name="widget_chag">#FFFF8D7F</color>
+</resources>

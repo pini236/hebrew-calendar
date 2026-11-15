@@ -1,0 +1,83 @@
+/* the prototype page only (sky-demo.html) */
+.demo {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: flex-start;
+  gap: 24px;
+  min-height: 100dvh;
+}
+.demo-phone {
+  width: 100%;
+  max-width: 420px;
+  min-height: 100dvh;
+  background: var(--bg);
+}
+/* the date now sits over the sky: the screen's own header is not needed */
+.demo-phone .today-tab > .tab-head {
+  display: none;
+}
+.demo-phone .tab {
+  padding-top: 16px;
+}
+.demo:not(.bare) .demo-phone {
+  box-shadow: 0 0 0 1px var(--line);
+}
+.demo-panel {
+  position: sticky;
+  top: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 300px;
+  margin: 16px;
+  padding: 20px;
+  border-radius: 16px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  font-size: 0.875rem;
+}
+.demo-panel h1 {
+  font-family: var(--f-display);
+  font-size: 1.25rem;
+}
+.demo-panel label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  color: var(--ink-2);
+}
+.demo-panel label b {
+  color: var(--ink);
+  font-weight: 500;
+}
+.demo-panel select,
+.demo-panel input[type='date'] {
+  min-height: 36px;
+  padding: 0 8px;
+  border-radius: 8px;
+  border: 1px solid var(--line-strong);
+  background: var(--bg);
+}
+.demo-panel input[type='range'] {
+  accent-color: var(--accent);
+}
+.demo-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.demo-row button {
+  min-height: 36px;
+  padding: 0 12px;
+  border-radius: 8px;
+  border: 1px solid var(--line-strong);
+  background: var(--bg);
+}
+.demo-row button:hover {
+  background: var(--raised);
+}
+.demo-fine {
+  color: var(--muted);
+  font-size: 0.8125rem;
+}

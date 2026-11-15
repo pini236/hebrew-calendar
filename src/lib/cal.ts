@@ -42,8 +42,9 @@ export function daysBetween(a: Date, b: Date) {
 
 /* ---------- Hebrew text ---------- */
 
+/** Removes vowel points and cantillation marks, keeping punctuation: maqaf (־ in "בן־גוריון"), paseq, sof pasuq */
 export function stripNiqqud(s: string) {
-  return s.replace(/[֑-ׇ]/g, '');
+  return s.replace(/[\u0591-\u05BD\u05BF\u05C1\u05C2\u05C4\u05C5\u05C7]/g, '');
 }
 
 // these lists read in the interface language wherever they are used (see i18n.ts byLang)

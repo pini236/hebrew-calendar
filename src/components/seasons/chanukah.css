@@ -7,14 +7,28 @@
 }
 .ch-stage {
   position: relative;
-  height: 216px;
+  /* the scene's own shape (816:678, about 6:5; the card also sets it inline). The painter never stretches
+     the art: in any other shape it covers the box and keeps the chanukiah in view */
+  aspect-ratio: 816 / 678;
+  isolation: isolate;
+  overflow: hidden;
   /* the window's colour before the first paint: night ink, as the sky's own */
   background: #0b1230;
 }
 .ch-stage canvas {
+  position: absolute;
+  inset: 0;
   display: block;
   width: 100%;
   height: 100%;
+}
+/* the flames: a band across the picture, and the light: the art's rectangle (both placed by the painter) */
+.ch-flames {
+  bottom: auto;
+}
+/* the flicker of the flames' light: a small canvas stretched over the picture and added to it */
+.ch-light {
+  mix-blend-mode: plus-lighter;
 }
 .ch-body {
   padding: 16px 20px 8px;

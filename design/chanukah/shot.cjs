@@ -35,6 +35,8 @@ const { chromium } = require(require.resolve('playwright', { paths: [process.cwd
     await page.clock.runFor(600);
     await page.waitForTimeout(600); // CSS animations run on real time
   }
+  // POST=ms: let the page run on after the clicks (the lighting takes about 10 s)
+  if (process.env.POST) await page.clock.runFor(+process.env.POST);
   const clip = process.env.CLIP ? (([x, y, width, height]) => ({ x, y, width, height }))(process.env.CLIP.split(',').map(Number)) : undefined;
   await page.screenshot({ path: out, fullPage: !!full, clip });
   await browser.close();

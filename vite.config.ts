@@ -43,6 +43,12 @@ export default defineConfig(({ mode }) => {
             workbox: {
               globPatterns: ['**/*.{js,css,html,svg,png,woff2}'],
               runtimeCaching: [
+                // pictures that load only when needed (the Chanukah card's scene): kept once seen, for offline
+                {
+                  urlPattern: ({ url }) => url.pathname.includes('/assets/') && url.pathname.endsWith('.webp'),
+                  handler: 'CacheFirst',
+                  options: { cacheName: 'season-pictures', expiration: { maxEntries: 40, maxAgeSeconds: 60 * 60 * 24 * 400 } },
+                },
                 {
                   urlPattern: /^https:\/\/fonts\.(googleapis|gstatic)\.com\/.*/i,
                   handler: 'CacheFirst',

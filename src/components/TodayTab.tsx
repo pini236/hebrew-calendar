@@ -25,6 +25,7 @@ import type { City } from '../lib/cities';
 import { isHe, tr } from '../lib/i18n';
 import type { MyEvent, Settings } from '../lib/store';
 import { Icon } from './Icon';
+import { SilkRibbon } from './SilkRibbon';
 import { SkyHeader, SkyScene } from './SkyScene';
 import { agendaRows, dayName, daysBetween, inTime, nextShabbat, weekParasha, yearsWord, type ShabbatInfo } from './dayinfo';
 
@@ -215,6 +216,8 @@ function NowHero({ selected, now, city, settings, fmt, z, isToday }: Props & { i
 
   return (
     <section className={`hero ${shab ? 'is-shabbat' : ''}`} aria-label={shab ? (shab.isChag ? tr('החג', 'Yom Tov') : tr('שבת', 'Shabbat')) : tr('הזמן הבא', 'Next zman')}>
+      {/* the bookmark: sewn at the top edge, near the inline-end corner, as in a diary */}
+      <SilkRibbon className="silk-hero" width={18} length={46} segments={14} sub={4} strips={4} wind={1} scroll={1} motion delay={220} nudge={dateKey(selected)} />
       {shab ? (
         <div className="hero-shabbat">
           <div className="eyebrow">

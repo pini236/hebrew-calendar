@@ -15,6 +15,7 @@ const NotifyScreen = lazy(() => import('./components/NotifyScreen').then((m) => 
 const AlertsScreen = lazy(() => import('./components/AlertsScreen').then((m) => ({ default: m.AlertsScreen })));
 const LocationScreen = lazy(() => import('./components/LocationScreen').then((m) => ({ default: m.LocationScreen })));
 import { BrandMark, Icon } from './components/Icon';
+import { SilkRibbon } from './components/SilkRibbon';
 import { isNative, pushWidget, setStatusBar, syncNotifications } from './lib/native';
 import { buildWidgetData } from './lib/widget';
 import { APP_NAME } from './lib/brand';
@@ -304,6 +305,7 @@ export default function App() {
         </div>
         {TABS.map((t) => (
           <button key={t.id} className={`tabbtn ${tab === t.id ? 'on' : ''}`} aria-current={tab === t.id ? 'page' : undefined} onClick={() => showTab(t.id)}>
+            {tab === t.id && <SilkRibbon className="silk-tab" width={13} length={15} segments={7} sub={3} strips={2} sheen={0.6} scroll={0.3} />}
             <Icon name={t.icon} size={24} />
             <span>{tabLabel(t.id)}</span>
           </button>

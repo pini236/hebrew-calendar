@@ -1,8 +1,9 @@
 name: Android app
 
 # Every push builds an installable test APK.
-# When the signing secrets are set (see PUBLISHING.md) it also builds the
-# signed .aab that Google Play needs, and can upload it to Play's internal track.
+# When the signing secrets are set (see PUBLISHING.md) it also builds the signed .aab that Google Play
+# needs, and when the Play service account is set (PLAY_SERVICE_ACCOUNT_JSON) every push uploads it to
+# Google Play by itself: to the track in the repository variable PLAY_TRACK (default: internal).
 on:
   push:
     paths:
@@ -19,9 +20,9 @@ on:
   workflow_dispatch:
     inputs:
       upload_to_play:
-        description: 'Upload the signed bundle to Google Play (internal testing track)'
+        description: 'Upload the signed bundle to Google Play'
         type: boolean
-        default: false
+        default: true
 
 jobs:
   build:
@@ -82,12 +83,13 @@ jobs:
           name: play-bundle
           path: android/app/build/outputs/bundle/release/app-release.aab
 
-      - name: Upload to Google Play (internal testing)
-        if: env.HAS_KEYSTORE == 'true' && env.HAS_PLAY == 'true' && inputs.upload_to_play
+      - name: Upload to Google Play
+        # every push; a manual run only when its checkbox is on
+        if: env.HAS_KEYSTORE == 'true' && env.HAS_PLAY == 'true' && (github.event_name == 'push' || inputs.upload_to_play)
         uses: r0adkll/upload-google-play@v1
         with:
           serviceAccountJsonPlainText: ${{ secrets.PLAY_SERVICE_ACCOUNT_JSON }}
           packageName: com.luachyehudi.app
           releaseFiles: android/app/build/outputs/bundle/release/app-release.aab
-          track: internal
+          track: ${{ vars.PLAY_TRACK || 'internal' }}
           status: completed

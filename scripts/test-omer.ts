@@ -108,7 +108,7 @@ const noon24 = at('2027-05-24T12:00:00+03:00');
 let n = notes(noon24, marks(range(1, 32)));
 const tonight = n.find((x) => x.id === 0 && x.at.getDate() === 24);
 ok(tonight && tonight.at.getTime() === tz32.getTime(), `tonight's reminder at nightfall (${tonight?.at})`);
-ok(tonight?.title === 'ספירת העומר · ל״ג בעומר' && tonight.body === 'היום שלושה ושלושים יום, שהם ארבעה שבועות וחמישה ימים בעומר', `the reminder carries the count: ${tonight?.body}`);
+ok(tonight?.title === 'ספירת העומר · ל״ג בעומר' && tonight.body === 'היום שלושה ושלושים יום, שהם ארבעה שבועות וחמישה ימים לעומר', `the reminder carries the count: ${tonight?.body}`);
 ok(tonight?.extra?.screen === 'omer', 'tapping it opens Today');
 ok(n.some((x) => x.id === 1 && x.at.getDate() === 24 && x.at.getHours() === 22 && x.at.getMinutes() === 30), 'a bedtime reminder at 22:30');
 ok(!n.some((x) => x.id === 2 && x.at.getDate() === 24), 'no morning reminder: last night was counted');
@@ -169,14 +169,14 @@ const T: Record<number, string> = {
   49: 'הַיּוֹם תִּשְׁעָה וְאַרְבָּעִים יוֹם, שֶׁהֵם שִׁבְעָה שָׁבוּעוֹת',
 };
 for (const [d, base] of Object.entries(T)) {
-  ok(countText(+d, 'ashkenaz') === `${base} לָעֹמֶר.`, `Ashkenaz ${d}: ${countText(+d, 'ashkenaz')}`);
-  ok(countText(+d, 'sefard') === `${base} בָּעֹמֶר.`, `Sefard ${d}: ${countText(+d, 'sefard')}`);
-  ok(countText(+d, 'edot') === `${base} בָּעֹמֶר.`, `Edot HaMizrach ${d}: ${countText(+d, 'edot')}`);
+  ok(countText(+d, 'ashkenaz') === `${base} בָּעֹמֶר.`, `Ashkenaz ${d}: ${countText(+d, 'ashkenaz')}`);
+  ok(countText(+d, 'sefard') === `${base} לָעֹמֶר.`, `Sefard ${d}: ${countText(+d, 'sefard')}`);
+  ok(countText(+d, 'edot') === `${base} לָעֹמֶר.`, `Edot HaMizrach ${d}: ${countText(+d, 'edot')}`);
 }
 ok(sefiraNiqqud(1) === 'חֶסֶד שֶׁבְּחֶסֶד' && sefiraNiqqud(33) === 'הוֹד שֶׁבְּהוֹד' && sefiraNiqqud(49) === 'מַלְכוּת שֶׁבְּמַלְכוּת', 'sefirot');
 ok(sefiraNiqqud(4) === 'נֶצַח שֶׁבְּחֶסֶד' && sefiraNiqqud(6) === 'יְסוֹד שֶׁבְּחֶסֶד', `no stray dagesh: ${sefiraNiqqud(4)} ${sefiraNiqqud(6)}`);
-ok(countTranslit(33, 'sefard') === "Hayom sh'loshah u'sh'loshim yom, shehem arba'ah shavu'ot va'chamishah yamim ba'omer.", countTranslit(33, 'sefard'));
-ok(countTranslit(1, 'ashkenaz') === "Hayom yom echad la'omer." && countTranslit(8, 'sefard') === "Hayom sh'monah yamim, shehem shavu'a echad v'yom echad ba'omer.", 'transliteration 1, 8');
+ok(countTranslit(33, 'sefard') === "Hayom sh'loshah u'sh'loshim yom, shehem arba'ah shavu'ot va'chamishah yamim la'omer.", countTranslit(33, 'sefard'));
+ok(countTranslit(1, 'ashkenaz') === "Hayom yom echad ba'omer." && countTranslit(8, 'sefard') === "Hayom sh'monah yamim, shehem shavu'a echad v'yom echad la'omer.", 'transliteration 1, 8');
 ok(weeksText(33) === '4 שבועות ו־5 ימים' && weeksText(14) === '2 שבועות' && weeksText(8) === 'שבוע אחד ויום אחד' && weeksText(1) === 'יום אחד', 'weeks');
 setLang('en');
 ok(weeksText(33) === '4 weeks, 5 days', 'weeks in English');

@@ -257,11 +257,12 @@ function clean(s: string) {
 }
 
 /**
- * "הַיּוֹם … לָעֹמֶר" from Hebcal (OmerEvent.getTodayIs): Ashkenaz ends לָעֹמֶר, Sefard and Edot HaMizrach בָּעֹמֶר.
+ * "הַיּוֹם … בָּעֹמֶר" from Hebcal (OmerEvent.getTodayIs): Ashkenaz ends בָּעֹמֶר, Sefard and Edot HaMizrach לָעֹמֶר
+ * (the common practice: most Ashkenazim say ba'omer, Sefardim and Chassidim la'omer).
  */
 export function countText(n: number, nusach: Nusach): string {
   const base = clean(new OmerEvent(new HDate(), n).getTodayIs('he')).replace(/\s*לָעוֹמֶר$/, '');
-  return `${base} ${nusach === 'ashkenaz' ? 'לָעֹמֶר' : 'בָּעֹמֶר'}.`;
+  return `${base} ${nusach === 'ashkenaz' ? 'בָּעֹמֶר' : 'לָעֹמֶר'}.`;
 }
 
 /** The count in English (Hebcal): "Today is 10 days, which are 1 week and 3 days of the Omer" */
@@ -290,7 +291,7 @@ export function countTranslit(n: number, nusach: Nusach): string {
     const days = d === 0 ? '' : d === 1 ? " v'yom echad" : d === 2 ? " u'sh'nei yamim" : ` ${and(ones[d])} yamim`;
     s += `, shehem ${weeks}${days}`;
   }
-  return `Hayom ${s} ${nusach === 'ashkenaz' ? "la'omer" : "ba'omer"}.`;
+  return `Hayom ${s} ${nusach === 'ashkenaz' ? "ba'omer" : "la'omer"}.`;
 }
 
 const SEFIROT_HE = ['חסד', 'גבורה', 'תפארת', 'נצח', 'הוד', 'יסוד', 'מלכות'];

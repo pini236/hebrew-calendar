@@ -4,7 +4,7 @@
 // computes, whatever the speed of the machine that records it.
 //
 //   npm run dev -- --port 5191          (in another terminal)
-//   node design/chanukah/record.cjs [base-url] [only: phone|lighting|eight] [--frames <dir>]
+//   node design/chanukah/record.cjs [base-url] [only: lighting|phone] [--frames <dir>]
 //
 // Playwright is the copy installed globally with its browser (not a project dependency).
 const { chromium } = require(require.resolve('playwright', { paths: [process.cwd(), '/opt/node-tools/node_modules'] }));
@@ -22,18 +22,22 @@ const OUT = __dirname;
 const FPS = 30;
 const at = (s) => Math.round(s * FPS);
 
-async function scene(browser, { theme = 'light', lang = 'he', time, dpr = 2, clip, script = {}, frames, dir, viewport = { width: 390, height: 844 } }) {
+async function scene(browser, { theme = 'light', lang = 'he', time, dpr = 2, clip, script = {}, frames, dir, played, viewport = { width: 390, height: 844 } }) {
   const ctx = await browser.newContext({ viewport, deviceScaleFactor: dpr, colorScheme: theme, timezoneId: 'Asia/Jerusalem', locale: 'he-IL', serviceWorkers: 'block' });
   await ctx.clock.install({ time: new Date(time) });
   // frozen: time moves only by runFor, one frame at a time, however long a screenshot takes
   await ctx.clock.pauseAt(new Date(Date.parse(time) + 200));
   await ctx.addInitScript(([s]) => localStorage.setItem('luach.settings.v1', s), [JSON.stringify({ theme, lang, themeV: 2 })]);
+  // an evening whose lighting this device has already shown
+  if (played) await ctx.addInitScript((k) => localStorage.setItem('luach.season.chanukah.v1', JSON.stringify({ lit: {}, played: k })), played);
   const page = await ctx.newPage();
   page.on('pageerror', (e) => console.error('page error:', e.message));
   await page.goto(BASE);
   await page.clock.runFor(300);
   await page.waitForSelector('.hero');
   await page.evaluate(() => document.fonts.ready);
+  // the card's pictures (they load with it)
+  await page.waitForFunction(() => !document.querySelector('.ch-card') || window.__chanukiah?.ready, null, { timeout: 15000, polling: 100 });
   await page.clock.runFor(400);
   const act = {
     page,
@@ -91,51 +95,30 @@ const cardClip = async (page) => {
 (async () => {
   const browser = await chromium.launch();
 
-  // 1. the phone: Friday afternoon before lighting, then the first night with Shabbat, the fifth, the eighth
-  if (!ONLY || ONLY === 'phone') {
-    const dir = frameDir('phone');
-    await scene(browser, {
-      time: '2026-12-04T15:30:00+02:00', dir, frames: at(7),
-      script: { [at(1.6)]: (a) => a.scrollTo('.week', 'start', -8) },
-    });
-    await scene(browser, {
-      time: '2026-12-04T19:00:00+02:00', dir, frames: at(13),
-      script: { [at(3.2)]: (a) => a.scrollTo('.week', 'start', -8) },
-    });
-    await scene(browser, {
-      time: '2026-12-08T18:30:00+02:00', dir, frames: at(8), theme: 'dark',
-      script: { [at(2.5)]: (a) => a.scrollTo('.week', 'start', -8) },
-    });
-    await scene(browser, {
-      time: '2026-12-11T18:00:00+02:00', dir, frames: at(19),
-      script: { [at(2.5)]: (a) => a.scrollTo('.week', 'start', -8) },
-    });
-    encode(dir, 'chanukah-phone.mp4', 26);
-    done(dir);
-  }
-
-  // 2. the lighting, close up: the fifth night, "הדלקתי" a few minutes before nightfall
+  // 1. the lighting, close up: the fifth night, "הדלקתי" a few minutes before nightfall
   if (!ONLY || ONLY === 'lighting') {
     const dir = frameDir('lighting');
     await scene(browser, {
-      time: '2026-12-08T17:11:20+02:00', dir, dpr: 3, frames: at(17), clip: cardClip,
+      time: '2026-12-08T17:11:20+02:00', dir, dpr: 3, frames: at(18), clip: cardClip,
       script: {
         [at(0)]: (a) => a.scrollTo('.ch-card', 'center'),
         [at(2.2)]: (a) => a.click('.ch-lit'),
       },
     });
-    encode(dir, 'chanukah-lighting.mp4', 23);
+    encode(dir, 'v2-lighting.mp4', 22);
     done(dir);
   }
 
-  // 3. the eighth night in the dark theme: all eight, the newest first
-  if (!ONLY || ONLY === 'eight') {
-    const dir = frameDir('eight');
-    await scene(browser, {
-      time: '2026-12-11T18:00:00+02:00', dir, dpr: 3, frames: at(20), clip: cardClip, theme: 'dark',
-      script: { [at(0)]: (a) => a.scrollTo('.ch-card', 'center') },
-    });
-    encode(dir, 'chanukah-eighth-night.mp4', 23);
+  // 2. the phone: Friday 4.12 at 19:00 (the first night, with Shabbat) and Tuesday 8.12 at 18:30 (the fifth),
+  //    each in the light and the dark theme. The first view of each evening plays its lighting; the second
+  //    is a device that has already seen it, so the lights simply burn
+  if (!ONLY || ONLY === 'phone') {
+    const dir = frameDir('phone');
+    await scene(browser, { time: '2026-12-04T19:00:00+02:00', dir, frames: at(9), script: { [at(1.4)]: (a) => a.scrollTo('.week', 'start', -8) } });
+    await scene(browser, { time: '2026-12-04T19:00:00+02:00', dir, frames: at(5), theme: 'dark', played: '2026-12-04', script: { [at(0.6)]: (a) => a.scrollTo('.week', 'start', -8) } });
+    await scene(browser, { time: '2026-12-08T18:30:00+02:00', dir, frames: at(14), theme: 'dark', script: { [at(1.4)]: (a) => a.scrollTo('.week', 'start', -8) } });
+    await scene(browser, { time: '2026-12-08T18:30:00+02:00', dir, frames: at(6), played: '2026-12-08', script: { [at(0.6)]: (a) => a.scrollTo('.week', 'start', -8) } });
+    encode(dir, 'v2-phone.mp4', 27);
     done(dir);
   }
 

@@ -1,11 +1,12 @@
 /**
- * Chanukah on היום: a window at evening with a brass chanukiah on its sill (chanukahPaint.ts), tonight's
- * candle in a few words, and the blessings, הנרות הללו and מעוז צור a tap away in a sheet.
+ * Chanukah on היום: a deep window of an old Jerusalem stone house at night with a brass oil chanukiah on its
+ * sill (rendered in Blender, composited live by chanukahPaint.ts), tonight's light in a few words, and the
+ * blessings, הנרות הללו and מעוז צור a tap away in a sheet.
  *
- * Before the lighting time the candles stand unlit in their cups (as many as tonight, from the right) with
- * a live countdown. At the lighting time, or when "הדלקתי" is tapped, the shamash catches, rises, and lights
- * them one by one, the newest first; once an evening on each device, then they simply burn, slowly getting
- * shorter until 22:00 (see src/lib/seasons/chanukah.ts). With reduced motion they are lit at once and still.
+ * Before the lighting time tonight's cups hold oil (as many as tonight, from the right) and wait, with a live
+ * countdown. At the lighting time, or when "הדלקתי" is tapped, the shamash catches, is lifted, and lights them
+ * one by one, the newest first; once an evening on each device, then they simply burn, the oil going down
+ * until 22:00 (see src/lib/seasons/chanukah.ts). With reduced motion they are lit at once and still.
  */
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { dateKey, roundTo, sameDay, timeFmt } from '../../lib/cal';
@@ -25,7 +26,8 @@ import {
 import { skyAt } from '../../lib/sky';
 import { inTime } from '../dayinfo';
 import { Icon } from '../Icon';
-import { ChanukiahPainter, type RGB, type StageState } from './chanukahPaint';
+import { ChanukiahPainter, FLAME_BAND, canAddLayers, type RGB, type StageState } from './chanukahPaint';
+import { SCENE } from './chanukahScene';
 import { BLESSINGS, HANEROT_HALALU, MAOZ_TZUR } from './chanukahTexts';
 import type { SeasonCardProps } from './index';
 import './chanukah.css';
@@ -81,22 +83,32 @@ export default function ChanukahCard({ day, now, city, settings, z, setPrefs }: 
     const m = sky[1];
     const lum = (0.2126 * m[0] + 0.7152 * m[1] + 0.0722 * m[2]) / 255;
     const burnt = phase === 'lit' ? clamp01((skyMin * 60000 - from) / Math.max(1, to - from)) : phase === 'after' || phase === 'past' || phase === 'eighth' ? 1 : 0;
+    // the window across the alley: lit from a while after sunset (a little later each evening of the week,
+    // as people come home) until 23:00
+    const set = z.sunset.getTime();
+    const on = set + (25 + ((day.getDate() * 7) % 30)) * 60000;
+    const off = new Date(day.getFullYear(), day.getMonth(), day.getDate(), 23).getTime();
+    const at = skyMin * 60000;
     return {
       sky,
       placed: night ? night.candles : 8,
       lit: phase === 'lit',
       burnt: Math.round(burnt * 200) / 200,
       night: 1 - Math.min(1, Math.max(0, (lum - 0.08) / 0.32)),
+      window: at >= on && at < off ? 1 : 0,
     };
-  }, [skyMin, z, phase, night, from, to]);
+  }, [skyMin, z, phase, night, from, to, key]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  /* ---------------- the canvas and its loop ---------------- */
+  /* ---------------- the canvases and their loop ---------------- */
 
   const host = useRef<HTMLDivElement>(null);
-  const canvas = useRef<HTMLCanvasElement>(null);
+  const base = useRef<HTMLCanvasElement>(null);
+  const lightC = useRef<HTMLCanvasElement>(null);
+  const flamesC = useRef<HTMLCanvasElement>(null);
+  const [layers] = useState(canAddLayers);
   const engine = useRef<ReturnType<typeof startStage> | null>(null);
   useLayoutEffect(() => {
-    engine.current = startStage(canvas.current!, host.current!);
+    engine.current = startStage(base.current!, lightC.current, flamesC.current!, host.current!);
     return () => engine.current?.stop();
   }, []);
   useEffect(() => {
@@ -163,8 +175,10 @@ export default function ChanukahCard({ day, now, city, settings, z, setPrefs }: 
 
   return (
     <section className="hero ch-card" aria-label={tr('חנוכה', 'Chanukah')}>
-      <div className="ch-stage" ref={host}>
-        <canvas ref={canvas} role="img" aria-label={label} />
+      <div className="ch-stage" ref={host} role="img" aria-label={label}>
+        <canvas ref={base} aria-hidden="true" />
+        {layers && <canvas ref={lightC} className="ch-light" aria-hidden="true" />}
+        <canvas ref={flamesC} className="ch-flames" aria-hidden="true" style={{ top: `${(FLAME_BAND[0] / SCENE.size[1]) * 100}%`, height: `${((FLAME_BAND[1] - FLAME_BAND[0]) / SCENE.size[1]) * 100}%` }} />
       </div>
       <div className="ch-body">
         <div className="ch-head">
@@ -372,8 +386,8 @@ function ChanukahSettings({ prefs, setPrefs }: { prefs: ChanukahPrefs; setPrefs:
 
 /* ---------------- the loop: 30 fps while the candles burn, 60 while the shamash moves, only while seen ---------------- */
 
-function startStage(canvas: HTMLCanvasElement, host: HTMLElement) {
-  const painter = new ChanukiahPainter(canvas);
+function startStage(base: HTMLCanvasElement, light: HTMLCanvasElement | null, flames: HTMLCanvasElement, host: HTMLElement) {
+  const painter = new ChanukiahPainter(base, light, flames);
   const reducedMq = window.matchMedia?.('(prefers-reduced-motion: reduce)');
   let reduced = !!reducedMq?.matches;
   let inView = true;
@@ -391,6 +405,11 @@ function startStage(canvas: HTMLCanvasElement, host: HTMLElement) {
   const tick = (now: number) => {
     raf = 0;
     if (!inView || document.hidden) return;
+    // nothing to draw until the pictures are in (and the scene's clock waits for them: onReady restarts it)
+    if (!painter.ready) {
+      prev = 0;
+      return;
+    }
     const fps = painter.animating ? 60 : 30;
     if (now - last >= 1000 / fps - 4) {
       clock += prev ? Math.min(0.1, (now - prev) / 1000) : 0;
@@ -404,6 +423,8 @@ function startStage(canvas: HTMLCanvasElement, host: HTMLElement) {
   const go = () => {
     if (!raf && inView && !document.hidden) raf = requestAnimationFrame(tick);
   };
+  // the pictures load with the card: paint as soon as they are in
+  painter.onReady = go;
 
   const measure = () => {
     const r = host.getBoundingClientRect();

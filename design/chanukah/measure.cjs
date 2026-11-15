@@ -1,5 +1,6 @@
 // Measures what the Chanukah card costs (see README.md): main-thread busy time from Chrome's own
-// counters (CDP Performance.getMetrics: TaskDuration) and the painter's own time per frame, over
+// counters (CDP Performance.getMetrics: TaskDuration), the CPU time of all of Chrome's processes (CDP
+// SystemInfo.getProcessInfo: the compositor and the GPU process too), and the painter's own time per frame, over
 // 10 s of real time at a real Chanukah moment, 390×844 at 2x, software rendering (no GPU).
 //
 //   npm run build && npx vite preview --port 5192      (in another terminal; a production build)
@@ -26,18 +27,24 @@ async function run(browser, label, { time, prep, played }) {
   await cdp.send('Performance.enable');
   const get = async () => Object.fromEntries((await cdp.send('Performance.getMetrics')).metrics.map((m) => [m.name, m.value]));
   const s0 = await page.evaluate(() => ({ ...window.__chanukiah.stats }));
+  // all of Chrome's processes (the renderer's other threads, the compositor, the GPU process): CPU seconds
+  const bcdp = await browser.newBrowserCDPSession();
+  const cpu = async () => (await bcdp.send('SystemInfo.getProcessInfo')).processInfo.reduce((a, p) => a + p.cpuTime, 0);
+  const c0 = await cpu();
   const m0 = await get();
   const w0 = Date.now();
   await page.waitForTimeout(SECS * 1000);
   const m1 = await get();
+  const c1 = await cpu();
   const s1 = await page.evaluate(() => ({ ...window.__chanukiah.stats }));
   const wall = (Date.now() - w0) / 1000;
   const frames = s1.frames - s0.frames;
   const busy = ((m1.TaskDuration - m0.TaskDuration) / wall) * 100;
+  const all = ((c1 - c0) / wall) * 100;
   const script = ((m1.ScriptDuration - m0.ScriptDuration) / wall) * 100;
   const ms = frames ? (s1.frameMs - s0.frameMs) / frames : 0;
   console.log(
-    `${label.padEnd(44)} card ${(frames / wall).toFixed(1).padStart(4)} fps · ${ms.toFixed(2)} ms/frame (max ${s1.maxFrameMs.toFixed(1)}) · main thread ${busy.toFixed(1)}% (script ${script.toFixed(1)}%)`,
+    `${label.padEnd(44)} card ${(frames / wall).toFixed(1).padStart(4)} fps · ${ms.toFixed(2)} ms/frame (max ${s1.maxFrameMs.toFixed(1)}) · main thread ${busy.toFixed(1)}% (script ${script.toFixed(1)}%) · all processes ${all.toFixed(1)}%`,
   );
   await ctx.close();
 }

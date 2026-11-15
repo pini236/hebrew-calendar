@@ -40,6 +40,8 @@ jobs:
         with:
           distribution: temurin
           java-version: 21
+          # keep Gradle's downloads between runs: Maven Central sometimes answers 429 (too many requests)
+          cache: gradle
       - run: npm ci
       - name: Accuracy check (zmanim vs. a second library)
         run: npm run verify
@@ -50,7 +52,13 @@ jobs:
 
       - name: Build test APK
         working-directory: android
-        run: ./gradlew assembleDebug --no-daemon
+        # a failed download (Maven Central's 429) is retried after a pause
+        run: |
+          for i in 1 2 3; do
+            ./gradlew assembleDebug --no-daemon && exit 0
+            echo "Gradle failed (attempt $i), retrying in $((i * 45)) s"; sleep $((i * 45))
+          done
+          exit 1
       - uses: actions/upload-artifact@v4
         with:
           name: test-apk

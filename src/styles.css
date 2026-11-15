@@ -2505,3 +2505,6 @@ kbd {
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+button.pair-cell + button.pair-cell {
+  border-radius: 0;
+}

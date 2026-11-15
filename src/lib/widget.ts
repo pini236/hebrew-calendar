@@ -70,6 +70,8 @@ export interface WidgetData {
   city: string;
   tz: string;
   generated: number;
+  /** the app's colour scheme: the widget follows it ('auto' = the phone's) */
+  theme: 'light' | 'dark' | 'auto';
   days: WidgetDay[];
   /** Shabbatot and Yamim Tovim in the range, in order */
   hol: WidgetHoly[];
@@ -207,7 +209,7 @@ export function buildWidgetData(from: Date, days: number, city: City, s: Setting
     if (!open && cn && (!hv || cn.getTime() > hv.getTime())) open = { c: cn, day: d };
   }
 
-  return { v: 1, city: city.name, tz: city.tz, generated: Date.now(), days: out, hol, om: widgetOmer(from, city, s, omer) };
+  return { v: 1, city: city.name, tz: city.tz, generated: Date.now(), theme: s.theme ?? 'light', days: out, hol, om: widgetOmer(from, city, s, omer) };
 }
 
 /** The season the Omer widget shows: this year's until two weeks after Shavuot, then next year's */

@@ -259,9 +259,21 @@ public class LuachWidgetProvider extends AppWidgetProvider {
         final int[] dark = new int[COLOR_IDS.length];
         final boolean night;
 
+        /** the app's colour scheme ("light", "dark" or "auto" = the phone's), from the data the app pushes */
+        final String theme;
+
         Palette(Context ctx) {
             Resources res = ctx.getResources();
-            night = (res.getConfiguration().uiMode & Configuration.UI_MODE_NIGHT_MASK) == Configuration.UI_MODE_NIGHT_YES;
+            String t = "light";
+            try {
+                String raw = ctx.getSharedPreferences(LuachWidgetProvider.PREFS, Context.MODE_PRIVATE).getString(LuachWidgetProvider.KEY, null);
+                if (raw != null) t = new org.json.JSONObject(raw).optString("theme", "light");
+            } catch (Exception ignored) {
+                // no data yet: light, as the app
+            }
+            theme = t;
+            boolean phoneNight = (res.getConfiguration().uiMode & Configuration.UI_MODE_NIGHT_MASK) == Configuration.UI_MODE_NIGHT_YES;
+            night = "dark".equals(theme) || ("auto".equals(theme) && phoneNight);
             Context l = mode(ctx, Configuration.UI_MODE_NIGHT_NO);
             Context d = mode(ctx, Configuration.UI_MODE_NIGHT_YES);
             for (int i = 0; i < COLOR_IDS.length; i++) {
@@ -282,7 +294,8 @@ public class LuachWidgetProvider extends AppWidgetProvider {
          * (a switch shows on the next refresh, at most a quarter of an hour later).
          */
         void set(RemoteViews v, int id, String method, int key) {
-            if (Build.VERSION.SDK_INT >= 31) v.setColorInt(id, method, light[key], dark[key]);
+            // the app's scheme wins; only "auto" lets the launcher switch with the phone (Android 12+)
+            if ("auto".equals(theme) && Build.VERSION.SDK_INT >= 31) v.setColorInt(id, method, light[key], dark[key]);
             else v.setInt(id, method, night ? dark[key] : light[key]);
         }
     }

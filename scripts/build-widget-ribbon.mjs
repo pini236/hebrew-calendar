@@ -1,5 +1,5 @@
 // The widget's ribbon moves with the app's silk physics (src/components/silk.ts): a home-screen widget
-// can't run code, so the motion is rendered here into frames, light and dark, and the widget plays
+// can't run code, so the motion is rendered here into frames, and the widget plays
 // them with a ViewFlipper (a still ribbon, then a gust that settles back to rest).
 // Writes android/app/src/main/res/drawable{,-night}-nodpi/widget_ribbon_fNN.png and puts the flipper
 // in the widget layouts in place of the static ribbon.
@@ -21,10 +21,9 @@ const FPS = 11; // frames per second the flipper plays (interval below)
 const INTERVAL = Math.round(1000 / FPS);
 const REST = 40; // still frames before each gust (~3.6 s)
 const MAX_GUST = 48; // at most this many moving frames (~4.4 s)
-const THEMES = [
-  ['', '#E3A73A', '#FFFEFB'],
-  ['-night', '#E2AE4C', '#1C1B18'],
-];
+// One set of frames: the widget follows the app's colour scheme, not the phone's, so a night-qualified
+// resource set would show the wrong frames; the saffron is the same on both papers.
+const THEMES = [['', '#E3A73A', '#FFFEFB']];
 
 const server = await createServer({ server: { port: 5199, strictPort: true }, logLevel: 'error' });
 await server.listen();

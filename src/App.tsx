@@ -198,7 +198,7 @@ export default function App() {
       window.removeEventListener('luachi:resume', run);
       window.removeEventListener('luachi:season-state', soon);
     };
-  }, [city, settings.candleMins, settings.havdalah, settings.useElevation, settings.showModern]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [city, settings.candleMins, settings.havdalah, settings.useElevation, settings.showModern, settings.theme]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const fmt = useMemo(() => timeFmt(city.tz), [city.tz]);
   const selKey = dateKey(selected);

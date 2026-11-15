@@ -27,6 +27,7 @@ import type { MyEvent, Settings } from '../lib/store';
 import { Icon } from './Icon';
 import { SilkRibbon } from './SilkRibbon';
 import { SkyHeader, SkyScene } from './SkyScene';
+import { SeasonCards } from './seasons';
 import { agendaRows, dayName, daysBetween, inTime, nextShabbat, weekParasha, yearsWord, type ShabbatInfo } from './dayinfo';
 
 type Z = ReturnType<typeof zmanim>;
@@ -48,6 +49,8 @@ interface Props {
   onAddEvent: () => void;
   onEditEvent: (e: MyEvent) => void;
   onAllZmanim: () => void;
+  /** save settings (the seasons' own preferences) */
+  onSettings: (s: Settings) => void;
 }
 
 const DAY_KINDS = new Set(['yomtov', 'cholhamoed', 'erev', 'fast', 'minor', 'roshchodesh', 'modern', 'special-shabbat', 'parasha', 'mevarchim']);
@@ -78,6 +81,8 @@ export function TodayTab(p: Props) {
       )}
 
       <WeekStrip {...p} />
+
+      <SeasonCards day={selected} now={now} city={city} settings={settings} z={z} onSettings={p.onSettings} />
 
       <div className="today-grid">
         <div className="today-main">

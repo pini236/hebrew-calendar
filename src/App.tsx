@@ -331,6 +331,7 @@ export default function App() {
             onAddEvent={addEvent}
             onEditEvent={editEvent}
             onAllZmanim={() => showTab('zmanim')}
+            onSettings={setSettings}
           />
         )}
         {tab === 'month' && (

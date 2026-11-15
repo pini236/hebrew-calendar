@@ -11,6 +11,8 @@ import type { City } from './cities';
 import { nativeAlerts, shabbatAlerts, shabbatName } from './ics';
 import { REMIND_DEFAULT_TIME, type MyEvent, type Settings } from './store';
 import { plural, tr } from './i18n';
+import { SEASONS, SEASON_SLOTS, seasonContext } from './seasons';
+import './seasons/all';
 
 /** iOS keeps at most 64 pending local notifications per app (the rest are silently dropped) */
 export const IOS_LIMIT = 64;
@@ -51,12 +53,13 @@ export const CANDLE_OFFSETS = [10, 15, 20, 30, 45, 60];
  * Each kind of notification has its own id range, so one kind can be cancelled or replaced
  * without touching the others. The Friday alerts keep the ids the app has always used (yyyymmdd).
  */
-export type Group = 'friday' | 'zmanim' | 'holiday' | 'events';
+export type Group = 'friday' | 'zmanim' | 'holiday' | 'events' | 'season';
 export const GROUP_RANGES: Record<Group, readonly [number, number]> = {
   friday: [19_000_000, 30_000_000],
   zmanim: [100_000_000, 200_000_000],
   holiday: [200_000_000, 300_000_000],
   events: [300_000_000, 400_000_000],
+  season: [400_000_000, 500_000_000],
 };
 export const groupOf = (id: number): Group | null => {
   for (const g of Object.keys(GROUP_RANGES) as Group[]) if (id >= GROUP_RANGES[g][0] && id < GROUP_RANGES[g][1]) return g;
@@ -67,7 +70,7 @@ const EPOCH = new Date(2000, 0, 1, 12).getTime();
 const dayNo = (d: Date) => Math.round((new Date(d.getFullYear(), d.getMonth(), d.getDate(), 12).getTime() - EPOCH) / 86400000);
 const makeId = (g: Group, day: Date, slot: number) => GROUP_RANGES[g][0] + dayNo(day) * 100 + slot;
 
-export type Channel = 'shabbat' | 'zmanim' | 'reminders';
+export type Channel = 'shabbat' | 'zmanim' | 'reminders' | 'seasons';
 /** Android notification channels; the names read in the interface language when the channels are made */
 export const CHANNELS: Record<Channel, { name: string; description: string }> = {
   get shabbat() {
@@ -81,6 +84,9 @@ export const CHANNELS: Record<Channel, { name: string; description: string }> = 
   },
   get reminders() {
     return { name: tr('האירועים שלי', 'My events'), description: tr('תזכורות לימי הולדת, יארצייטים ואירועים', 'Reminders for birthdays, yahrzeits and events') };
+  },
+  get seasons() {
+    return { name: tr('עונות ומועדים', 'Seasons'), description: tr('ספירת העומר, חנוכה ועוד', 'Sefirat HaOmer, Chanukah and more') };
   },
 };
 
@@ -271,6 +277,21 @@ export function eventNotifications(from: Date, days: number, events: MyEvent[], 
  * fewer days when many zmanim are on); whatever is left extends the Friday alerts (up to a year)
  * and the remaining event reminders.
  */
+/* ---------------- seasons (src/lib/seasons.ts) ---------------- */
+
+export function seasonNotifications(from: Date, days: number, city: City, s: Settings, now: Date): PlannedNotification[] {
+  const out: PlannedNotification[] = [];
+  for (const season of SEASONS) {
+    if (!season.notifications) continue;
+    for (const n of season.notifications(from, days, now, seasonContext(season.id, city, s))) {
+      // the season's id is its own slot within the day; place it in the season range
+      const slot = SEASON_SLOTS[season.id] + (n.id % 20);
+      out.push({ ...n, id: makeId('season', n.at, slot), group: 'season', channel: 'seasons' });
+    }
+  }
+  return out.sort((a, b) => a.at.getTime() - b.at.getTime());
+}
+
 export function planNotifications(opts: { now: Date; city: City; settings: Settings; events: MyEvent[]; budget?: number }): Plan {
   const { now, city, settings: s, events } = opts;
   const budget = opts.budget ?? IOS_LIMIT;
@@ -279,6 +300,7 @@ export function planNotifications(opts: { now: Date; city: City; settings: Setti
   const evs = eventNotifications(start, HORIZON.events, events, now);
   const hol = holidayNotifications(start, HORIZON.holiday, city, s, now);
   const fri = fridayNotifications(start, HORIZON.fridayWeeks, city, s, now);
+  const sea = seasonNotifications(start, HORIZON.holiday, city, s, now);
 
   const take: PlannedNotification[] = [];
   const room = () => budget - take.length;
@@ -290,6 +312,7 @@ export function planNotifications(opts: { now: Date; city: City; settings: Setti
 
   let evN = add(evs.slice(0, RESERVE.events));
   const holN = add(hol);
+  add(sea);
   let friN = add(fri.slice(0, RESERVE.fridayWeeks));
 
   // zmanim: whole days while they fit

@@ -42,6 +42,8 @@ export interface Settings {
   havdalahAlert: boolean;
   /** native apps: notifications for the start and the end of fasts */
   fastAlerts: boolean;
+  /** each season's own preferences (src/lib/seasons.ts), by season id */
+  seasons?: Record<string, Record<string, unknown>>;
 }
 
 export const DEFAULT_SETTINGS: Settings = {

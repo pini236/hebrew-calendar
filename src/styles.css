@@ -2876,3 +2876,10 @@ button.pair-cell + button.pair-cell {
   font-weight: 500;
   font-variant-numeric: tabular-nums;
 }
+
+/* ---------------- seasons (src/lib/seasons.ts, src/components/seasons) ---------------- */
+.season-cards {
+  display: grid;
+  gap: 16px;
+  margin-bottom: 16px;
+}

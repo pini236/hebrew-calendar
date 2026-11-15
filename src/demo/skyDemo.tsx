@@ -132,6 +132,7 @@ function Demo() {
           onAddEvent={() => {}}
           onEditEvent={() => {}}
           onAllZmanim={() => {}}
+          onSettings={() => {}}
         />
       </div>
     </div>

@@ -109,24 +109,51 @@ async function shot(browser, s) {
   await ctx.close();
 }
 
-// the widget's HTML twin (/omer-demo.html) on a home screen, and the launcher's preview image
+// the widget's HTML twin (/omer-demo.html) on a 360dp home screen: every size (4×2, 2×2, 5×2, 4×3), light and
+// dark, on a busy photo-like wallpaper and on a plain one; an overview; and the launcher's preview image
+const SKIP = '2,9,16,23,30';
 const WIDGETS = [
-  { name: 'widget-tonight', q: 'at=2027-05-24T20:40:00%2B03:00&marks=1-32&skip=2,9,16,23,30' },
-  { name: 'widget-counted', q: 'at=2027-05-24T21:00:00%2B03:00&marks=1-33&skip=2,9,16,23,30' },
-  { name: 'widget-before', q: 'at=2027-04-10T12:00:00%2B03:00' },
-  { name: 'widget-after', q: 'at=2027-06-13T12:00:00%2B03:00&marks=1-49&skip=2,9,16,23,30,37' },
-  { name: 'widget-no-marks', q: 'at=2027-05-03T10:00:00%2B03:00' },
+  // the owner's moment (Sunday 15.11.2026, 13:14): off season, 158 days to the second night of Pesach
+  { name: 'offseason', q: 'at=2026-11-15T13:14:00%2B02:00' },
+  // 15 Nisan (Thursday 22.4.2027) at noon: the count begins tonight
+  { name: 'begins-tonight', q: 'at=2027-04-22T12:00:00%2B03:00' },
+  // the night of Lag BaOmer (Monday 24.5.2027 after nightfall), not counted yet: the ribbon on day 33
+  { name: 'tonight', q: `at=2027-05-24T20:40:00%2B03:00&marks=1-32&skip=${SKIP}` },
+  // the same night after "ספרתי" (day 20 was missed: a ring and a dot)
+  { name: 'counted', q: `at=2027-05-24T21:00:00%2B03:00&marks=1-33&skip=${SKIP},20` },
+  // Lag BaOmer afternoon: the sky from dawn to nightfall, "now" on it, and when the next count begins
+  { name: 'before-nightfall', q: `at=2027-05-25T17:46:00%2B03:00&marks=1-33&skip=${SKIP}` },
+  // someone who doesn't mark the count in the app: the days that went by are quiet
+  { name: 'no-marks', q: 'at=2027-05-03T10:00:00%2B03:00' },
+  // two weeks after Shavuot: the summary
+  { name: 'after', q: `at=2027-06-13T12:00:00%2B03:00&marks=1-49&skip=${SKIP},37` },
+  // English (nusach Ashkenaz), after the count, Lag BaOmer behind (its saffron dot)
+  { name: 'english', q: `at=2027-05-27T21:30:00%2B03:00&marks=1-36&skip=${SKIP}&lang=en&nusach=ashkenaz` },
 ];
-async function widget(browser, w, theme, file, extra = '') {
-  const ctx = await browser.newContext({ viewport: { width: 400, height: 600 }, deviceScaleFactor: 3, colorScheme: theme, timezoneId: 'Asia/Jerusalem', locale: 'he-IL' });
+async function widget(browser, q, file, preview = false) {
+  const ctx = await browser.newContext({ viewport: { width: 400, height: 1100 }, deviceScaleFactor: 3, timezoneId: 'Asia/Jerusalem', locale: 'he-IL' });
   const page = await ctx.newPage();
-  await page.goto(`${BASE}omer-demo.html?${w.q}&theme=${theme}${extra}`);
+  const errors = [];
+  page.on('pageerror', (e) => errors.push(String(e)));
+  await page.goto(`${BASE}omer-demo.html?${q}`);
   await page.waitForSelector('#shot .ow');
   await page.evaluate(() => document.fonts.ready);
-  await page.waitForTimeout(300);
-  const el = await page.$(extra ? '#shot .ow' : '#shot');
-  await el.screenshot({ path: file, omitBackground: !!extra });
+  await page.waitForTimeout(500);
+  const el = await page.$(preview ? '#shot .ow' : '#shot');
+  await el.screenshot({ path: file, omitBackground: preview });
+  if (errors.length) console.log(`  ${path.basename(file)}: ${errors.join(' | ')}`);
   console.log(path.basename(file));
+  await ctx.close();
+}
+async function overview(browser) {
+  const pick = ['offseason-light-busy', 'tonight-light-busy', 'before-nightfall-dark-busy', 'counted-dark-plain', 'after-light-plain', 'english-light-busy'];
+  const img = (n) => `<img src="data:image/png;base64,${fs.readFileSync(path.join(OUT, `widget-v2-${n}.png`)).toString('base64')}">`;
+  const ctx = await browser.newContext({ viewport: { width: 6 * 300 + 7 * 16, height: 300 }, deviceScaleFactor: 1 });
+  const page = await ctx.newPage();
+  await page.setContent(`<style>body{margin:0;background:#e9e6df;display:flex;gap:16px;padding:16px;width:max-content;align-items:flex-start}img{width:300px;display:block}</style>${pick.map(img).join('')}`);
+  await page.waitForTimeout(300);
+  await page.screenshot({ path: path.join(OUT, 'widget-v2-overview.png'), fullPage: true });
+  console.log('widget-v2-overview.png');
   await ctx.close();
 }
 
@@ -134,8 +161,11 @@ async function widget(browser, w, theme, file, extra = '') {
   const browser = await chromium.launch({ args: ['--no-proxy-server'] });
   for (const s of SHOTS) if (!ONLY || s.name.startsWith(ONLY)) await shot(browser, s);
   for (const w of WIDGETS)
-    for (const theme of ['light', 'dark']) if (!ONLY || w.name.startsWith(ONLY)) await widget(browser, w, theme, path.join(OUT, `${w.name}-${theme}.png`));
-  if (!ONLY || ONLY === 'preview')
-    await widget(browser, WIDGETS[0], 'light', path.resolve(OUT, '../../android/app/src/main/res/drawable-nodpi/omer_widget_preview.png'), '&preview');
+    for (const theme of ['light', 'dark'])
+      for (const bg of ['busy', 'plain'])
+        if (!ONLY || ONLY === 'widget' || w.name.startsWith(ONLY)) await widget(browser, `${w.q}&theme=${theme}&bg=${bg}`, path.join(OUT, `widget-v2-${w.name}-${theme}-${bg}.png`));
+  if (!ONLY || ONLY === 'widget' || ONLY === 'overview') await overview(browser);
+  if (!ONLY || ONLY === 'widget' || ONLY === 'preview')
+    await widget(browser, `${WIDGETS[3].q}&theme=light&sizes=m&preview`, path.resolve(OUT, '../../android/app/src/main/res/drawable-nodpi/omer_widget_preview.png'), true);
   await browser.close();
 })();

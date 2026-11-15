@@ -97,4 +97,15 @@ for (const f of readdirSync(`${RES}/layout`).filter((n) => /^widget_(xs|s|m_shor
   x = x.replace(/<ViewFlipper\s+android:id="@\+id\/w_ribbon"[\s\S]*?android:layout_marginRight="(\d+)dp"[\s\S]*?<\/ViewFlipper>/, (_, m) => flipper(+m));
   writeFileSync(path, x);
 }
+// the Omer widget's layouts: the flipper sits on the day in the field (its size and place are set in code), so only
+// its frames are refreshed here
+for (const f of readdirSync(`${RES}/layout`).filter((n) => /^omer_widget_\w+\.xml$/.test(n))) {
+  const path = `${RES}/layout/${f}`;
+  const x = readFileSync(path, 'utf8').replace(
+    /(<ViewFlipper\s+android:id="@\+id\/w_ribbon"[\s\S]*?-->\n)([ ]*)<ImageView[\s\S]*?(\s*<\/ViewFlipper>)/,
+    (_, head, pad, tail) =>
+      head + seq.map((n) => `${pad}<ImageView android:layout_width="match_parent" android:layout_height="match_parent" android:src="@drawable/widget_ribbon_f${String(n).padStart(2, '0')}" />`).join('\n') + tail,
+  );
+  writeFileSync(path, x);
+}
 console.log(`layouts: ${seq.length} frames each, ${INTERVAL} ms (${((seq.length * INTERVAL) / 1000).toFixed(1)} s loop)`);

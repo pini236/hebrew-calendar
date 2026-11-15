@@ -496,179 +496,227 @@ button.om-cell:focus-visible {
 
 /* ---------------- the widget, as Android draws it (OmerWidgetMock; android/.../res/layout/omer_widget_*.xml) ---------------- */
 
+/* every box is a LinearLayout of the layouts; sizes in dp, text in sp (1 = 1 CSS px) */
 .ow {
-  --ow-paper: #faf6ec;
-  --ow-edge: #dfdcd2;
-  --ow-ink: #1d1c19;
-  --ow-muted: #6c685f;
-  --ow-date: #1e5a45;
-  --ow-ribbon: #e3a73a;
   position: relative;
-  display: flex;
-  align-items: stretch;
-  gap: 14px;
-  width: 250px;
-  height: 166px;
-  padding: 16px;
+  flex: none;
   overflow: hidden;
   border-radius: 20px;
   background: var(--ow-paper);
   box-shadow: inset 0 0 0 1px var(--ow-edge);
   color: var(--ow-ink);
   font-family: Roboto, 'Noto Sans Hebrew', var(--f-body);
-  text-align: right;
+  font-variant-numeric: tabular-nums;
+  text-align: start;
 }
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme='light']) .ow:not(.ow-light) {
-    --ow-paper: #1b1a18;
-    --ow-edge: #353331;
-    --ow-ink: #eeebe4;
-    --ow-muted: #9a958b;
-    --ow-date: #f3ecdd;
-    --ow-ribbon: #e2ae4c;
-  }
+.ow canvas {
+  display: block;
 }
-:root[data-theme='dark'] .ow:not(.ow-light),
-.ow.ow-dark {
-  --ow-paper: #1b1a18;
-  --ow-edge: #353331;
-  --ow-ink: #eeebe4;
-  --ow-muted: #9a958b;
-  --ow-date: #f3ecdd;
-  --ow-ribbon: #e2ae4c;
+/* the bitmaps: ImageViews with adjustViewBounds, never wider than their column */
+.ow-num,
+.ow-title,
+.ow-big-n {
+  flex: none;
+  max-width: 100%;
+  height: auto;
 }
-.ow-ribbon {
+.ow-big-n {
+  min-width: 0;
+  flex-shrink: 1;
+}
+.ow-status {
+  margin-top: 8px;
+}
+.ow-row,
+.ow-col {
   position: absolute;
-  top: 0;
-  left: 8px;
-  width: 22px;
-  height: 22px;
+  inset: 0;
+  display: flex;
+  padding: 14px 16px 14px;
 }
-.ow-ribbon-css {
-  left: 14px;
-  width: 10px;
-  height: 18px;
-  background: var(--ow-ribbon);
-  clip-path: polygon(0 0, 100% 0, 100% 100%, 50% 76%, 0 100%);
+.ow-col {
+  flex-direction: column;
+}
+.ow-row > .ow-text {
+  flex: 1;
+  min-width: 0;
+  margin-inline-end: 14px;
+}
+.ow-sp {
+  flex: 1;
 }
 .ow-text {
   display: flex;
-  flex: 1;
   flex-direction: column;
-  justify-content: flex-end;
-  min-width: 0;
+  align-items: flex-start;
 }
 .ow-num {
-  color: var(--ow-date);
-  font-family: 'Geresh Serif', 'Frank Ruhl Libre', serif;
-  font-size: 46px;
-  font-weight: 500;
-  line-height: 1;
-}
-.ow-title {
-  color: var(--ow-date);
-  font-family: 'Geresh Serif', 'Frank Ruhl Libre', serif;
-  font-size: 22px;
-  font-weight: 500;
-  line-height: 1.15;
+  flex: none;
 }
 .ow-sef {
-  margin-top: 8px;
-  font-size: 13px;
+  margin-top: 4px;
+  font-size: 14px;
   font-weight: 500;
-  line-height: 1.25;
+  line-height: 17px;
 }
-.ow-sub {
-  margin-top: 2px;
+.ow-count {
+  display: -webkit-box;
+  margin-top: 5px;
+  overflow: hidden;
   color: var(--ow-muted);
-  font-size: 12px;
-  line-height: 1.3;
+  font-size: 11px;
+  line-height: 14px;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 4;
 }
-/* the field: F square, 7 cells, 6 gaps of 0.26 cell and half a gap round the band (OmerWidgetDraw.field) */
-.ow-field {
-  --F: 118px;
-  --c: calc(var(--F) / 8.82);
-  --g: calc(var(--c) * 0.26);
-  padding: calc(var(--g) / 2);
+.ow-t .ow-count {
+  -webkit-line-clamp: 2;
+}
+.ow-done {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  color: var(--ow-green);
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 15px;
+}
+.ow-done::before {
+  content: '';
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--ow-green);
+}
+.ow-title {
+  flex: none;
+}
+.ow-start {
+  margin-top: 4px;
+  color: var(--ow-muted);
+  font-size: 11px;
+  line-height: 14px;
+  white-space: pre-line;
+}
+.ow-big {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+}
+.ow-big-w {
+  color: var(--ow-muted);
+  font-size: 13px;
+  line-height: 16px;
+}
+.ow-left {
   display: flex;
   flex: none;
   flex-direction: column;
-  align-self: center;
-  gap: var(--g);
-  width: var(--F);
+  justify-content: center;
 }
-.ow-row {
-  display: grid;
-  grid-template-columns: repeat(7, 1fr);
-  gap: var(--g);
-  margin: calc(var(--g) / -2);
-  padding: calc(var(--g) / 2);
-  border-radius: 999px;
+.ow-fieldwrap {
+  display: flex;
+  flex: none;
+  align-items: flex-start;
 }
-.ow-row.wk {
-  background: color-mix(in srgb, var(--ow-muted) 11%, transparent);
-}
-.ow-c {
+.ow-field {
   position: relative;
-  width: 100%;
-  aspect-ratio: 1;
-  border-radius: 50%;
+  flex: none;
 }
-.ow-c.future,
-.ow-c.missed {
-  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--ow-muted) 42%, transparent);
-}
-.ow-c.missed::after {
-  content: '';
+.ow-tab {
   position: absolute;
-  inset: 38%;
-  border-radius: 50%;
-  background: color-mix(in srgb, var(--ow-muted) 75%, transparent);
 }
-.ow-c.passed {
-  background: color-mix(in srgb, var(--ow-muted) 18%, transparent);
+.ow-weeks {
+  display: flex;
+  flex: none;
+  flex-direction: column;
+  width: 32px;
+  margin-inline-end: 6px;
 }
-.ow-c.counted,
-.ow-c.today-counted {
-  background: var(--ow-date);
+.ow-weeks span {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  justify-content: flex-end;
+  color: var(--ow-muted);
+  font-size: 10px;
+  opacity: 0.7;
 }
-.ow-c.assumed {
-  background: color-mix(in srgb, var(--ow-date) 40%, transparent);
+.ow-weeks span.on {
+  color: var(--ow-ink);
+  font-weight: 500;
+  opacity: 1;
 }
-.ow-c.today {
-  background: color-mix(in srgb, var(--ow-ribbon) 26%, transparent);
-  box-shadow: inset 0 0 0 1.5px var(--ow-ribbon);
+.ow-next {
+  margin-top: 4px;
 }
-.ow-c.today-counted {
-  box-shadow: 0 0 0 0.8px var(--ow-paper), 0 0 0 2px var(--ow-ribbon);
+.ow-next-row {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  margin-top: 2px;
+}
+.ow-next-l {
+  color: var(--ow-muted);
+  font-size: 11px;
+  line-height: 14px;
+}
+.ow-next-t {
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 16px;
+}
+/* under the field and beside the day: the label takes the room left, the hour at the end */
+.ow-next-row .ow-next-l {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  font-size: 10.5px;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.ow-next-row .ow-next-t {
+  font-size: 12.5px;
+}
+.ow-center {
+  display: flex;
+  justify-content: center;
 }
 
-/* 2×2: the number and the sefira above, the field below */
-.ow-s {
-  flex-direction: column;
-  gap: 8px;
-  width: 117px;
-  padding: 12px;
+/* 2×2 */
+.ow-s .ow-col {
+  padding: 14px 12px 12px;
 }
-.ow-s .ow-text {
-  flex: none;
-  justify-content: flex-start;
-  padding-top: 6px;
-}
-.ow-s .ow-num {
-  font-size: 30px;
-}
-.ow-s .ow-title {
-  font-size: 16px;
+.ow-top {
+  display: flex;
+  align-items: flex-start;
 }
 .ow-s .ow-sef {
-  margin-top: 4px;
-  font-size: 11px;
+  font-size: 12px;
+  line-height: 15px;
 }
-.ow-s .ow-sub {
-  font-size: 11px;
+.ow-s-next {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
 }
-.ow-s .ow-field {
-  --F: 88px;
+.ow-s .ow-fieldwrap {
   align-self: center;
+}
+.ow-head {
+  display: flex;
+  gap: 14px;
+}
+.ow-head > .ow-text {
+  flex: 1;
+  min-width: 0;
+}
+.ow-head .ow-sef {
+  margin-top: 6px;
+}
+.ow-fit {
+  align-self: stretch;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
 }

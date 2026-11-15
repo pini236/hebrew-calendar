@@ -33,7 +33,9 @@ export default function OmerIntro({ now, city, settings, onSettings, onClose }: 
   const minute = Math.floor(now.getTime() / 60000);
   const m = useMemo(() => omerNow(now, city, settings), [minute, city]); // eslint-disable-line react-hooks/exhaustive-deps
   const om = useMemo(() => widgetOmer(now, city, settings, st), [minute, city, st]); // eslint-disable-line react-hooks/exhaustive-deps
-  const wm = omerWidgetModel({ om } as WidgetData, now);
+  const wm = omerWidgetModel({ om, tz: city.tz } as WidgetData, now);
+  // the widget follows the app's colour scheme, as the real one does
+  const dark = settings.theme === 'dark' || (settings.theme === 'auto' && typeof matchMedia === 'function' && matchMedia('(prefers-color-scheme: dark)').matches);
 
   // the season shown: this year's while it runs (or until two weeks after it), otherwise the next one
   const inSeason = m.n >= 1 && m.n <= 49 && om.y === m.year;
@@ -105,7 +107,7 @@ export default function OmerIntro({ now, city, settings, onSettings, onClose }: 
           <section className="oi-widget" aria-label={tr('ווידג׳ט למסך הבית', 'Home-screen widget')}>
             <h2 className="group-label">{tr('על מסך הבית', 'On your home screen')}</h2>
             <div className="oi-plate">
-              <OmerWidgetMock m={wm} size="m" />
+              <OmerWidgetMock m={wm} size="m" theme={dark ? 'dark' : 'light'} />
             </div>
             {plat === 'android' ? (
               canPin ? (

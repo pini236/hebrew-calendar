@@ -306,8 +306,8 @@ export const sefira = (n: number) => (isHe() ? stripNiqqud(sefiraNiqqud(n)) : ne
 export const sefiraMeaning = (n: number) => new OmerEvent(new HDate(), n).sefira('en');
 /** The sefira of a week (1–7), plain: "הוד" / "Hod" */
 export const weekSefira = (w: number) => (isHe() ? SEFIROT_HE[w - 1] : SEFIROT_EN[w - 1]);
-/** The seven words, and the seven "within" forms, for the widget (Hebrew, no niqqud) */
-export const SEFIRA_WORDS = { he: SEFIROT_HE, in: SEFIROT_IN_HE };
+/** The seven words, and the seven "within" forms, for the widget (no niqqud): "הוד" + "שבהוד", "Hod" + "sheb'Hod" */
+export const SEFIRA_WORDS = { he: SEFIROT_HE, in: SEFIROT_IN_HE, en: SEFIROT_EN, inEn: SEFIROT_EN.map((w) => `sheb'${w}`) };
 
 /** "4 שבועות ו־5 ימים" / "4 weeks, 5 days" */
 export function weeksText(n: number): string {
@@ -340,8 +340,8 @@ const at = (d: Date, hhmm: string) => {
   const [h, m] = hhmm.split(':').map(Number);
   return new Date(d.getFullYear(), d.getMonth(), d.getDate(), h || 0, m || 0);
 };
-/** The count without niqqud, in full spelling (a notification has no room for vowels) */
-const plain = (n: number, nusach: Nusach) =>
+/** The count without niqqud, in full spelling (a notification or the widget has no room for vowels) */
+export const countPlain = (n: number, nusach: Nusach) =>
   stripNiqqud(countText(n, nusach))
     .replace(/\.$/, '')
     .replace(/([לב])עמר$/, '$1עומר')
@@ -356,7 +356,7 @@ export function omerNotifications(from: Date, days: number, now: Date, ctx: Seas
     if (when.getTime() <= now.getTime() + 30000 || holyAt(when, city, s)) return;
     out.push({ id: slot, at: when, title, body, ...(extra ? { extra } : {}) });
   };
-  const he = (n: number) => (isHe() ? plain(n, p.nusach) : countEnglish(n).replace(/\.$/, ''));
+  const he = (n: number) => (isHe() ? countPlain(n, p.nusach) : countEnglish(n).replace(/\.$/, ''));
   // a gap already known now (a day that is over and was not marked): later nights can't know of more
   const cur = omerNow(now, city, s);
   const knownGap = cur.n > 1 && cur.n < 50 && omerCells(state, cur.year, cur.n, city.il).slice(0, cur.n - 1).includes('missed');

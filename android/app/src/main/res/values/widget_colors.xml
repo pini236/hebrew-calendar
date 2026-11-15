@@ -12,4 +12,6 @@
     <color name="widget_ribbon">#FFE3A73A</color>
     <color name="widget_ribbon_ink">#FF8A5807</color>
     <color name="widget_chag">#FFB0281F</color>
+    <!-- the counted days of the Omer widget: the diary's green (light), the app's dark accent (dark) -->
+    <color name="widget_green">#FF1E5A45</color>
 </resources>

@@ -10,15 +10,17 @@ import {
   gregDateStr,
   hebDateStr,
   rangeItems,
-  shortTitle,
+  shortItem,
   today,
   type Kind,
 } from '../lib/cal';
 import type { City } from '../lib/cities';
+import { isHe, tr } from '../lib/i18n';
 import type { MyEvent, Settings } from '../lib/store';
 import { Screen } from './Screen';
 import { Icon } from './Icon';
 import { HebDatePicker, hebPartsOf, hebPartsToDate } from './HebDatePicker';
+import { dayName, relWords } from './dayinfo';
 
 interface Props {
   selected: Date;
@@ -33,12 +35,17 @@ type Tab = 'soon' | 'heb' | 'greg' | 'rel';
 
 const LIST_KINDS = new Set<Kind>(['yomtov', 'erev', 'fast', 'minor', 'modern', 'roshchodesh']);
 
-function relWords(n: number) {
-  if (n === 0) return 'היום';
-  if (n === 1) return 'מחר';
-  if (n === -1) return 'אתמול';
-  if (n === 2) return 'מחרתיים';
-  return n > 0 ? `בעוד ${n.toLocaleString('he-IL')} ימים` : `לפני ${(-n).toLocaleString('he-IL')} ימים`;
+/** English search: lower case, letters and digits only, common spellings mapped to Hebcal's */
+function normEn(s: string) {
+  return s
+    .toLowerCase()
+    .replace(/[^a-z0-9]/g, '')
+    .replace(/passover/g, 'pesach')
+    .replace(/c?hann?ukk?ah?/g, 'chanukah')
+    .replace(/hashanah/g, 'hashana')
+    .replace(/sukkos/g, 'sukkot')
+    .replace(/shavuos/g, 'shavuot')
+    .replace(/tishah/g, 'tisha');
 }
 
 export function JumpScreen({ selected, city, settings, myEvents, onGo, onClose }: Props) {
@@ -50,7 +57,8 @@ export function JumpScreen({ selected, city, settings, myEvents, onGo, onClose }
   const upcoming = useMemo(() => {
     const end = addDays(t0, 400);
     const map = rangeItems(t0, end, city, settings, false);
-    const out: { d: Date; title: string; kind: Kind | 'mine'; color?: string }[] = [];
+    // title: Hebrew (also what the grouping matches on); en: English
+    const out: { d: Date; title: string; en: string; kind: Kind | 'mine'; color?: string }[] = [];
     const lastSeen = new Map<string, number>();
     for (let i = 0; i <= 400; i++) {
       const d = addDays(t0, i);
@@ -64,14 +72,26 @@ export function JumpScreen({ selected, city, settings, myEvents, onGo, onClose }
         const prev = lastSeen.get(group);
         lastSeen.set(group, i);
         if (prev !== undefined && i - prev < 10) continue;
-        out.push({ d, title: it.kind === 'yomtov' || it.kind === 'minor' ? group || it.title : it.title, kind: it.kind });
+        const en = it.en ?? it.title;
+        const enGroup = en
+          .split(/[:(]/)[0]
+          .replace(/\s+(\d{4}|[IVX]+)$/, '')
+          .trim();
+        const whole = it.kind === 'yomtov' || it.kind === 'minor';
+        out.push({ d, title: whole ? group || it.title : it.title, en: whole ? enGroup || en : en, kind: it.kind });
       }
-      for (const m of eventsOn(myEvents, d)) out.push({ d, title: m.ev.title, kind: 'mine', color: m.ev.color });
+      for (const m of eventsOn(myEvents, d)) out.push({ d, title: m.ev.title, en: m.ev.title, kind: 'mine', color: m.ev.color });
     }
     return out;
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [city, settings.showModern, myEvents]);
-  const filtered = q.trim() ? upcoming.filter((u) => u.title.includes(q.trim())) : upcoming;
+  // Hebrew matches the Hebrew names; English matches the English names (and Hebrew typed into it)
+  const nq = normEn(q);
+  const filtered = !q.trim()
+    ? upcoming
+    : isHe()
+      ? upcoming.filter((u) => u.title.includes(q.trim()))
+      : upcoming.filter((u) => u.title.includes(q.trim()) || (nq !== '' && normEn(u.en).includes(nq)));
 
   /* ----- hebrew picker ----- */
   const [heb, setHeb] = useState(() => hebPartsOf(selected));
@@ -106,15 +126,15 @@ export function JumpScreen({ selected, city, settings, myEvents, onGo, onClose }
   })();
 
   return (
-    <Screen title="מעבר לתאריך" onClose={onClose}>
+    <Screen title={tr('מעבר לתאריך', 'Go to date')} onClose={onClose}>
       <label className="search big">
         <Icon name="search" size={20} />
         <input
           id="jump-search"
           type="search"
           autoComplete="off"
-          placeholder="חג, מועד או אירוע שלי"
-          aria-label="חיפוש חג, מועד או אירוע"
+          placeholder={tr('חג, מועד או אירוע שלי', 'A holiday or one of my events')}
+          aria-label={tr('חיפוש חג, מועד או אירוע', 'Search holidays and events')}
           value={q}
           onChange={(e) => {
             setQ(e.target.value);
@@ -123,21 +143,21 @@ export function JumpScreen({ selected, city, settings, myEvents, onGo, onClose }
         />
       </label>
       <div className="quick">
-        <button onClick={() => onGo(t0)}>היום</button>
-        <button onClick={() => onGo(addDays(t0, 1))}>מחר</button>
-        <button onClick={() => onGo(nextSat)}>שבת הבאה</button>
-        <button onClick={() => onGo(nextRC)}>ראש חודש הבא</button>
-        <button onClick={() => onGo(addDays(selected, 7))}>שבוע קדימה</button>
-        <button onClick={() => onGo(new Date(selected.getFullYear() + 1, selected.getMonth(), selected.getDate(), 12))}>שנה קדימה</button>
+        <button onClick={() => onGo(t0)}>{tr('היום', 'Today')}</button>
+        <button onClick={() => onGo(addDays(t0, 1))}>{tr('מחר', 'Tomorrow')}</button>
+        <button onClick={() => onGo(nextSat)}>{tr('שבת הבאה', 'Next Shabbat')}</button>
+        <button onClick={() => onGo(nextRC)}>{tr('ראש חודש הבא', 'Next Rosh Chodesh')}</button>
+        <button onClick={() => onGo(addDays(selected, 7))}>{tr('שבוע קדימה', 'A week ahead')}</button>
+        <button onClick={() => onGo(new Date(selected.getFullYear() + 1, selected.getMonth(), selected.getDate(), 12))}>{tr('שנה קדימה', 'A year ahead')}</button>
       </div>
 
       <div className="seg tabs" role="tablist">
         {(
           [
-            ['soon', 'מועדים'],
-            ['heb', 'עברי'],
-            ['greg', 'לועזי'],
-            ['rel', 'בעוד / לפני'],
+            ['soon', tr('מועדים', 'Holidays')],
+            ['heb', tr('עברי', 'Hebrew')],
+            ['greg', tr('לועזי', 'Gregorian')],
+            ['rel', tr('בעוד / לפני', 'Relative')],
           ] as [Tab, string][]
         ).map(([k, l]) => (
           <button key={k} role="tab" aria-selected={tab === k} className={tab === k ? 'on' : ''} onClick={() => setTab(k)}>
@@ -163,14 +183,14 @@ export function JumpScreen({ selected, city, settings, myEvents, onGo, onClose }
                     </span>
                     <span className={`s-title k-${u.kind}`}>
                       {u.color && <i style={{ background: u.color }} />}
-                      {shortTitle(u.title)}
+                      {shortItem(u)}
                     </span>
                     <span className="s-in">{relWords(dd)}</span>
                   </button>
                 </li>
               );
             })}
-            {filtered.length === 0 && <li className="empty">לא נמצא מועד בשם הזה בשנה הקרובה.</li>}
+            {filtered.length === 0 && <li className="empty">{tr('לא נמצא מועד בשם הזה בשנה הקרובה.', 'Nothing by that name in the coming year.')}</li>}
           </ul>
         </div>
       )}
@@ -180,7 +200,7 @@ export function JumpScreen({ selected, city, settings, myEvents, onGo, onClose }
       {tab === 'greg' && (
         <div className="picker one">
           <label>
-            <span>בחרו תאריך לועזי</span>
+            <span>{tr('בחרו תאריך לועזי', 'Pick a Gregorian date')}</span>
             <input id="jump-greg" type="date" value={gk} onChange={(e) => setGk(e.target.value)} />
           </label>
         </div>
@@ -190,20 +210,22 @@ export function JumpScreen({ selected, city, settings, myEvents, onGo, onClose }
         <div className="picker rel">
           <div className="seg small">
             <button className={!dirFwd ? 'on' : ''} onClick={() => setDirFwd(false)}>
-              אחורה
+              {tr('אחורה', 'Back')}
             </button>
             <button className={dirFwd ? 'on' : ''} onClick={() => setDirFwd(true)}>
-              קדימה
+              {tr('קדימה', 'Forward')}
             </button>
           </div>
           <input id="jump-amt" type="number" min={0} inputMode="numeric" value={amt} onChange={(e) => setAmt(Math.max(0, Math.min(100000, +e.target.value)))} />
           <select id="jump-unit" value={unit} onChange={(e) => setUnit(e.target.value as typeof unit)}>
-            <option value="d">ימים</option>
-            <option value="w">שבועות</option>
-            <option value="m">חודשים</option>
-            <option value="y">שנים</option>
+            <option value="d">{tr('ימים', 'days')}</option>
+            <option value="w">{tr('שבועות', 'weeks')}</option>
+            <option value="m">{tr('חודשים', 'months')}</option>
+            <option value="y">{tr('שנים', 'years')}</option>
           </select>
-          <p className="fine">מהתאריך הנבחר: {gregDateStr(selected)}</p>
+          <p className="fine">
+            {tr('מהתאריך הנבחר:', 'From the selected date:')} {gregDateStr(selected)}
+          </p>
         </div>
       )}
 
@@ -212,11 +234,11 @@ export function JumpScreen({ selected, city, settings, myEvents, onGo, onClose }
           <div>
             <div className="p-heb">{hebDateStr(new HDate(target))}</div>
             <div className="p-greg">
-              יום {WEEKDAYS[target.getDay()]} · {gregDateStr(target)} · {relWords(daysBetween(t0, target))}
+              {dayName(target)} · {gregDateStr(target)} · {relWords(daysBetween(t0, target))}
             </div>
           </div>
           <button className="primary" onClick={() => onGo(target)}>
-            מעבר לתאריך
+            {tr('מעבר לתאריך', 'Go to date')}
           </button>
         </div>
       )}

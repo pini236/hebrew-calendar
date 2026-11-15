@@ -1,5 +1,6 @@
 import { HDate } from '@hebcal/core';
 import { hebMonthsOfYear, hebNum, hebYear } from '../lib/cal';
+import { isHe, tr } from '../lib/i18n';
 
 export interface HebParts {
   d: number;
@@ -32,7 +33,7 @@ export function HebDatePicker({ value, onChange, idPrefix }: { value: HebParts; 
   return (
     <div className="picker">
       <label>
-        <span>יום</span>
+        <span>{tr('יום', 'Day')}</span>
         <select id={`${idPrefix}-hd`} value={d} onChange={(e) => onChange({ ...value, d: +e.target.value })}>
           {Array.from({ length: maxD }, (_, i) => i + 1).map((n) => (
             <option key={n} value={n}>
@@ -42,7 +43,7 @@ export function HebDatePicker({ value, onChange, idPrefix }: { value: HebParts; 
         </select>
       </label>
       <label>
-        <span>חודש</span>
+        <span>{tr('חודש', 'Month')}</span>
         <select id={`${idPrefix}-hm`} value={m} onChange={(e) => onChange({ ...value, m: +e.target.value })}>
           {hebMonthsOfYear(y).map((x) => (
             <option key={x.month} value={x.month}>
@@ -52,13 +53,13 @@ export function HebDatePicker({ value, onChange, idPrefix }: { value: HebParts; 
         </select>
       </label>
       <label>
-        <span>שנה · {hebYear(y)}</span>
+        <span>{isHe() ? `שנה · ${hebYear(y)}` : 'Year'}</span>
         <div className="stepper">
-          <button type="button" onClick={() => setY(y - 1)} aria-label="שנה קודמת">
+          <button type="button" onClick={() => setY(y - 1)} aria-label={tr('שנה קודמת', 'Previous year')}>
             −
           </button>
-          <input id={`${idPrefix}-hy`} type="number" inputMode="numeric" value={y} aria-label="שנה עברית" onChange={(e) => setY(+e.target.value || y)} />
-          <button type="button" onClick={() => setY(y + 1)} aria-label="שנה הבאה">
+          <input id={`${idPrefix}-hy`} type="number" inputMode="numeric" value={y} aria-label={tr('שנה עברית', 'Hebrew year')} onChange={(e) => setY(+e.target.value || y)} />
+          <button type="button" onClick={() => setY(y + 1)} aria-label={tr('שנה הבאה', 'Next year')}>
             +
           </button>
         </div>

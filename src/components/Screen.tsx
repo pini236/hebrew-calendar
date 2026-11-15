@@ -1,4 +1,5 @@
 import { useEffect, useRef, type ReactNode } from 'react';
+import { tr } from '../lib/i18n';
 import { Icon } from './Icon';
 
 /**
@@ -22,7 +23,7 @@ export function Screen({ title, onClose, children, action }: { title: string; on
   return (
     <div className="screen" role="dialog" aria-modal="true" aria-label={title} tabIndex={-1} ref={ref}>
       <header className="screen-bar">
-        <button className="icon-btn" onClick={onClose} aria-label="חזרה">
+        <button className="icon-btn" onClick={onClose} aria-label={tr('חזרה', 'Back')}>
           <Icon name="back" size={22} />
         </button>
         <h2>{title}</h2>

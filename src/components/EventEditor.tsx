@@ -20,9 +20,9 @@ const COLOR_NAMES = byLang(['כתום', 'ירוק', 'כחול', 'ורוד', 'ס�
 
 const reminds = (): [Remind, string][] => [
   ['none', tr('ללא', 'None')],
-  ['day', tr('ביום עצמו', 'On the day')],
-  ['eve', tr('בערב שלפני', 'Evening before')],
-  ['week', tr('שבוע לפני', 'A week before')],
+  ['day', tr('ביום עצמו', 'Same day')],
+  ['eve', tr('בערב שלפני', 'Day before')],
+  ['week', tr('שבוע לפני', 'Week before')],
 ];
 
 export function EventEditor({ initial, date, onSave, onDelete, onClose }: Props) {
@@ -140,8 +140,8 @@ export function EventEditor({ initial, date, onSave, onDelete, onClose }: Props)
             {(
               [
                 ['none', tr('חד־פעמי', 'One-time')],
-                ['heb-yearly', tr('כל שנה · עברי', 'Yearly · Hebrew')],
-                ['greg-yearly', tr('כל שנה · לועזי', 'Yearly · Gregorian')],
+                ['heb-yearly', tr('כל שנה · עברי', 'Hebrew date')],
+                ['greg-yearly', tr('כל שנה · לועזי', 'Gregorian date')],
               ] as [Repeat, string][]
             ).map(([k, l]) => (
               <button type="button" key={k} className={repeat === k ? 'on' : ''} aria-pressed={repeat === k} onClick={() => setRepeat(k)}>

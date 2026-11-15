@@ -126,7 +126,7 @@ export function SettingsTab({ settings, city, myEvents, onChange, onImport, onNo
               <label className="field">
                 <span>{tr('הדלקת נרות', 'Candle lighting')}</span>
                 <select id="set-candle" value={settings.candleMins ?? ''} onChange={(e) => set({ candleMins: e.target.value === '' ? null : +e.target.value })}>
-                  <option value="">{tr(`מנהג העיר (${city.candle} דק׳)`, `Local custom (${city.candle} min)`)}</option>
+                  <option value="">{tr(`מנהג העיר (${city.candle} דק׳)`, `Local (${city.candle} min)`)}</option>
                   {[15, 18, 20, 22, 24, 30, 40].map((m) => (
                     <option key={m} value={m}>
                       {tr(`${m} דק׳ לפני השקיעה`, `${m} min before sunset`)}
@@ -138,9 +138,9 @@ export function SettingsTab({ settings, city, myEvents, onChange, onImport, onNo
                 <span>{tr('צאת שבת', 'End of Shabbat')}</span>
                 <select id="set-havdalah" value={settings.havdalah} onChange={(e) => set({ havdalah: e.target.value as Settings['havdalah'] })}>
                   <option value="deg8.5">{tr('צאת הכוכבים (8.5°)', 'Nightfall (8.5°)')}</option>
-                  <option value="min42">{tr('42 דקות אחרי השקיעה', '42 minutes after sunset')}</option>
-                  <option value="min50">{tr('50 דקות אחרי השקיעה', '50 minutes after sunset')}</option>
-                  <option value="min72">{tr('רבנו תם (72 דקות)', 'Rabbeinu Tam (72 minutes)')}</option>
+                  <option value="min42">{tr('42 דקות אחרי השקיעה', '42 min after sunset')}</option>
+                  <option value="min50">{tr('50 דקות אחרי השקיעה', '50 min after sunset')}</option>
+                  <option value="min72">{tr('רבנו תם (72 דקות)', 'Rabbeinu Tam (72 min)')}</option>
                 </select>
               </label>
             </div>

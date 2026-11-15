@@ -28,7 +28,7 @@ const za = (id: string, he: string, en: string, hintHe?: string, hintEn?: string
 
 /** Zmanim a user can be notified about, in the order of the day. `label` is the notification wording. */
 export const ZMAN_ALERTS: { readonly id: string; readonly label: string; readonly hint?: string }[] = [
-  za('alot', 'עלות השחר', 'Alot HaShachar (dawn)'),
+  za('alot', 'עלות השחר', 'Alot HaShachar'),
   za('misheyakir', 'משיכיר', 'Misheyakir', 'טלית ותפילין', 'Tallit & tefillin'),
   za('sunrise', 'הנץ החמה', 'Sunrise'),
   za('shmaMGA', 'סוף זמן ק״ש (מג״א)', 'Latest Shema (MGA)'),

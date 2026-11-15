@@ -1,30 +1,57 @@
 /** Small view helpers shared by the tabs (no calendar maths here: that all lives in src/lib) */
-import { addDays, dateKey, daysBetween, eventsOn, rangeItems, roundTo, type DayItem, type ZmanRow } from '../lib/cal';
+import { WEEKDAYS, addDays, dateKey, daysBetween, eventsOn, rangeItems, roundTo, type DayItem, type ZmanRow } from '../lib/cal';
 import type { City } from '../lib/cities';
+import { isHe, locale, plural, tr } from '../lib/i18n';
 import { skyAt } from '../lib/sky';
 import type { MyEvent, Settings } from '../lib/store';
 
+/** "5:41 שע׳" / "5:41 h", "15 דק׳" / "15 min" */
 export function countdown(ms: number) {
   const m = Math.floor(ms / 60000);
   const s = Math.floor((ms % 60000) / 1000);
-  if (m >= 60 * 24) return `${Math.round(m / 60 / 24)} ימים`;
-  if (m >= 60) return `${Math.floor(m / 60)}:${String(m % 60).padStart(2, '0')} שע׳`;
-  if (m >= 10) return `${m} דק׳`;
-  return `${m}:${String(s).padStart(2, '0')} דק׳`;
+  if (m >= 60 * 24) {
+    const d = Math.round(m / 60 / 24);
+    return tr(`${d} ימים`, `${d} ${plural(d, 'day', 'days')}`);
+  }
+  if (m >= 60) return `${Math.floor(m / 60)}:${String(m % 60).padStart(2, '0')} ${tr('שע׳', 'h')}`;
+  if (m >= 10) return `${m} ${tr('דק׳', 'min')}`;
+  return `${m}:${String(s).padStart(2, '0')} ${tr('דק׳', 'min')}`;
+}
+
+/** "יום שני" / "Monday" */
+export function dayName(d: Date) {
+  return tr(`יום ${WEEKDAYS[d.getDay()]}`, WEEKDAYS[d.getDay()]);
+}
+
+/** Plural years after an event's name: "3 שנים" / "3 years" */
+export function yearsWord(n: number) {
+  return tr(`${n} שנים`, `${n} ${plural(n, 'year', 'years')}`);
+}
+
+/** "בעוד 5:41 שע׳" / "in 5:41 h" */
+export function inTime(ms: number) {
+  return tr(`בעוד ${countdown(ms)}`, `in ${countdown(ms)}`);
 }
 
 export function relWords(n: number) {
-  if (n === 0) return 'היום';
-  if (n === 1) return 'מחר';
-  if (n === -1) return 'אתמול';
-  if (n === 2) return 'מחרתיים';
-  return n > 0 ? `בעוד ${n.toLocaleString('he-IL')} ימים` : `לפני ${(-n).toLocaleString('he-IL')} ימים`;
+  if (n === 0) return tr('היום', 'today');
+  if (n === 1) return tr('מחר', 'tomorrow');
+  if (n === -1) return tr('אתמול', 'yesterday');
+  if (isHe()) {
+    if (n === 2) return 'מחרתיים';
+    return n > 0 ? `בעוד ${n.toLocaleString('he-IL')} ימים` : `לפני ${(-n).toLocaleString('he-IL')} ימים`;
+  }
+  const a = Math.abs(n).toLocaleString(locale());
+  return n > 0 ? `in ${a} days` : `${a} days ago`;
 }
 
 export interface ShabbatInfo {
   candle: { d: Date; it: DayItem };
   havdalah: { d: Date; it: DayItem };
+  /** Hebrew title (display it with itemTitle(info)) */
   title: string;
+  /** English title */
+  en: string;
   isShabbat: boolean;
   isChag: boolean;
 }
@@ -36,6 +63,7 @@ export function nextShabbat(date: Date, city: City, settings: Settings): Shabbat
   let candle: ShabbatInfo['candle'] | null = null;
   let havdalah: ShabbatInfo['havdalah'] | null = null;
   let title = '';
+  let en = '';
   let isShabbat = false;
   let isChag = false;
   for (let i = 0; i <= 9 && !havdalah; i++) {
@@ -46,26 +74,33 @@ export function nextShabbat(date: Date, city: City, settings: Settings): Shabbat
       if (it.kind === 'havdalah' && !havdalah) havdalah = { d, it };
       if (it.kind === 'yomtov' && !title) {
         title = it.title;
+        en = it.en ?? it.title;
         isChag = true;
       }
       if (it.kind === 'parasha') {
         isShabbat = true;
-        if (!title) title = it.title;
+        if (!title) {
+          title = it.title;
+          en = it.en ?? it.title;
+        }
       }
     }
   }
   if (!candle || !havdalah || !candle.it.time || !havdalah.it.time) return null;
-  return { candle, havdalah, title: title || 'שבת', isShabbat, isChag };
+  return { candle, havdalah, title: title || 'שבת', en: en || 'Shabbat', isShabbat, isChag };
 }
 
-/** The parasha read on the Shabbat of the week that holds `date` (or the holiday read instead) */
-export function weekParasha(date: Date, city: City, settings: Settings) {
+/**
+ * The parasha read on the Shabbat of the week that holds `date` (or the holiday read instead),
+ * in both languages: display it with itemTitle()
+ */
+export function weekParasha(date: Date, city: City, settings: Settings): { title: string; en: string } | null {
   const sat = addDays(date, 6 - date.getDay());
   const its = rangeItems(sat, sat, city, settings, false).get(dateKey(sat)) ?? [];
   const p = its.find((i) => i.kind === 'parasha');
-  if (p) return p.title;
+  if (p) return { title: p.title, en: p.en ?? p.title };
   const y = its.find((i) => i.kind === 'yomtov' || i.kind === 'cholhamoed');
-  return y ? `שבת ${y.title}` : '';
+  return y ? { title: `שבת ${y.title}`, en: `Shabbat ${y.en ?? y.title}` } : null;
 }
 
 /**
@@ -82,8 +117,8 @@ export function dayRibbon(date: Date, t: { dawn: Date; sunrise: Date; sunset: Da
     // the middle band of the sky is the truest single colour for that hour
     stops.push(`${m?.[1] ?? m?.[0] ?? 'rgb(0,0,0)'} ${((i / N) * 100).toFixed(1)}%`);
   }
-  // RTL: the morning is on the right
-  return `linear-gradient(to left, ${stops.join(', ')})`;
+  // the morning is on the right in Hebrew (RTL), on the left in English
+  return `linear-gradient(to ${isHe() ? 'left' : 'right'}, ${stops.join(', ')})`;
 }
 
 /** Fraction of the local day (0 = midnight) */
@@ -105,10 +140,10 @@ export function agendaRows(rows: ZmanRow[], items: DayItem[], mine: { ev: MyEven
   for (const r of rows) if (show(r)) out.push({ key: r.id, time: roundTo(r.time, r.round), name: r.name, hint: r.hint, kind: 'zman', zmanId: r.id });
   for (const it of items) {
     if (!it.time) continue;
-    if (it.kind === 'candles') out.push({ key: 'candles', time: it.time, name: 'הדלקת נרות', hint: candleMins ? `${candleMins} דק׳ לפני השקיעה` : undefined, kind: 'candles' });
-    if (it.kind === 'havdalah') out.push({ key: 'havdalah', time: it.time, name: 'צאת השבת / החג', hint: 'הבדלה', kind: 'havdalah' });
-    if (it.kind === 'fast-start') out.push({ key: 'fs', time: it.time, name: 'תחילת הצום', kind: 'fast' });
-    if (it.kind === 'fast-end') out.push({ key: 'fe', time: it.time, name: 'סיום הצום', kind: 'fast' });
+    if (it.kind === 'candles') out.push({ key: 'candles', time: it.time, name: tr('הדלקת נרות', 'Candle lighting'), hint: candleMins ? tr(`${candleMins} דק׳ לפני השקיעה`, `${candleMins} min before sunset`) : undefined, kind: 'candles' });
+    if (it.kind === 'havdalah') out.push({ key: 'havdalah', time: it.time, name: tr('צאת השבת / החג', 'Shabbat / Yom Tov ends'), hint: tr('הבדלה', 'Havdalah'), kind: 'havdalah' });
+    if (it.kind === 'fast-start') out.push({ key: 'fs', time: it.time, name: tr('תחילת הצום', 'Fast begins'), kind: 'fast' });
+    if (it.kind === 'fast-end') out.push({ key: 'fe', time: it.time, name: tr('סיום הצום', 'Fast ends'), kind: 'fast' });
   }
   for (const m of mine) {
     if (!m.ev.time) continue;

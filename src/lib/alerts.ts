@@ -6,31 +6,43 @@
  * the settings or the personal events change, and replaces the pending notifications with it.
  */
 import { HDate } from '@hebcal/core';
-import { WEEKDAYS_SHORT, addDays, dateKey, eventOccursOn, hebDateStr, rangeItems, roundTo, timeFmt, zmanim, type DayItem } from './cal';
+import { WEEKDAYS_SHORT, addDays, dateKey, eventOccursOn, hebDateStr, itemTitle, rangeItems, roundTo, timeFmt, zmanim, type DayItem } from './cal';
 import type { City } from './cities';
-import { nativeAlerts, shabbatAlerts } from './ics';
+import { nativeAlerts, shabbatAlerts, shabbatName } from './ics';
 import { REMIND_DEFAULT_TIME, type MyEvent, type Settings } from './store';
+import { plural, tr } from './i18n';
 
 /** iOS keeps at most 64 pending local notifications per app (the rest are silently dropped) */
 export const IOS_LIMIT = 64;
 
+/** A zman alert whose label and hint read in the interface language wherever they are used */
+const za = (id: string, he: string, en: string, hintHe?: string, hintEn?: string) => ({
+  id,
+  get label() {
+    return tr(he, en);
+  },
+  get hint() {
+    return hintHe && hintEn ? tr(hintHe, hintEn) : undefined;
+  },
+});
+
 /** Zmanim a user can be notified about, in the order of the day. `label` is the notification wording. */
-export const ZMAN_ALERTS: { id: string; label: string; hint?: string }[] = [
-  { id: 'alot', label: 'עלות השחר' },
-  { id: 'misheyakir', label: 'משיכיר', hint: 'טלית ותפילין' },
-  { id: 'sunrise', label: 'הנץ החמה' },
-  { id: 'shmaMGA', label: 'סוף זמן ק״ש (מג״א)' },
-  { id: 'shma', label: 'סוף זמן ק״ש (גר״א)' },
-  { id: 'tfillaMGA', label: 'סוף זמן תפילה (מג״א)' },
-  { id: 'tfilla', label: 'סוף זמן תפילה (גר״א)' },
-  { id: 'chatzot', label: 'חצות היום' },
-  { id: 'minchaG', label: 'מנחה גדולה' },
-  { id: 'minchaK', label: 'מנחה קטנה' },
-  { id: 'plag', label: 'פלג המנחה' },
-  { id: 'sunset', label: 'שקיעה' },
-  { id: 'tzeit', label: 'צאת הכוכבים' },
-  { id: 'tzeitRT', label: 'צאת הכוכבים (ר״ת)' },
-  { id: 'chatzotNight', label: 'חצות הלילה' },
+export const ZMAN_ALERTS: { readonly id: string; readonly label: string; readonly hint?: string }[] = [
+  za('alot', 'עלות השחר', 'Alot HaShachar (dawn)'),
+  za('misheyakir', 'משיכיר', 'Misheyakir', 'טלית ותפילין', 'Tallit & tefillin'),
+  za('sunrise', 'הנץ החמה', 'Sunrise'),
+  za('shmaMGA', 'סוף זמן ק״ש (מג״א)', 'Latest Shema (MGA)'),
+  za('shma', 'סוף זמן ק״ש (גר״א)', 'Latest Shema (GRA)'),
+  za('tfillaMGA', 'סוף זמן תפילה (מג״א)', 'Latest Shacharit (MGA)'),
+  za('tfilla', 'סוף זמן תפילה (גר״א)', 'Latest Shacharit (GRA)'),
+  za('chatzot', 'חצות היום', 'Chatzot (midday)'),
+  za('minchaG', 'מנחה גדולה', 'Mincha Gedola'),
+  za('minchaK', 'מנחה קטנה', 'Mincha Ketana'),
+  za('plag', 'פלג המנחה', 'Plag HaMincha'),
+  za('sunset', 'שקיעה', 'Sunset'),
+  za('tzeit', 'צאת הכוכבים', 'Nightfall (Tzeit)'),
+  za('tzeitRT', 'צאת הכוכבים (ר״ת)', 'Tzeit (Rabbeinu Tam)'),
+  za('chatzotNight', 'חצות הלילה', 'Chatzot (midnight)'),
 ];
 export const ZMAN_OFFSETS = [0, 5, 10, 15, 30];
 export const CANDLE_OFFSETS = [10, 15, 20, 30, 45, 60];
@@ -56,10 +68,20 @@ const dayNo = (d: Date) => Math.round((new Date(d.getFullYear(), d.getMonth(), d
 const makeId = (g: Group, day: Date, slot: number) => GROUP_RANGES[g][0] + dayNo(day) * 100 + slot;
 
 export type Channel = 'shabbat' | 'zmanim' | 'reminders';
+/** Android notification channels; the names read in the interface language when the channels are made */
 export const CHANNELS: Record<Channel, { name: string; description: string }> = {
-  shabbat: { name: 'שבת, חגים וצומות', description: 'התראה ביום שישי, הדלקת נרות, צאת שבת וחג, תחילת הצום וסיומו' },
-  zmanim: { name: 'זמני היום', description: 'התראות לפני הזמנים שבחרתם' },
-  reminders: { name: 'האירועים שלי', description: 'תזכורות לימי הולדת, יארצייטים ואירועים' },
+  get shabbat() {
+    return {
+      name: tr('שבת, חגים וצומות', 'Shabbat, holidays & fasts'),
+      description: tr('התראה ביום שישי, הדלקת נרות, צאת שבת וחג, תחילת הצום וסיומו', 'Friday alert, candle lighting, end of Shabbat and Yom Tov, start and end of fasts'),
+    };
+  },
+  get zmanim() {
+    return { name: tr('זמני היום', 'Zmanim'), description: tr('התראות לפני הזמנים שבחרתם', 'Alerts before the zmanim you chose') };
+  },
+  get reminders() {
+    return { name: tr('האירועים שלי', 'My events'), description: tr('תזכורות לימי הולדת, יארצייטים ואירועים', 'Reminders for birthdays, yahrzeits and events') };
+  },
 };
 
 export interface PlannedNotification {
@@ -85,7 +107,7 @@ export const HORIZON = { zmanim: 10, holiday: 14, events: 60, fridayWeeks: 52 } 
 /** Kept even when many zmanim are on; the zmanim get what is left, in whole days */
 const RESERVE = { events: 20, fridayWeeks: 4 } as const;
 
-const inMins = (m: number) => (m === 0 ? 'עכשיו' : `בעוד ${m} דק׳`);
+const inMins = (m: number) => (m === 0 ? tr('עכשיו', 'now') : tr(`בעוד ${m} דק׳`, `in ${m} min`));
 
 export function anyAlertsOn(s: Settings, events: MyEvent[] = []) {
   return (
@@ -139,11 +161,11 @@ function hourIn(tz: string, d: Date) {
 
 function occasion(items: DayItem[], next: DayItem[]) {
   const yt = next.find((i) => i.kind === 'yomtov') ?? next.find((i) => i.kind === 'cholhamoed');
-  if (yt) return yt.title;
+  if (yt) return itemTitle(yt);
   const p = next.find((i) => i.kind === 'parasha');
-  if (p) return p.title.startsWith('פרשת') ? `שבת ${p.title}` : p.title;
+  if (p) return shabbatName(p);
   const fast = items.find((i) => i.kind === 'fast');
-  return fast?.title ?? 'שבת';
+  return fast ? itemTitle(fast) : tr('שבת', 'Shabbat');
 }
 
 export function holidayNotifications(from: Date, days: number, city: City, s: Settings, now: Date): PlannedNotification[] {
@@ -166,25 +188,27 @@ export function holidayNotifications(from: Date, days: number, city: City, s: Se
       const t = it.time;
       if (it.kind === 'candles' && s.candleAlert) {
         const m = s.candleAlertMins;
-        push(d, slot, new Date(t.getTime() - m * 60000), `🕯️ הדלקת נרות ${inMins(m)}`, `${f.format(t)} · ${city.name} · ${occasion(items, next)}`);
+        push(d, slot, new Date(t.getTime() - m * 60000), `🕯️ ${tr('הדלקת נרות', 'Candle lighting')} ${inMins(m)}`, `${f.format(t)} · ${city.name} · ${occasion(items, next)}`);
       } else if (it.kind === 'havdalah' && s.havdalahAlert) {
         const chag = items.some((x) => x.kind === 'yomtov');
-        const what = d.getDay() === 6 ? (chag ? 'צאת השבת והחג' : 'צאת השבת') : 'צאת החג';
+        const what = d.getDay() === 6 ? (chag ? tr('צאת השבת והחג', 'Shabbat & Yom Tov end') : tr('צאת השבת', 'Shabbat ends')) : tr('צאת החג', 'Yom Tov ends');
         push(d, slot, t, what, `${f.format(t)} · ${city.name}`);
       } else if (it.kind === 'fast-start' && s.fastAlerts) {
         // the hebcal item for a fast that starts at sunset sits on the day before the fast
         const hour = hourIn(city.tz, t);
-        const name = (get(hour < 12 ? d : addDays(d, 1)).find((x) => x.kind === 'fast') ?? items.find((x) => x.kind === 'fast'))?.title ?? 'צום';
+        const fast = get(hour < 12 ? d : addDays(d, 1)).find((x) => x.kind === 'fast') ?? items.find((x) => x.kind === 'fast');
+        const name = fast ? itemTitle(fast) : tr('צום', 'Fast');
         if (hour < 8) {
           // a dawn fast: no alarm at 4 a.m.; say it the evening before, while there is still time to eat
           const eve = addDays(d, -1);
-          push(d, slot, new Date(eve.getFullYear(), eve.getMonth(), eve.getDate(), 21, 0), `מחר ${name}`, `תחילת הצום ${f.format(t)} · ${city.name}`);
+          push(d, slot, new Date(eve.getFullYear(), eve.getMonth(), eve.getDate(), 21, 0), tr(`מחר ${name}`, `Tomorrow: ${name}`), `${tr('תחילת הצום', 'Fast begins')} ${f.format(t)} · ${city.name}`);
         } else {
-          push(d, slot, new Date(t.getTime() - 30 * 60000), `${name}: הצום מתחיל בעוד 30 דק׳`, `${f.format(t)} · ${city.name}`);
+          push(d, slot, new Date(t.getTime() - 30 * 60000), tr(`${name}: הצום מתחיל בעוד 30 דק׳`, `${name}: fast begins in 30 min`), `${f.format(t)} · ${city.name}`);
         }
       } else if (it.kind === 'fast-end' && s.fastAlerts) {
-        const name = items.find((x) => x.kind === 'fast')?.title;
-        push(d, slot, t, 'סיום הצום', `${f.format(t)} · ${city.name}${name ? ' · ' + name : ''}`);
+        const fast = items.find((x) => x.kind === 'fast');
+        const name = fast && itemTitle(fast);
+        push(d, slot, t, tr('סיום הצום', 'Fast ends'), `${f.format(t)} · ${city.name}${name ? ' · ' + name : ''}`);
       }
     });
   }
@@ -223,13 +247,13 @@ export function eventNotifications(from: Date, days: number, events: MyEvent[], 
       const slot = slots.get(k) ?? 0;
       if (slot > 99) continue;
       slots.set(k, slot + 1);
-      const when = kind === 'day' ? 'היום' : kind === 'eve' ? 'מחר' : 'בעוד שבוע';
-      const age = e.repeat !== 'none' && years > 0 ? ` · ${years} שנה` : '';
+      const when = kind === 'day' ? tr('היום', 'Today') : kind === 'eve' ? tr('מחר', 'Tomorrow') : tr('בעוד שבוע', 'In a week');
+      const age = e.repeat !== 'none' && years > 0 ? ` · ${tr(`${years} שנה`, `${years} ${plural(years, 'year', 'years')}`)}` : '';
       out.push({
         id: makeId('events', fire, slot),
         at,
         title: e.title,
-        body: `${when}, יום ${WEEKDAYS_SHORT[d.getDay()]} ${hebDateStr(hd, false)}${e.time ? ` · ${e.time}` : ''}${age}`,
+        body: `${when}, ${tr('יום ', '')}${WEEKDAYS_SHORT[d.getDay()]} ${hebDateStr(hd, false)}${e.time ? ` · ${e.time}` : ''}${age}`,
         group: 'events',
         channel: 'reminders',
       });

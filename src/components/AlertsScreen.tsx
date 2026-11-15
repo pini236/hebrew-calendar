@@ -7,6 +7,7 @@ import type { MyEvent, Settings } from '../lib/store';
 import { isNative, notificationPermission } from '../lib/native';
 import { Screen } from './Screen';
 import { Icon } from './Icon';
+import { isHe, plural, tr } from '../lib/i18n';
 
 interface Props {
   city: City;
@@ -18,7 +19,7 @@ interface Props {
   onClose: () => void;
 }
 
-const offsetLabel = (m: number) => (m === 0 ? 'בזמן' : `${m} דק׳ לפני`);
+const offsetLabel = (m: number) => (m === 0 ? tr('בזמן', 'On time') : tr(`${m} דק׳ לפני`, `${m} min before`));
 
 export function AlertsScreen({ city, settings, myEvents, onChange, onFriday, onClose, focus }: Props & { focus?: string }) {
   // opened from a zman's bell: bring that zman's row into view
@@ -40,11 +41,16 @@ export function AlertsScreen({ city, settings, myEvents, onChange, onFriday, onC
       try {
         const p = await notificationPermission(true);
         if (p !== 'granted') {
-          setMsg(`ההתראות חסומות. אפשר להפעיל אותן בהגדרות הטלפון ← אפליקציות ← ${APP_NAME} ← התראות, ולנסות שוב.`);
+          setMsg(
+            tr(
+              `ההתראות חסומות. אפשר להפעיל אותן בהגדרות הטלפון ← אפליקציות ← ${APP_NAME} ← התראות, ולנסות שוב.`,
+              `Notifications are blocked. Turn them on in phone Settings → Apps → ${APP_NAME} → Notifications, then try again.`,
+            ),
+          );
           return;
         }
       } catch {
-        setMsg('לא הצלחנו לבקש הרשאה להתראות. נסו שוב.');
+        setMsg(tr('לא הצלחנו לבקש הרשאה להתראות. נסו שוב.', "Couldn't ask for notification permission. Try again."));
         return;
       }
     }
@@ -76,18 +82,35 @@ export function AlertsScreen({ city, settings, myEvents, onChange, onFriday, onC
   };
 
   return (
-    <Screen title="התראות" onClose={onClose}>
+    <Screen title={tr('התראות', 'Alerts')} onClose={onClose}>
       {native ? (
         <p className="lead">
-          ההתראות מגיעות גם כשהאפליקציה סגורה. הן מחושבות לפי <b>{city.name}</b>, ומתעדכנות בכל פתיחה של האפליקציה ובכל החלפת מיקום.
+          {isHe() ? (
+            <>
+              ההתראות מגיעות גם כשהאפליקציה סגורה. הן מחושבות לפי <b>{city.name}</b>, ומתעדכנות בכל פתיחה של האפליקציה ובכל החלפת מיקום.
+            </>
+          ) : (
+            <>
+              Alerts arrive even when the app is closed. They are calculated for <b>{city.name}</b> and update every time you open the
+              app or change location.
+            </>
+          )}
         </p>
       ) : (
         <div className="notice" role="note">
           <Icon name="bell" size={20} />
-          <div>
-            <b>ההתראות פועלות באפליקציה המותקנת לאנדרואיד ולאייפון.</b> דפדפן לא יכול לשלוח התראה בזמן כשהאתר סגור, ולכן כאן
-            רק רואים איך הן ייראו. באתר אפשר להוסיף ליומן של הטלפון התראה בכל יום שישי עם זמני השבת.
-          </div>
+          {isHe() ? (
+            <div>
+              <b>ההתראות פועלות באפליקציה המותקנת לאנדרואיד ולאייפון.</b> דפדפן לא יכול לשלוח התראה בזמן כשהאתר סגור, ולכן כאן
+              רק רואים איך הן ייראו. באתר אפשר להוסיף ליומן של הטלפון התראה בכל יום שישי עם זמני השבת.
+            </div>
+          ) : (
+            <div>
+              <b>Alerts work in the installed Android and iPhone app.</b> A browser can&apos;t send an alert on time while the site is
+              closed, so here you only see how they will look. On the website you can add an every-Friday alert with Shabbat times to
+              your phone&apos;s calendar.
+            </div>
+          )}
         </div>
       )}
       {msg && (
@@ -97,50 +120,56 @@ export function AlertsScreen({ city, settings, myEvents, onChange, onFriday, onC
       )}
 
       <section className="set-sec">
-        <h3>שבת, חג וצום</h3>
+        <h3>{tr('שבת, חג וצום', 'Shabbat, holidays & fasts')}</h3>
         <div className="field">
           <span>
-            התראה בכל יום שישי בבוקר
-            <small className="sub">{native ? (settings.nativeAlerts ? `פועלת · ${settings.alertTime}` : 'כבויה') : 'דרך היומן של הטלפון'}</small>
+            {tr('התראה בכל יום שישי בבוקר', 'Every Friday morning alert')}
+            <small className="sub">
+              {native
+                ? settings.nativeAlerts
+                  ? tr(`פועלת · ${settings.alertTime}`, `On · ${settings.alertTime}`)
+                  : tr('כבויה', 'Off')
+                : tr('דרך היומן של הטלפון', "Through your phone's calendar")}
+            </small>
           </span>
           <button className="ghost-btn" onClick={onFriday}>
-            <Icon name="candle" size={16} /> הגדרה
+            <Icon name="candle" size={16} /> {tr('הגדרה', 'Set up')}
           </button>
         </div>
         <fieldset className="plain" disabled={!native}>
           <div className="za-row">
             <Switch
               id="al-candle"
-              label="תזכורת להדלקת נרות"
-              hint="ערב שבת וערב חג"
+              label={tr('תזכורת להדלקת נרות', 'Candle lighting reminder')}
+              hint={tr('ערב שבת וערב חג', 'Erev Shabbat and Erev Yom Tov')}
               on={settings.candleAlert}
               onChange={(v) => (v ? enable(() => set({ candleAlert: true })) : set({ candleAlert: false }))}
             />
             <select
               id="al-candle-mins"
-              aria-label="כמה זמן לפני הדלקת הנרות"
+              aria-label={tr('כמה זמן לפני הדלקת הנרות', 'How long before candle lighting')}
               value={settings.candleAlertMins}
               disabled={!settings.candleAlert}
               onChange={(e) => set({ candleAlertMins: +e.target.value })}
             >
               {CANDLE_OFFSETS.map((m) => (
                 <option key={m} value={m}>
-                  {m} דק׳ לפני
+                  {tr(`${m} דק׳ לפני`, `${m} min before`)}
                 </option>
               ))}
             </select>
           </div>
           <Switch
             id="al-havdalah"
-            label="צאת השבת והחג"
-            hint="בשעת היציאה"
+            label={tr('צאת השבת והחג', 'End of Shabbat & Yom Tov')}
+            hint={tr('בשעת היציאה', 'At the time it ends')}
             on={settings.havdalahAlert}
             onChange={(v) => (v ? enable(() => set({ havdalahAlert: true })) : set({ havdalahAlert: false }))}
           />
           <Switch
             id="al-fast"
-            label="תחילת הצום וסיומו"
-            hint="צום שמתחיל בעלות השחר: תזכורת בערב שלפניו ב־21:00"
+            label={tr('תחילת הצום וסיומו', 'Start and end of fasts')}
+            hint={tr('צום שמתחיל בעלות השחר: תזכורת בערב שלפניו ב־21:00', 'A fast that starts at dawn: reminder the evening before at 21:00')}
             on={settings.fastAlerts}
             onChange={(v) => (v ? enable(() => set({ fastAlerts: true })) : set({ fastAlerts: false }))}
           />
@@ -148,8 +177,13 @@ export function AlertsScreen({ city, settings, myEvents, onChange, onFriday, onC
       </section>
 
       <section className="set-sec">
-        <h3>זמני היום</h3>
-        <p className="fine">בחרו זמנים, וכמה דקות לפני כל אחד תרצו לקבל התראה. השעה שליד כל זמן היא של היום.</p>
+        <h3>{tr('זמני היום', 'Zmanim')}</h3>
+        <p className="fine">
+          {tr(
+            'בחרו זמנים, וכמה דקות לפני כל אחד תרצו לקבל התראה. השעה שליד כל זמן היא של היום.',
+            "Choose zmanim, and how many minutes before each one you'd like an alert. The time next to each zman is today's.",
+          )}
+        </p>
         <fieldset className="plain" disabled={!native}>
           {ZMAN_ALERTS.map((z) => {
             const mins = settings.zmanAlerts[z.id];
@@ -160,11 +194,11 @@ export function AlertsScreen({ city, settings, myEvents, onChange, onFriday, onC
                 <Switch
                   id={`al-z-${z.id}`}
                   label={z.label}
-                  hint={[z.hint, row ? fmt.format(roundTo(row.time, row.round)) : 'אין היום'].filter(Boolean).join(' · ')}
+                  hint={[z.hint, row ? fmt.format(roundTo(row.time, row.round)) : tr('אין היום', 'None today')].filter(Boolean).join(' · ')}
                   on={on}
                   onChange={(v) => (v ? enable(() => setZman(z.id, 15)) : setZman(z.id, null))}
                 />
-                <select id={`al-zm-${z.id}`} aria-label={`כמה זמן לפני ${z.label}`} value={mins ?? 15} disabled={!on} onChange={(e) => setZman(z.id, +e.target.value)}>
+                <select id={`al-zm-${z.id}`} aria-label={tr(`כמה זמן לפני ${z.label}`, `How long before ${z.label}`)} value={mins ?? 15} disabled={!on} onChange={(e) => setZman(z.id, +e.target.value)}>
                   {ZMAN_OFFSETS.map((m) => (
                     <option key={m} value={m}>
                       {offsetLabel(m)}
@@ -178,28 +212,50 @@ export function AlertsScreen({ city, settings, myEvents, onChange, onFriday, onC
       </section>
 
       <section className="set-sec">
-        <h3>האירועים שלי</h3>
+        <h3>{tr('האירועים שלי', 'My events')}</h3>
         <p className="fine">
-          לכל יום הולדת, יארצייט או אירוע אפשר לבחור תזכורת: ביום עצמו, בערב שלפניו או שבוע לפני. בוחרים אותה בעריכת האירוע.
-          {withReminders > 0 && ` כרגע יש תזכורת ל־${withReminders} אירועים.`}
+          {tr(
+            'לכל יום הולדת, יארצייט או אירוע אפשר לבחור תזכורת: ביום עצמו, בערב שלפניו או שבוע לפני. בוחרים אותה בעריכת האירוע.',
+            'Each birthday, yahrzeit or event can have a reminder: on the day, the evening before or a week before. Choose it when editing the event.',
+          )}
+          {withReminders > 0 &&
+            tr(
+              ` כרגע יש תזכורת ל־${withReminders} אירועים.`,
+              ` ${withReminders} ${plural(withReminders, 'event has', 'events have')} a reminder now.`,
+            )}
         </p>
       </section>
 
       <section className="set-sec">
-        <h3>{native ? 'ההתראות הקרובות' : 'כך זה ייראה באפליקציה'}</h3>
+        <h3>{native ? tr('ההתראות הקרובות', 'Upcoming alerts') : tr('כך זה ייראה באפליקציה', 'How it looks in the app')}</h3>
         <Preview list={sample.slice(0, 4)} fmt={timeFmt(Intl.DateTimeFormat().resolvedOptions().timeZone)} />
         {native ? (
-          <p className="fine">
-            מתוזמנות {plan.list.length} התראות. אייפון שומר עד {IOS_LIMIT} התראות לכל אפליקציה, ולכן
-            {plan.zmanDays > 0 ? ` זמני היום נקבעים ל־${plan.zmanDays} ${plan.zmanDays === 1 ? 'יום' : 'ימים'} קדימה` : ' זמני היום נקבעים לימים הקרובים'}
-            {plan.fridayWeeks > 0 ? `, התראת יום שישי ל־${plan.fridayWeeks} שבועות` : ''}
-            {withReminders > 0 ? ', ותזכורות לאירועים לחודשיים' : ''}. כל פתיחה של האפליקציה ממשיכה את הרשימה. באנדרואיד התראה עשויה
-            להגיע באיחור של כמה דקות כשהטלפון במצב חיסכון בסוללה.
-          </p>
-        ) : (
+          isHe() ? (
+            <p className="fine">
+              מתוזמנות {plan.list.length} התראות. אייפון שומר עד {IOS_LIMIT} התראות לכל אפליקציה, ולכן
+              {plan.zmanDays > 0 ? ` זמני היום נקבעים ל־${plan.zmanDays} ${plan.zmanDays === 1 ? 'יום' : 'ימים'} קדימה` : ' זמני היום נקבעים לימים הקרובים'}
+              {plan.fridayWeeks > 0 ? `, התראת יום שישי ל־${plan.fridayWeeks} שבועות` : ''}
+              {withReminders > 0 ? ', ותזכורות לאירועים לחודשיים' : ''}. כל פתיחה של האפליקציה ממשיכה את הרשימה. באנדרואיד התראה עשויה
+              להגיע באיחור של כמה דקות כשהטלפון במצב חיסכון בסוללה.
+            </p>
+          ) : (
+            <p className="fine">
+              {plan.list.length} {plural(plan.list.length, 'alert', 'alerts')} scheduled. iPhone keeps up to {IOS_LIMIT} alerts per app, so
+              {plan.zmanDays > 0 ? ` zmanim are set ${plan.zmanDays} ${plural(plan.zmanDays, 'day', 'days')} ahead` : ' zmanim are set for the coming days'}
+              {plan.fridayWeeks > 0 ? `, the Friday alert ${plan.fridayWeeks} ${plural(plan.fridayWeeks, 'week', 'weeks')} ahead` : ''}
+              {withReminders > 0 ? ', and event reminders two months ahead' : ''}. Each time you open the app the list continues. On Android
+              an alert may arrive a few minutes late when the phone is in battery saver.
+            </p>
+          )
+        ) : isHe() ? (
           <p className="fine">
             לדוגמה: סוף זמן ק״ש, שקיעה והדלקת נרות ב{city.name}. באפליקציה ההתראות נקבעות לימים הקרובים ומתחדשות בכל פתיחה (אייפון
             שומר עד {IOS_LIMIT} התראות לכל אפליקציה).
+          </p>
+        ) : (
+          <p className="fine">
+            For example: latest Shema, sunset and candle lighting in {city.name}. In the app, alerts are set for the coming days and
+            renewed every time you open it (iPhone keeps up to {IOS_LIMIT} alerts per app).
           </p>
         )}
       </section>
@@ -208,9 +264,9 @@ export function AlertsScreen({ city, settings, myEvents, onChange, onFriday, onC
 }
 
 function Preview({ list, fmt }: { list: PlannedNotification[]; fmt: Intl.DateTimeFormat }) {
-  if (!list.length) return <p className="empty">עוד לא נבחרה אף התראה.</p>;
+  if (!list.length) return <p className="empty">{tr('עוד לא נבחרה אף התראה.', 'No alerts chosen yet.')}</p>;
   return (
-    <div className="alert-preview" aria-label="דוגמה להתראות הקרובות">
+    <div className="alert-preview" aria-label={tr('דוגמה להתראות הקרובות', 'Preview of upcoming alerts')}>
       {list.map((n) => (
         <div className="notif" key={n.id}>
           <div className="notif-head">
@@ -218,7 +274,8 @@ function Preview({ list, fmt }: { list: PlannedNotification[]; fmt: Intl.DateTim
               <Icon name={n.channel === 'zmanim' ? 'bell' : n.channel === 'reminders' ? 'today' : 'candle'} size={14} /> {APP_NAME}
             </span>
             <span>
-              יום {WEEKDAYS_SHORT[n.at.getDay()]} · {fmt.format(n.at)}
+              {tr('יום ', '')}
+              {WEEKDAYS_SHORT[n.at.getDay()]} · {fmt.format(n.at)}
             </span>
           </div>
           <div className="notif-body">{n.title}</div>

@@ -1,6 +1,6 @@
 import { Suspense, lazy, useCallback, useEffect, useMemo, useState } from 'react';
 import { DEFAULT_CITY, cityLabel, findCity } from './lib/cities';
-import { resolveLang, setLang } from './lib/i18n';
+import { isHe, resolveLang, setLang, tr } from './lib/i18n';
 import { addDays, dateKey, dayItems, eventsOn, timeFmt, today, zmanim } from './lib/cal';
 import { DEFAULT_SETTINGS, EVENTS_KEY, SETTINGS_KEY, mergeSettings, usePersistent, type MyEvent, type Settings } from './lib/store';
 import { TodayTab } from './components/TodayTab';
@@ -22,13 +22,22 @@ import { planNotifications } from './lib/alerts';
 
 /** The five destinations, in thumb order (right to left) */
 type Tab = 'today' | 'month' | 'zmanim' | 'mine' | 'settings';
-const TABS: { id: Tab; label: string; icon: string }[] = [
-  { id: 'today', label: 'היום', icon: 'tabToday' },
-  { id: 'month', label: 'לוח', icon: 'tabMonth' },
-  { id: 'zmanim', label: 'זמנים', icon: 'tabZmanim' },
-  { id: 'mine', label: 'שלי', icon: 'tabMine' },
-  { id: 'settings', label: 'הגדרות', icon: 'tabSettings' },
+const TABS: { id: Tab; icon: string }[] = [
+  { id: 'today', icon: 'tabToday' },
+  { id: 'month', icon: 'tabMonth' },
+  { id: 'zmanim', icon: 'tabZmanim' },
+  { id: 'mine', icon: 'tabMine' },
+  { id: 'settings', icon: 'tabSettings' },
 ];
+/** A tab's label in the interface language */
+const tabLabel = (t: Tab) =>
+  ({
+    today: tr('היום', 'Today'),
+    month: tr('לוח', 'Calendar'),
+    zmanim: tr('זמנים', 'Zmanim'),
+    mine: tr('שלי', 'Mine'),
+    settings: tr('הגדרות', 'Settings'),
+  })[t];
 
 /** Screens pushed over the tabs */
 type ScreenState = null | { name: 'jump' } | { name: 'event' } | { name: 'notify' } | { name: 'alerts'; focus?: string } | { name: 'location' };
@@ -208,14 +217,14 @@ export default function App() {
     [openScreen],
   );
 
-  // keyboard: ← next day (RTL), → previous day, PageUp/PageDown months, t = today, g = go to date, 1–5 tabs
+  // keyboard: ← next day in Hebrew (RTL), → next day in English (LTR), PageUp/PageDown months, t = today, g = go to date, 1–5 tabs
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (screen || e.ctrlKey || e.metaKey || e.altKey) return;
       const tag = (e.target as HTMLElement)?.tagName;
       if (tag === 'INPUT' || tag === 'SELECT' || tag === 'TEXTAREA') return;
-      if (e.key === 'ArrowLeft') moveDay(1);
-      else if (e.key === 'ArrowRight') moveDay(-1);
+      if (e.key === 'ArrowLeft') moveDay(isHe() ? 1 : -1);
+      else if (e.key === 'ArrowRight') moveDay(isHe() ? -1 : 1);
       else if (e.key === 'ArrowDown' && tab !== 'settings') {
         e.preventDefault();
         moveDay(7);
@@ -240,7 +249,7 @@ export default function App() {
 
   return (
     <div className={`app tab-${tab} ${screen ? 'has-screen' : ''}`}>
-      <nav className="tabbar" aria-label="ניווט ראשי">
+      <nav className="tabbar" aria-label={tr('ניווט ראשי', 'Main navigation')}>
         <div className="rail-brand">
           <BrandMark size={32} />
           <span>{APP_NAME}</span>
@@ -248,7 +257,7 @@ export default function App() {
         {TABS.map((t) => (
           <button key={t.id} className={`tabbtn ${tab === t.id ? 'on' : ''}`} aria-current={tab === t.id ? 'page' : undefined} onClick={() => showTab(t.id)}>
             <Icon name={t.icon} size={24} />
-            <span>{t.label}</span>
+            <span>{tabLabel(t.id)}</span>
           </button>
         ))}
       </nav>

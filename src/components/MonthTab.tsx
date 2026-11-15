@@ -2,7 +2,7 @@ import { useMemo, useRef, useState } from 'react';
 import { HDate } from '@hebcal/core';
 import {
   GREG_MONTHS,
-  WEEKDAYS,
+  GREG_MONTHS_SHORT,
   WEEKDAYS_SHORT,
   addDays,
   cellLabel,
@@ -13,13 +13,17 @@ import {
   hebMonthName,
   hebNum,
   hebYear,
+  itemTitle,
   rangeItems,
   sameDay,
+  shortItem,
   shortTitle,
 } from '../lib/cal';
 import type { City } from '../lib/cities';
+import { isHe, tr } from '../lib/i18n';
 import type { MyEvent, Settings } from '../lib/store';
 import { Icon } from './Icon';
+import { dayName } from './dayinfo';
 
 interface Props {
   anchor: Date;
@@ -109,43 +113,43 @@ export function MonthTab({ anchor, selected, now, mode, city, settings, myEvents
   return (
     <div className="tab month-tab">
       <header className="tab-head month-head">
-        <button className="icon-btn" onClick={() => move(-1)} aria-label="החודש הקודם">
+        <button className="icon-btn" onClick={() => move(-1)} aria-label={tr('החודש הקודם', 'Previous month')}>
           <Icon name="prev" size={22} />
         </button>
-        <button className="date-title center" onClick={onJump} aria-label={`${title}. מעבר לתאריך אחר`}>
+        <button className="date-title center" onClick={onJump} aria-label={tr(`${title}. מעבר לתאריך אחר`, `${title}. Go to another date`)}>
           <span className="dt-main">
             {title}
             <Icon name="down" size={18} />
           </span>
           <span className="dt-sub">{sub}</span>
         </button>
-        <button className="icon-btn" onClick={() => move(1)} aria-label="החודש הבא">
+        <button className="icon-btn" onClick={() => move(1)} aria-label={tr('החודש הבא', 'Next month')}>
           <Icon name="next" size={22} />
         </button>
       </header>
 
       <div className="month-tools">
-        <div className="seg" role="group" aria-label="סוג חודש">
+        <div className="seg" role="group" aria-label={tr('סוג חודש', 'Calendar')}>
           <button aria-pressed={mode === 'greg'} className={mode === 'greg' ? 'on' : ''} onClick={() => onMode('greg')}>
-            לועזי
+            {tr('לועזי', 'Gregorian')}
           </button>
           <button aria-pressed={mode === 'heb'} className={mode === 'heb' ? 'on' : ''} onClick={() => onMode('heb')}>
-            עברי
+            {tr('עברי', 'Hebrew')}
           </button>
         </div>
         {!nowInMonth && (
           <button className="text-btn" onClick={onToday}>
-            חזרה להיום
+            {tr('חזרה להיום', 'Back to today')}
           </button>
         )}
       </div>
 
       <div className="month-body">
-        <section className="wall" aria-label="לוח חודשי">
+        <section className="wall" aria-label={tr('לוח חודשי', 'Month calendar')}>
           <div className="weekdays" aria-hidden="true">
             {WEEKDAYS_SHORT.map((w, i) => (
               <span key={w} className={i === 6 ? 'sat' : ''}>
-                {i === 6 ? 'שבת' : w}
+                {i === 6 ? tr('שבת', w) : w}
               </span>
             ))}
           </div>
@@ -182,14 +186,18 @@ export function MonthTab({ anchor, selected, now, mode, city, settings, myEvents
                   key={k}
                   className={cls}
                   onClick={() => (isSel ? onOpenDay(d) : onSelect(d))}
-                  aria-label={`${d.getDate()} ${GREG_MONTHS[d.getMonth()]}, ${hebNum(hd.getDate())} ${hebMonthName(hd.getMonth(), hd.getFullYear())}${lab ? ', ' + lab.title : ''}`}
+                  aria-label={
+                    isHe()
+                      ? `${d.getDate()} ${GREG_MONTHS[d.getMonth()]}, ${hebNum(hd.getDate())} ${hebMonthName(hd.getMonth(), hd.getFullYear())}${lab ? ', ' + lab.title : ''}`
+                      : `${gregDateStr(d, false)}, ${hebDateStr(hd, false)}${lab ? ', ' + itemTitle(lab) : ''}`
+                  }
                   aria-pressed={isSel}
                 >
                   <span className={`c-big ${mode === 'heb' ? 'heb' : ''}`}>{big}</span>
                   <span className={`c-small ${mode === 'greg' ? 'heb' : ''}`}>
-                    {firstOfOther ? (mode === 'greg' ? hebMonthName(hd.getMonth(), hd.getFullYear()) : GREG_MONTHS[d.getMonth()]) : small}
+                    {firstOfOther ? (mode === 'greg' ? hebMonthName(hd.getMonth(), hd.getFullYear()) : tr(GREG_MONTHS[d.getMonth()], GREG_MONTHS_SHORT[d.getMonth()])) : small}
                   </span>
-                  {lab && <span className={`c-label k-${lab.kind}`}>{shortTitle(lab.title)}</span>}
+                  {lab && <span className={`c-label k-${lab.kind}`}>{shortItem(lab)}</span>}
                   {mine.length > 0 && (
                     <span className="c-dots">
                       {mine.slice(0, 3).map((m) => (
@@ -203,16 +211,16 @@ export function MonthTab({ anchor, selected, now, mode, city, settings, myEvents
           </div>
         </section>
 
-        <section className="day-sum" aria-label="היום הנבחר" aria-live="polite">
+        <section className="day-sum" aria-label={tr('היום הנבחר', 'Selected day')} aria-live="polite">
           <div className="ds-head">
             <div>
               <div className="ds-date">{hebDateStr(selHd, false)}</div>
               <div className="ds-sub">
-                יום {WEEKDAYS[selected.getDay()]} · {gregDateStr(selected)}
+                {dayName(selected)} · {gregDateStr(selected)}
               </div>
             </div>
             <button className="btn" onClick={() => onOpenDay(selected)}>
-              סדר היום
+              {tr('סדר היום', 'Schedule')}
               <Icon name="next" size={16} />
             </button>
           </div>
@@ -220,17 +228,17 @@ export function MonthTab({ anchor, selected, now, mode, city, settings, myEvents
             <ul className="ds-list">
               {labels.map((l, i) => (
                 <li key={i} className={`k-${l.kind}`}>
-                  {l.kind === 'parasha' ? l.title : shortTitle(l.title)}
+                  {isHe() ? (l.kind === 'parasha' ? l.title : shortTitle(l.title)) : itemTitle(l)}
                 </li>
               ))}
               {candles && (
                 <li className="k-candles">
-                  הדלקת נרות <b>{fmt.format(candles.time!)}</b>
+                  {tr('הדלקת נרות', 'Candle lighting')} <b>{fmt.format(candles.time!)}</b>
                 </li>
               )}
               {havdalah && (
                 <li>
-                  צאת השבת / החג <b>{fmt.format(havdalah.time!)}</b>
+                  {tr('צאת השבת / החג', 'Shabbat / Yom Tov ends')} <b>{fmt.format(havdalah.time!)}</b>
                 </li>
               )}
               {selMine.map((m) => (

@@ -1,9 +1,10 @@
 import { useMemo, useState } from 'react';
 import { HDate } from '@hebcal/core';
-import { WEEKDAYS, dateKey, eventHebDate, fromKey, gregDateStr, hebDateStr } from '../lib/cal';
+import { dateKey, eventHebDate, fromKey, gregDateStr, hebDateStr } from '../lib/cal';
+import { plural, tr } from '../lib/i18n';
 import type { MyEvent } from '../lib/store';
 import { Icon } from './Icon';
-import { upcomingEvents, type Upcoming } from './dayinfo';
+import { dayName, upcomingEvents, yearsWord, type Upcoming } from './dayinfo';
 
 interface Props {
   myEvents: MyEvent[];
@@ -15,39 +16,52 @@ interface Props {
   onBackup: () => void;
 }
 
-const REPEAT_WORDS: Record<MyEvent['repeat'], string> = { none: 'חד־פעמי', 'heb-yearly': 'כל שנה, לפי התאריך העברי', 'greg-yearly': 'כל שנה, לפי התאריך הלועזי' };
-const REMIND_WORDS = { day: 'ביום עצמו', eve: 'בערב שלפני', week: 'שבוע לפני' } as const;
+const repeatWords = (r: MyEvent['repeat']) =>
+  ({
+    none: tr('חד־פעמי', 'One-time'),
+    'heb-yearly': tr('כל שנה, לפי התאריך העברי', 'Every year, by the Hebrew date'),
+    'greg-yearly': tr('כל שנה, לפי התאריך הלועזי', 'Every year, by the Gregorian date'),
+  })[r];
+const remindWords = (r: Exclude<MyEvent['remind'], 'none' | undefined>) =>
+  ({
+    day: tr('תזכורת ביום עצמו', 'Reminder on the day'),
+    eve: tr('תזכורת בערב שלפני', 'Reminder the evening before'),
+    week: tr('תזכורת שבוע לפני', 'Reminder a week before'),
+  })[r];
 
 export function MineTab({ myEvents, today, onAdd, onEdit, onOpenDay, onAlerts, onBackup }: Props) {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const { upcoming, past } = useMemo(() => upcomingEvents(myEvents, today), [myEvents, dateKey(today)]);
   const [showPast, setShowPast] = useState(false);
   const groups: [string, Upcoming[]][] = [
-    ['השבוע', upcoming.filter((u) => u.inDays < 7)],
-    ['החודש הקרוב', upcoming.filter((u) => u.inDays >= 7 && u.inDays < 31)],
-    ['בהמשך השנה', upcoming.filter((u) => u.inDays >= 31)],
+    [tr('השבוע', 'This week'), upcoming.filter((u) => u.inDays < 7)],
+    [tr('החודש הקרוב', 'Coming month'), upcoming.filter((u) => u.inDays >= 7 && u.inDays < 31)],
+    [tr('בהמשך השנה', 'Later this year'), upcoming.filter((u) => u.inDays >= 31)],
   ];
   const reminders = myEvents.filter((e) => e.remind && e.remind !== 'none').length;
 
   return (
     <div className="tab mine-tab">
       <header className="tab-head">
-        <h1 className="tab-title">האירועים שלי</h1>
+        <h1 className="tab-title">{tr('האירועים שלי', 'My events')}</h1>
         <button className="btn primary" onClick={onAdd}>
           <Icon name="plus" size={18} />
-          אירוע חדש
+          {tr('אירוע חדש', 'New event')}
         </button>
       </header>
 
       {myEvents.length === 0 ? (
         <section className="empty-state">
-          <h2>ימי הולדת ויארצייט, לפי התאריך העברי</h2>
+          <h2>{tr('ימי הולדת ויארצייט, לפי התאריך העברי', 'Birthdays and yahrzeits, by the Hebrew date')}</h2>
           <p>
-            מוסיפים פעם אחת, והאירוע חוזר כל שנה בתאריך העברי הנכון, עם תזכורת ביום עצמו, בערב שלפניו או שבוע לפני. אפשר גם אירוע חד־פעמי או לפי התאריך הלועזי.
+            {tr(
+              'מוסיפים פעם אחת, והאירוע חוזר כל שנה בתאריך העברי הנכון, עם תזכורת ביום עצמו, בערב שלפניו או שבוע לפני. אפשר גם אירוע חד־פעמי או לפי התאריך הלועזי.',
+              'Add it once and it comes back every year on the right Hebrew date, with a reminder on the day, the evening before or a week before. One-time events and events by the Gregorian date work too.',
+            )}
           </p>
           <button className="btn primary" onClick={onAdd}>
             <Icon name="plus" size={18} />
-            הוספת האירוע הראשון
+            {tr('הוספת האירוע הראשון', 'Add your first event')}
           </button>
         </section>
       ) : (
@@ -68,9 +82,9 @@ export function MineTab({ myEvents, today, onAdd, onEdit, onOpenDay, onAlerts, o
               ) : null,
             )}
             {past.length > 0 && (
-              <section aria-label="אירועים שעברו">
+              <section aria-label={tr('אירועים שעברו', 'Past events')}>
                 <button className="group-label as-btn" onClick={() => setShowPast((v) => !v)} aria-expanded={showPast}>
-                  שעברו ({past.length})
+                  {tr(`שעברו (${past.length})`, `Past (${past.length})`)}
                   <Icon name="down" size={16} />
                 </button>
                 {showPast && (
@@ -103,8 +117,12 @@ export function MineTab({ myEvents, today, onAdd, onEdit, onOpenDay, onAlerts, o
                 <button className="link-row" onClick={onAlerts}>
                   <Icon name="bell" size={18} />
                   <span>
-                    תזכורות והתראות
-                    <small>{reminders ? `תזכורת ל־${reminders} אירועים` : 'בוחרים תזכורת בעריכת האירוע'}</small>
+                    {tr('תזכורות והתראות', 'Reminders & alerts')}
+                    <small>
+                      {reminders
+                        ? tr(`תזכורת ל־${reminders} אירועים`, `Reminders for ${reminders} ${plural(reminders, 'event', 'events')}`)
+                        : tr('בוחרים תזכורת בעריכת האירוע', 'Pick a reminder when you edit an event')}
+                    </small>
                   </span>
                   <Icon name="next" size={16} />
                 </button>
@@ -113,8 +131,8 @@ export function MineTab({ myEvents, today, onAdd, onEdit, onOpenDay, onAlerts, o
                 <button className="link-row" onClick={onBackup}>
                   <Icon name="download" size={18} />
                   <span>
-                    גיבוי והעברה למכשיר אחר
-                    <small>האירועים שמורים רק במכשיר הזה</small>
+                    {tr('גיבוי והעברה למכשיר אחר', 'Back up or move to another device')}
+                    <small>{tr('האירועים שמורים רק במכשיר הזה', 'Your events are saved only on this device')}</small>
                   </span>
                   <Icon name="next" size={16} />
                 </button>
@@ -130,16 +148,16 @@ export function MineTab({ myEvents, today, onAdd, onEdit, onOpenDay, onAlerts, o
 function EventRow({ u, onEdit, onOpenDay }: { u: Upcoming; onEdit: (e: MyEvent) => void; onOpenDay: (d: Date) => void }) {
   const { ev, d, years, inDays } = u;
   const hd = new HDate(d);
-  const when = inDays === 0 ? 'היום' : inDays === 1 ? 'מחר' : null;
+  const when = inDays === 0 ? tr('היום', 'Today') : inDays === 1 ? tr('מחר', 'Tomorrow') : null;
   return (
     <div className="ev-row">
-      <button className="ev-when" onClick={() => onOpenDay(d)} aria-label={`${when ?? `בעוד ${inDays} ימים`}. פתיחת היום`}>
+      <button className="ev-when" onClick={() => onOpenDay(d)} aria-label={tr(`${when ?? `בעוד ${inDays} ימים`}. פתיחת היום`, `${when ?? `In ${inDays} days`}. Open the day`)}>
         {when ? (
           <b className="word">{when}</b>
         ) : (
           <>
             <b>{inDays}</b>
-            <small>ימים</small>
+            <small>{tr('ימים', 'days')}</small>
           </>
         )}
       </button>
@@ -147,22 +165,22 @@ function EventRow({ u, onEdit, onOpenDay }: { u: Upcoming; onEdit: (e: MyEvent) 
         <b>
           <i style={{ background: ev.color }} aria-hidden="true" />
           {ev.title}
-          {ev.repeat !== 'none' && years > 0 && <span className="ev-years"> · {years} שנים</span>}
+          {ev.repeat !== 'none' && years > 0 && <span className="ev-years"> · {yearsWord(years)}</span>}
         </b>
         <small>
-          {hebDateStr(hd, false)} · יום {WEEKDAYS[d.getDay()]}, {gregDateStr(d, false)}
+          {hebDateStr(hd, false)} · {dayName(d)}, {gregDateStr(d, false)}
           {ev.time ? ` · ${ev.time}` : ''}
         </small>
         {(ev.repeat !== 'none' || (ev.remind && ev.remind !== 'none')) && (
           <small className="ev-meta">
-            {[ev.repeat !== 'none' ? REPEAT_WORDS[ev.repeat] : '', ev.remind && ev.remind !== 'none' ? `תזכורת ${REMIND_WORDS[ev.remind]}` : '']
+            {[ev.repeat !== 'none' ? repeatWords(ev.repeat) : '', ev.remind && ev.remind !== 'none' ? remindWords(ev.remind) : '']
               .filter(Boolean)
               .join(' · ')}
           </small>
         )}
       </button>
       {ev.remind && ev.remind !== 'none' && (
-        <span className="ev-bell" aria-label="יש תזכורת">
+        <span className="ev-bell" aria-label={tr('יש תזכורת', 'Reminder on')}>
           <Icon name="bell" size={16} />
         </span>
       )}

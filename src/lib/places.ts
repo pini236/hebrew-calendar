@@ -4,6 +4,7 @@
  * loaded lazily, only when the location screen opens, so app start-up stays fast.
  */
 import { CITIES, findCity, type City } from './cities';
+import { lang, type Lang } from './i18n';
 
 export interface Place {
   name: string;
@@ -71,22 +72,24 @@ export function loadPlaces(): Promise<PlaceDB> {
 
 /* ---------------- countries ---------------- */
 
-let regionNames: Intl.DisplayNames | null | undefined;
-/** Country name in Hebrew ("FR" → "צרפת"), or the code if the browser has no names */
-export function countryName(cc: string) {
-  if (regionNames === undefined) {
+const regionNames: Partial<Record<Lang, Intl.DisplayNames | null>> = {};
+/** Country name in a language ("FR" → "צרפת" / "France"), or the code if the browser has no names */
+export function countryNameIn(l: Lang, cc: string) {
+  if (regionNames[l] === undefined) {
     try {
-      regionNames = new Intl.DisplayNames(['he'], { type: 'region' });
+      regionNames[l] = new Intl.DisplayNames([l], { type: 'region' });
     } catch {
-      regionNames = null;
+      regionNames[l] = null;
     }
   }
   try {
-    return regionNames?.of(cc) ?? cc;
+    return regionNames[l]?.of(cc) ?? cc;
   } catch {
     return cc;
   }
 }
+/** Country name in the interface language */
+export const countryName = (cc: string) => countryNameIn(lang(), cc);
 
 /* ---------------- search ---------------- */
 
@@ -109,7 +112,7 @@ export function searchPlaces(db: PlaceDB | null, query: string, limit = 40): Hit
     const hits: Hit[] = CITIES.filter((c) => c.name.includes(q)).map((city) => ({ city }));
     if (db && hits.length < limit) {
       db.countries ??= [...new Set(db.places.map((p) => p.cc))];
-      const ccs = new Set(db.countries.filter((cc) => countryName(cc).startsWith(q)));
+      const ccs = new Set(db.countries.filter((cc) => countryNameIn('he', cc).startsWith(q)));
       const listed = new Set(hits.map((h) => h.city?.id));
       for (const p of db.places) {
         if (hits.length >= limit) break;
@@ -129,7 +132,7 @@ export function searchPlaces(db: PlaceDB | null, query: string, limit = 40): Hit
     const pos = key.indexOf(k);
     if (pos < 0) continue;
     const p = db.places[i];
-    if (where && !(searchKey(p.region).startsWith(where) || p.cc.toLowerCase() === where || searchKey(countryName(p.cc)).startsWith(where))) continue;
+    if (where && !(searchKey(p.region).startsWith(where) || p.cc.toLowerCase() === where || searchKey(countryNameIn('en', p.cc)).startsWith(where))) continue;
     const b = pos === 0 ? 0 : key[pos - 1] === ' ' ? 1 : 2;
     if (buckets[b].length < limit) buckets[b].push(p);
   }
@@ -170,7 +173,7 @@ export function placeToCity(p: Place): City {
   };
 }
 
-/** One line under a place's name: "New York · ארצות הברית" */
+/** One line under a place's name: "New York · ארצות הברית" / "New York · United States" */
 export function placeSub(p: Place) {
   const country = countryName(p.cc);
   return p.region && p.region !== p.name ? `${p.region} · ${country}` : country;

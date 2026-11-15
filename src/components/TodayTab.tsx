@@ -1,7 +1,6 @@
 import { useMemo, useRef, useState } from 'react';
 import { HDate } from '@hebcal/core';
 import {
-  GREG_MONTHS,
   WEEKDAYS,
   WEEKDAYS_SHORT,
   addDays,
@@ -12,6 +11,8 @@ import {
   hebMonthName,
   hebNum,
   hebYear,
+  itemTitle,
+  learningLabel,
   prayerNotes,
   rangeItems,
   roundTo,
@@ -22,9 +23,10 @@ import {
   type ZmanRow,
 } from '../lib/cal';
 import type { City } from '../lib/cities';
+import { isHe, lang, tr } from '../lib/i18n';
 import type { MyEvent, Settings } from '../lib/store';
 import { Icon } from './Icon';
-import { agendaRows, countdown, dayFrac, dayRibbon, daysBetween, nextShabbat, weekParasha, type ShabbatInfo } from './dayinfo';
+import { agendaRows, dayFrac, dayName, dayRibbon, daysBetween, inTime, nextShabbat, weekParasha, yearsWord, type ShabbatInfo } from './dayinfo';
 
 type Z = ReturnType<typeof zmanim>;
 
@@ -55,14 +57,15 @@ export function TodayTab(p: Props) {
   const isToday = sameDay(selected, now);
   const afterSunset = isToday && now.getTime() > z.sunset.getTime();
   const tonight = new HDate(addDays(selected, 1));
-  const tonightDay = WEEKDAYS[addDays(selected, 1).getDay()];
+  const tonightDow = addDays(selected, 1).getDay();
+  const tonightDay = WEEKDAYS[tonightDow];
 
   return (
     <div className="tab today-tab">
       <header className="tab-head">
-        <button className="date-title" onClick={p.onJump} aria-label={`${hebDateStr(hd)}. מעבר לתאריך אחר`}>
+        <button className="date-title" onClick={p.onJump} aria-label={tr(`${hebDateStr(hd)}. מעבר לתאריך אחר`, `${hebDateStr(hd)}. Go to another date`)}>
           <span className="dt-sub">
-            יום {WEEKDAYS[selected.getDay()]} · {gregDateStr(selected)}
+            {dayName(selected)} · {gregDateStr(selected)}
           </span>
           <span className="dt-main">
             {hebNum(hd.getDate())} {hebMonthName(hd.getMonth(), hd.getFullYear())}
@@ -70,14 +73,17 @@ export function TodayTab(p: Props) {
             <Icon name="down" size={18} />
           </span>
         </button>
-        <button className="place-chip" onClick={p.onLocation} aria-label={`מיקום${city.id === 'gps' ? ' לפי GPS' : ''}: ${city.name}. שינוי מיקום`}>
+        <button className="place-chip" onClick={p.onLocation} aria-label={tr(`מיקום${city.id === 'gps' ? ' לפי GPS' : ''}: ${city.name}. שינוי מיקום`, `Location${city.id === 'gps' ? ' (GPS)' : ''}: ${city.name}. Change location`)}>
           <Icon name={city.id === 'gps' ? 'locate' : 'pin'} size={16} />
           <span>{city.name}</span>
         </button>
       </header>
       {afterSunset && (
         <p className="tonight">
-          מהשקיעה כבר {hebDateStr(tonight, false)}, אור ל{tonightDay === 'שבת' ? 'שבת' : `יום ${tonightDay}`}
+          {tr(
+            `מהשקיעה כבר ${hebDateStr(tonight, false)}, אור ל${tonightDow === 6 ? 'שבת' : `יום ${tonightDay}`}`,
+            `Since sunset it's ${hebDateStr(tonight, false)}, the eve of ${tonightDay}`,
+          )}
         </p>
       )}
 
@@ -91,7 +97,7 @@ export function TodayTab(p: Props) {
         <div className="today-side">
           <Notes date={selected} il={city.il} items={items} showLearning={settings.showLearning} />
           <p className="fine source-line">
-            {city.name} · שעה זמנית {Math.round(z.shaahZmanit)} דק׳
+            {city.name} · {tr(`שעה זמנית ${Math.round(z.shaahZmanit)} דק׳`, `Halachic hour ${Math.round(z.shaahZmanit)} min`)}
           </p>
         </div>
       </div>
@@ -121,28 +127,28 @@ function WeekStrip({ selected, now, city, settings, myEvents, onSelect, onToday 
       : `${hebMonthName(h0.getMonth(), h0.getFullYear())}–${hebMonthName(h6.getMonth(), h6.getFullYear())}`;
 
   return (
-    <section className="week" aria-label="השבוע">
+    <section className="week" aria-label={tr('השבוע', 'Week')}>
       <div className="week-head">
-        <button className="icon-btn sm" onClick={() => onSelect(addDays(selected, -7))} aria-label="השבוע הקודם">
+        <button className="icon-btn sm" onClick={() => onSelect(addDays(selected, -7))} aria-label={tr('השבוע הקודם', 'Previous week')}>
           <Icon name="prev" />
         </button>
         <span className="week-name">
-          {parasha ? `שבוע ${parasha}` : months}
+          {parasha ? tr(`שבוע ${parasha.title}`, itemTitle(parasha)) : months}
           {parasha && <small> · {months}</small>}
         </span>
         {!sameDay(selected, now) && (
           <button className="text-btn" onClick={onToday}>
-            {thisWeek ? 'היום' : 'חזרה להיום'}
+            {thisWeek ? tr('היום', 'Today') : tr('חזרה להיום', 'Back to today')}
           </button>
         )}
-        <button className="icon-btn sm" onClick={() => onSelect(addDays(selected, 7))} aria-label="השבוע הבא">
+        <button className="icon-btn sm" onClick={() => onSelect(addDays(selected, 7))} aria-label={tr('השבוע הבא', 'Next week')}>
           <Icon name="next" />
         </button>
       </div>
       <div
         className="week-days"
         role="group"
-        aria-label="ימי השבוע"
+        aria-label={tr('ימי השבוע', 'Days of the week')}
         onTouchStart={(e) => (touch.current = { x: e.touches[0].clientX, y: e.touches[0].clientY })}
         onTouchEnd={(e) => {
           const t = touch.current;
@@ -166,7 +172,10 @@ function WeekStrip({ selected, now, city, settings, myEvents, onSelect, onToday 
               className={`wd ${sel ? 'sel' : ''} ${tod ? 'today' : ''} ${chag ? 'chag' : ''} ${d.getDay() === 6 ? 'sat' : ''}`}
               onClick={() => onSelect(d)}
               aria-pressed={sel}
-              aria-label={`יום ${WEEKDAYS[d.getDay()]}, ${hebDateStr(h, false)}, ${d.getDate()} ב${GREG_MONTHS[d.getMonth()]}${tod ? ', היום' : ''}`}
+              aria-label={tr(
+                `יום ${WEEKDAYS[d.getDay()]}, ${hebDateStr(h, false)}, ${gregDateStr(d, false)}${tod ? ', היום' : ''}`,
+                `${WEEKDAYS[d.getDay()]}, ${hebDateStr(h, false)}, ${gregDateStr(d, false)}${tod ? ', today' : ''}`,
+              )}
             >
               <span className="wd-name">{WEEKDAYS_SHORT[d.getDay()]}</span>
               <span className={`wd-num ${heb ? 'heb' : ''}`}>{heb ? hebNum(h.getDate()) : d.getDate()}</span>
@@ -195,7 +204,8 @@ function NowHero({ selected, now, city, settings, fmt, z, isToday }: Props & { i
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [dateKey(selected), city, settings.candleMins, settings.havdalah, settings.useElevation],
   );
-  const ribbon = useMemo(() => dayRibbon(selected, z), [z, selected]);
+  const l = lang();
+  const ribbon = useMemo(() => dayRibbon(selected, z), [z, selected, l]); // eslint-disable-line react-hooks/exhaustive-deps
   const t = now.getTime();
 
   // the next zman of today; after the last one, tomorrow's first. The same zmanim as the day's
@@ -217,38 +227,43 @@ function NowHero({ selected, now, city, settings, fmt, z, isToday }: Props & { i
   const inShabbat = shab && isToday && t >= shab.candle.it.time!.getTime();
 
   return (
-    <section className={`hero ${shab ? 'is-shabbat' : ''}`} aria-label={shab ? (shab.isChag ? 'החג' : 'שבת') : 'הזמן הבא'}>
+    <section className={`hero ${shab ? 'is-shabbat' : ''}`} aria-label={shab ? (shab.isChag ? tr('החג', 'Yom Tov') : tr('שבת', 'Shabbat')) : tr('הזמן הבא', 'Next zman')}>
       {shab ? (
         <div className="hero-shabbat">
           <div className="eyebrow">
-            {shab.isChag ? (shab.isShabbat ? 'שבת וחג' : 'החג') : 'שבת'}
+            {shab.isChag ? (shab.isShabbat ? tr('שבת וחג', 'Shabbat & Yom Tov') : tr('החג', 'Yom Tov')) : tr('שבת', 'Shabbat')}
             {' · '}
-            {inShabbat ? 'עכשיו' : `${shab.isChag && !shab.isShabbat ? 'נכנס' : 'נכנסת'} ${daysBetween(selected, shab.candle.d) === 0 ? 'היום' : 'מחר'}`}
+            {inShabbat
+              ? tr('עכשיו', 'now')
+              : tr(
+                  `${shab.isChag && !shab.isShabbat ? 'נכנס' : 'נכנסת'} ${daysBetween(selected, shab.candle.d) === 0 ? 'היום' : 'מחר'}`,
+                  `begins ${daysBetween(selected, shab.candle.d) === 0 ? 'today' : 'tomorrow'}`,
+                )}
           </div>
-          <h2 className="hero-title">{shab.title}</h2>
+          <h2 className="hero-title">{itemTitle(shab)}</h2>
           <div className="pair">
             <div className={`pair-cell ${inShabbat ? 'done' : ''}`}>
-              <span className="pc-label">הדלקת נרות</span>
+              <span className="pc-label">{tr('הדלקת נרות', 'Candle lighting')}</span>
               <span className="pc-time candle">{fmt.format(shab.candle.it.time!)}</span>
-              <span className="pc-sub">יום {WEEKDAYS[shab.candle.d.getDay()]}</span>
+              <span className="pc-sub">{dayName(shab.candle.d)}</span>
             </div>
             <div className="pair-cell">
-              <span className="pc-label">{shab.isChag && !shab.isShabbat ? 'צאת החג' : 'צאת השבת'}</span>
+              <span className="pc-label">{shab.isChag && !shab.isShabbat ? tr('צאת החג', 'Yom Tov ends') : tr('צאת השבת', 'Shabbat ends')}</span>
               <span className="pc-time">{fmt.format(shab.havdalah.it.time!)}</span>
-              <span className="pc-sub">{shab.havdalah.d.getDay() === 6 ? 'מוצאי שבת' : `יום ${WEEKDAYS[shab.havdalah.d.getDay()]}`}</span>
+              <span className="pc-sub">{shab.havdalah.d.getDay() === 6 ? tr('מוצאי שבת', 'Saturday night') : dayName(shab.havdalah.d)}</span>
             </div>
           </div>
           {isToday && (
             <p className="hero-count">
               {!inShabbat
-                ? `הדלקת נרות בעוד ${countdown(shab.candle.it.time!.getTime() - t)}`
-                : `${shab.isChag && !shab.isShabbat ? 'צאת החג' : 'צאת השבת'} בעוד ${countdown(shab.havdalah.it.time!.getTime() - t)}`}
+                ? `${tr('הדלקת נרות', 'Candle lighting')} ${inTime(shab.candle.it.time!.getTime() - t)}`
+                : `${shab.isChag && !shab.isShabbat ? tr('צאת החג', 'Yom Tov ends') : tr('צאת השבת', 'Shabbat ends')} ${inTime(shab.havdalah.it.time!.getTime() - t)}`}
             </p>
           )}
         </div>
       ) : next ? (
         <div className="hero-next">
-          <div className="eyebrow">{next.tomorrow ? 'הזמן הבא · מחר' : 'הזמן הבא'}</div>
+          <div className="eyebrow">{next.tomorrow ? tr('הזמן הבא · מחר', 'Next zman · tomorrow') : tr('הזמן הבא', 'Next zman')}</div>
           <div className="hn-row">
             <h2 className="hero-title">
               {next.name}
@@ -256,17 +271,20 @@ function NowHero({ selected, now, city, settings, fmt, z, isToday }: Props & { i
             </h2>
             <span className="hn-time">{fmt.format(next.time)}</span>
           </div>
-          <p className="hero-count">בעוד {countdown(next.time.getTime() - t)}</p>
+          <p className="hero-count">{inTime(next.time.getTime() - t)}</p>
         </div>
       ) : (
         <div className="hero-next">
-          <div className="eyebrow">יום {WEEKDAYS[selected.getDay()]}</div>
+          <div className="eyebrow">{dayName(selected)}</div>
           <h2 className="hero-title">{hebDateStr(new HDate(selected))}</h2>
         </div>
       )}
 
       <div className="ribbon-wrap">
-        <div className="ribbon" style={{ background: ribbon }} role="img" aria-label={`היום: זריחה ${fmt.format(roundTo(z.sunrise, 'round'))}, שקיעה ${fmt.format(roundTo(z.sunset, 'floor'))}`}>
+        <div className="ribbon" style={{ background: ribbon }} role="img" aria-label={tr(
+            `היום: זריחה ${fmt.format(roundTo(z.sunrise, 'round'))}, שקיעה ${fmt.format(roundTo(z.sunset, 'floor'))}`,
+            `The day: sunrise ${fmt.format(roundTo(z.sunrise, 'round'))}, sunset ${fmt.format(roundTo(z.sunset, 'floor'))}`,
+          )}>
           {[z.sunrise, z.sunset].map((d, i) => (
             <i key={i} className="tick" style={{ insetInlineStart: `${dayFrac(d) * 100}%` }} />
           ))}
@@ -274,10 +292,12 @@ function NowHero({ selected, now, city, settings, fmt, z, isToday }: Props & { i
         </div>
         <div className="ribbon-labels" aria-hidden="true">
           <span style={{ insetInlineStart: `${dayFrac(z.sunrise) * 100}%` }}>
-            <b>{fmt.format(roundTo(z.sunrise, 'round'))}</b>זריחה
+            <b>{fmt.format(roundTo(z.sunrise, 'round'))}</b>
+            {tr('זריחה', 'Sunrise')}
           </span>
           <span style={{ insetInlineStart: `${dayFrac(z.sunset) * 100}%` }}>
-            <b>{fmt.format(roundTo(z.sunset, 'floor'))}</b>שקיעה
+            <b>{fmt.format(roundTo(z.sunset, 'floor'))}</b>
+            {tr('שקיעה', 'Sunset')}
           </span>
         </div>
       </div>
@@ -292,8 +312,9 @@ function Agenda({ selected, now, items, z, mine, settings, city, fmt, isToday, o
   const rows = agendaRows(z.rows, items, mine, selected, (r) => !!r.major || alerted[r.id] !== undefined, settings.candleMins ?? city.candle);
   const allDay: { key: string; title: string; kind: string; color?: string; ev?: MyEvent; years?: number }[] = items
     .filter((i) => DAY_KINDS.has(i.kind))
-    .map((i, n) => ({ key: i.kind + n, title: i.kind === 'parasha' ? i.title : shortTitle(i.title), kind: i.kind }));
-  if (selected.getDay() === 5 && !items.some((i) => i.kind === 'erev' || i.kind === 'yomtov')) allDay.unshift({ key: 'erev-shabbat', title: 'ערב שבת קודש', kind: 'erev' });
+    // Hebrew: the short cell title (the parasha in full); English: the full title, which reads better in a row
+    .map((i, n) => ({ key: i.kind + n, title: isHe() ? (i.kind === 'parasha' ? i.title : shortTitle(i.title)) : itemTitle(i), kind: i.kind }));
+  if (selected.getDay() === 5 && !items.some((i) => i.kind === 'erev' || i.kind === 'yomtov')) allDay.unshift({ key: 'erev-shabbat', title: tr('ערב שבת קודש', 'Erev Shabbat'), kind: 'erev' });
   for (const m of mine) if (!m.ev.time) allDay.push({ key: 'ev' + m.ev.id, title: m.ev.title, kind: 'mine', color: m.ev.color, ev: m.ev, years: m.years });
 
   const t = now.getTime();
@@ -305,11 +326,11 @@ function Agenda({ selected, now, items, z, mine, settings, city, fmt, isToday, o
   const mineById = new Map(mine.map((m) => [m.ev.id, m.ev]));
 
   return (
-    <section className="agenda" aria-label="סדר היום">
+    <section className="agenda" aria-label={tr('סדר היום', 'Schedule')}>
       <header className="sec-head">
-        <h3>סדר היום</h3>
+        <h3>{tr('סדר היום', 'Schedule')}</h3>
         <button className="text-btn" onClick={onAllZmanim}>
-          כל הזמנים
+          {tr('כל הזמנים', 'All zmanim')}
         </button>
       </header>
 
@@ -322,7 +343,7 @@ function Agenda({ selected, now, items, z, mine, settings, city, fmt, isToday, o
                   <i className="mk" style={{ background: a.color }} />
                   <span className="ad-title">
                     {a.title}
-                    {a.ev.repeat !== 'none' && a.years! > 0 && <small> · {a.years} שנים</small>}
+                    {a.ev.repeat !== 'none' && a.years! > 0 && <small> · {yearsWord(a.years!)}</small>}
                   </span>
                   {a.ev.remind && a.ev.remind !== 'none' && <Icon name="bell" size={16} />}
                 </button>
@@ -344,7 +365,7 @@ function Agenda({ selected, now, items, z, mine, settings, city, fmt, isToday, o
               <span className="tl-time">{fmt.format(rows[0].time)}</span>
               <i className="tl-dot" aria-hidden="true" />
               <span className="tl-name">
-                {pastCount} זמנים שעברו
+                {tr(`${pastCount} זמנים שעברו`, `${pastCount} earlier zmanim`)}
                 <small>{rows.slice(0, pastCount).map((r) => r.name.split(' — ')[0]).filter((n, i, a) => a.indexOf(n) === i).join(' · ')}</small>
               </span>
               <Icon name="down" size={16} />
@@ -364,7 +385,7 @@ function Agenda({ selected, now, items, z, mine, settings, city, fmt, isToday, o
                 {r.hint && <small>{r.hint}</small>}
               </span>
               {r.zmanId && alerted[r.zmanId] !== undefined && (
-                <span className="tl-bell" aria-label="יש התראה">
+                <span className="tl-bell" aria-label={tr('יש התראה', 'Alert on')}>
                   <Icon name="bell" size={16} />
                 </span>
               )}
@@ -373,11 +394,11 @@ function Agenda({ selected, now, items, z, mine, settings, city, fmt, isToday, o
           return (
             <li key={r.key} className={`tl-row k-${r.kind} ${past ? 'past' : ''}`}>
               {i === nextIdx && (
-                <div className="now-line" aria-label={`עכשיו ${fmt.format(now)}`}>
+                <div className="now-line" aria-label={tr(`עכשיו ${fmt.format(now)}`, `Now ${fmt.format(now)}`)}>
                   <span className="nl-time">{fmt.format(now)}</span>
                   <i />
                   <span className="nl-text">
-                    {r.name.split(' — ')[0]} בעוד {countdown(r.time.getTime() - t)}
+                    {r.name.split(' — ')[0]} {inTime(r.time.getTime() - t)}
                   </span>
                 </div>
               )}
@@ -396,14 +417,14 @@ function Agenda({ selected, now, items, z, mine, settings, city, fmt, isToday, o
             <div className="now-line">
               <span className="nl-time">{fmt.format(now)}</span>
               <i />
-              <span className="nl-text">הזמנים של היום עברו</span>
+              <span className="nl-text">{tr('הזמנים של היום עברו', "Today's zmanim have passed")}</span>
             </div>
           </li>
         )}
       </ol>
       <button className="add-row" onClick={onAddEvent}>
         <Icon name="plus" size={18} />
-        <span>הוספת אירוע ביום הזה</span>
+        <span>{tr('הוספת אירוע ביום הזה', 'Add an event on this day')}</span>
       </button>
     </section>
   );
@@ -416,13 +437,13 @@ function Notes({ date, il, items, showLearning }: { date: Date; il: boolean; ite
   const omer = items.find((i) => i.kind === 'omer');
   const learning = showLearning ? items.filter((i) => i.kind === 'learning') : [];
   return (
-    <section className="notes" aria-label="בתפילה ובלימוד">
+    <section className="notes" aria-label={tr('בתפילה ובלימוד', 'Prayer and learning')}>
       <header className="sec-head">
-        <h3>בתפילה{learning.length ? ' ובלימוד' : ''}</h3>
+        <h3>{learning.length ? tr('בתפילה ובלימוד', 'Prayer & learning') : tr('בתפילה', 'Prayer')}</h3>
       </header>
       <dl className="facts">
         <div>
-          <dt>בתפילה</dt>
+          <dt>{tr('בתפילה', 'Prayer')}</dt>
           <dd>
             {notes.map((n) => (
               <span key={n}>{n}</span>
@@ -431,14 +452,14 @@ function Notes({ date, il, items, showLearning }: { date: Date; il: boolean; ite
         </div>
         {omer && (
           <div>
-            <dt>ספירת העומר</dt>
-            <dd>{omer.title}</dd>
+            <dt>{tr('ספירת העומר', 'Omer count')}</dt>
+            <dd>{itemTitle(omer)}</dd>
           </div>
         )}
         {learning.map((x, i) => (
           <div key={i}>
-            <dt>{x.label}</dt>
-            <dd>{x.title}</dd>
+            <dt>{learningLabel(x)}</dt>
+            <dd>{itemTitle(x)}</dd>
           </div>
         ))}
       </dl>

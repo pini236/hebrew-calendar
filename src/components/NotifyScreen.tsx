@@ -7,6 +7,7 @@ import type { Settings } from '../lib/store';
 import { Screen } from './Screen';
 import { Icon } from './Icon';
 import { cancelGroups, isNative, notificationPermission } from '../lib/native';
+import { isHe, tr } from '../lib/i18n';
 
 interface Props {
   city: City;
@@ -42,35 +43,48 @@ function NativeNotify({ city, settings, onChange, onClose }: Props) {
       if (on) {
         const p = await notificationPermission(true);
         if (p !== 'granted') {
-          setMsg(`ההתראות חסומות. אפשר להפעיל אותן בהגדרות הטלפון ← אפליקציות ← ${APP_NAME} ← התראות, ולנסות שוב.`);
+          setMsg(
+            tr(
+              `ההתראות חסומות. אפשר להפעיל אותן בהגדרות הטלפון ← אפליקציות ← ${APP_NAME} ← התראות, ולנסות שוב.`,
+              `Notifications are blocked. Turn them on in phone Settings → Apps → ${APP_NAME} → Notifications, then try again.`,
+            ),
+          );
           return;
         }
         set({ nativeAlerts: true });
-        setMsg('מופעל. ההתראות מתעדכנות אוטומטית בכל פתיחה של האפליקציה, גם אם תחליפו עיר.');
+        setMsg(tr('מופעל. ההתראות מתעדכנות אוטומטית בכל פתיחה של האפליקציה, גם אם תחליפו עיר.', 'On. The alerts update automatically every time you open the app, even if you change city.'));
       } else {
         await cancelGroups(['friday']);
         set({ nativeAlerts: false });
-        setMsg('ההתראות כובו.');
+        setMsg(tr('ההתראות כובו.', 'Alerts turned off.'));
       }
     } catch {
-      setMsg('לא הצלחנו לעדכן את ההתראות. נסו שוב.');
+      setMsg(tr('לא הצלחנו לעדכן את ההתראות. נסו שוב.', "Couldn't update the alerts. Try again."));
     } finally {
       setBusy(false);
     }
   };
 
   return (
-    <Screen title="התראה בכל יום שישי" onClose={onClose}>
+    <Screen title={tr('התראה בכל יום שישי', 'Every Friday alert')} onClose={onClose}>
       <p className="lead">
-        בכל יום שישי בבוקר תקבלו התראה עם שעת כניסת השבת ושעת היציאה ב<b>{city.name}</b>.
+        {isHe() ? (
+          <>
+            בכל יום שישי בבוקר תקבלו התראה עם שעת כניסת השבת ושעת היציאה ב<b>{city.name}</b>.
+          </>
+        ) : (
+          <>
+            Every Friday morning you get an alert with the times Shabbat begins and ends in <b>{city.name}</b>.
+          </>
+        )}
       </p>
       <label className="toggle big" htmlFor="native-alerts">
-        <span>התראה בכל יום שישי</span>
+        <span>{tr('התראה בכל יום שישי', 'Every Friday alert')}</span>
         <input id="native-alerts" type="checkbox" checked={settings.nativeAlerts} disabled={busy} onChange={(e) => toggle(e.target.checked)} />
         <i aria-hidden="true" />
       </label>
       <label className="field">
-        <span>שעת ההתראה</span>
+        <span>{tr('שעת ההתראה', 'Alert time')}</span>
         <input id="alert-time" type="time" value={settings.alertTime} onChange={(e) => e.target.value && set({ alertTime: e.target.value })} />
       </label>
       <Preview alerts={alerts} city={city} time={settings.alertTime} />
@@ -80,7 +94,10 @@ function NativeNotify({ city, settings, onChange, onClose }: Props) {
         </p>
       )}
       <p className="fine">
-        הזמנים לפי הגדרות הדלקת הנרות וצאת השבת (כרגע {settings.candleMins ?? city.candle} דק׳ לפני השקיעה). באנדרואיד ההתראה עשויה להגיע באיחור של כמה דקות כשהטלפון במצב חיסכון.
+        {tr(
+          `הזמנים לפי הגדרות הדלקת הנרות וצאת השבת (כרגע ${settings.candleMins ?? city.candle} דק׳ לפני השקיעה). באנדרואיד ההתראה עשויה להגיע באיחור של כמה דקות כשהטלפון במצב חיסכון.`,
+          `Times follow your candle lighting and end-of-Shabbat settings (now ${settings.candleMins ?? city.candle} min before sunset). On Android an alert may arrive a few minutes late when the phone is in battery saver.`,
+        )}
       </p>
     </Screen>
   );
@@ -88,7 +105,7 @@ function NativeNotify({ city, settings, onChange, onClose }: Props) {
 
 function Preview({ alerts, city, time }: { alerts: ReturnType<typeof shabbatAlerts>; city: City; time: string }) {
   return (
-    <div className="alert-preview" aria-label="דוגמה להתראות הקרובות">
+    <div className="alert-preview" aria-label={tr('דוגמה להתראות הקרובות', 'Preview of upcoming alerts')}>
       {alerts.slice(0, 3).map((a) => {
         const t = alertText(a, city);
         return (
@@ -98,14 +115,15 @@ function Preview({ alerts, city, time }: { alerts: ReturnType<typeof shabbatAler
                 <Icon name="candle" size={14} /> {APP_NAME}
               </span>
               <span>
-                יום {WEEKDAYS[5]}, {gregDateStr(a.friday, false)} · {time}
+                {tr('יום ', '')}
+                {WEEKDAYS[5]}, {gregDateStr(a.friday, false)} · {time}
               </span>
             </div>
             <div className="notif-body">{t.summary.replace(/^🕯️\s*/, '')}</div>
           </div>
         );
       })}
-      {alerts.length === 0 && <p className="empty">לא נמצאו זמני שבת לטווח הזה.</p>}
+      {alerts.length === 0 && <p className="empty">{tr('לא נמצאו זמני שבת לטווח הזה.', 'No Shabbat times found for this range.')}</p>}
     </div>
   );
 }
@@ -140,9 +158,9 @@ function WebNotify({ city, settings, onChange, onClose }: Props) {
       a.remove();
       setTimeout(() => URL.revokeObjectURL(url), 60000);
       setDone(true);
-      setMsg(`נוצר קובץ עם ${alerts.length} התראות שבת.`);
+      setMsg(tr(`נוצר קובץ עם ${alerts.length} התראות שבת.`, `Created a file with ${alerts.length} Shabbat ${alerts.length === 1 ? 'alert' : 'alerts'}.`));
     } catch {
-      setMsg('לא הצלחנו ליצור את הקובץ במכשיר הזה. נסו "שיתוף הקובץ".');
+      setMsg(tr('לא הצלחנו ליצור את הקובץ במכשיר הזה. נסו "שיתוף הקובץ".', 'Couldn\'t create the file on this device. Try "Share file".'));
     }
   };
 
@@ -156,72 +174,85 @@ function WebNotify({ city, settings, onChange, onClose }: Props) {
 
   const share = async () => {
     try {
-      await navigator.share({ files: [makeFile()], title: `זמני שבת — ${APP_NAME}` });
+      await navigator.share({ files: [makeFile()], title: tr(`זמני שבת — ${APP_NAME}`, `Shabbat times — ${APP_NAME}`) });
       setDone(true);
-      setMsg('שותף. בחרו באפליקציית היומן כדי להוסיף את ההתראות.');
+      setMsg(tr('שותף. בחרו באפליקציית היומן כדי להוסיף את ההתראות.', 'Shared. Choose your calendar app to add the alerts.'));
     } catch (e) {
-      if ((e as DOMException)?.name !== 'AbortError') setMsg('השיתוף לא הצליח במכשיר הזה. נסו "הוספה ליומן".');
+      if ((e as DOMException)?.name !== 'AbortError') setMsg(tr('השיתוף לא הצליח במכשיר הזה. נסו "הוספה ליומן".', 'Sharing didn\'t work on this device. Try "Add to calendar".'));
     }
   };
 
   const preview = alerts.slice(0, 3);
 
   return (
-    <Screen title="התראה בכל יום שישי" onClose={onClose}>
+    <Screen title={tr('התראה בכל יום שישי', 'Every Friday alert')} onClose={onClose}>
       <p className="lead">
-        בכל יום שישי בבוקר תקבלו התראה עם שעת כניסת השבת ושעת היציאה ב<b>{city.name}</b>. ההתראות נכנסות ליומן של הטלפון,
-        ולכן הן מגיעות גם כשהאפליקציה סגורה.
+        {isHe() ? (
+          <>
+            בכל יום שישי בבוקר תקבלו התראה עם שעת כניסת השבת ושעת היציאה ב<b>{city.name}</b>. ההתראות נכנסות ליומן של הטלפון,
+            ולכן הן מגיעות גם כשהאפליקציה סגורה.
+          </>
+        ) : (
+          <>
+            Every Friday morning you get an alert with the times Shabbat begins and ends in <b>{city.name}</b>. The alerts go into
+            your phone&apos;s calendar, so they arrive even when the app is closed.
+          </>
+        )}
       </p>
 
       <div className="two">
         <label className="field col">
-          <span>שעת ההתראה ביום שישי</span>
+          <span>{tr('שעת ההתראה ביום שישי', 'Friday alert time')}</span>
           <input id="alert-time" type="time" value={settings.alertTime} onChange={(e) => e.target.value && set({ alertTime: e.target.value })} />
         </label>
         <label className="field col">
-          <span>לכמה זמן קדימה</span>
+          <span>{tr('לכמה זמן קדימה', 'How far ahead')}</span>
           <select id="alert-weeks" value={settings.alertWeeks} onChange={(e) => set({ alertWeeks: +e.target.value })}>
-            <option value={13}>3 חודשים</option>
-            <option value={26}>חצי שנה</option>
-            <option value={52}>שנה</option>
-            <option value={104}>שנתיים</option>
+            <option value={13}>{tr('3 חודשים', '3 months')}</option>
+            <option value={26}>{tr('חצי שנה', '6 months')}</option>
+            <option value={52}>{tr('שנה', '1 year')}</option>
+            <option value={104}>{tr('שנתיים', '2 years')}</option>
           </select>
         </label>
       </div>
 
-      <div className="alert-preview" aria-label="דוגמה להתראות הקרובות">
+      <div className="alert-preview" aria-label={tr('דוגמה להתראות הקרובות', 'Preview of upcoming alerts')}>
         {preview.map((a) => {
           const t = alertText(a, city);
           return (
             <div className="notif" key={a.friday.getTime()}>
               <div className="notif-head">
                 <span className="notif-app">
-                  <Icon name="candle" size={14} /> יומן
+                  <Icon name="candle" size={14} /> {tr('יומן', 'Calendar')}
                 </span>
                 <span>
-                  יום {WEEKDAYS[5]}, {gregDateStr(a.friday, false)} · {settings.alertTime}
+                  {tr('יום ', '')}
+                  {WEEKDAYS[5]}, {gregDateStr(a.friday, false)} · {settings.alertTime}
                 </span>
               </div>
               <div className="notif-body">{t.summary.replace(/^🕯️\s*/, '')}</div>
             </div>
           );
         })}
-        {alerts.length === 0 && <p className="empty">לא נמצאו זמני שבת לטווח הזה.</p>}
+        {alerts.length === 0 && <p className="empty">{tr('לא נמצאו זמני שבת לטווח הזה.', 'No Shabbat times found for this range.')}</p>}
       </div>
 
       <div className="row-btns">
         <button className="primary" onClick={addToCalendar} disabled={!alerts.length}>
-          <Icon name="today" size={18} /> הוספה ליומן ({alerts.length} שבתות)
+          <Icon name="today" size={18} /> {tr(`הוספה ליומן (${alerts.length} שבתות)`, `Add to calendar (${alerts.length} ${alerts.length === 1 ? 'week' : 'weeks'})`)}
         </button>
         {canShare && (
           <button className="ghost-btn" onClick={share} disabled={!alerts.length}>
-            <Icon name="share" size={16} /> שיתוף הקובץ
+            <Icon name="share" size={16} /> {tr('שיתוף הקובץ', 'Share file')}
           </button>
         )}
       </div>
       {__SINGLE__ && (
         <p className="fine" role="note">
-          בתצוגה המקדימה הזאת הדפדפן חוסם הורדת קבצים. הכפתור יעבוד באפליקציה המותקנת (אחרי הפרסום ב־GitHub Pages).
+          {tr(
+            'בתצוגה המקדימה הזאת הדפדפן חוסם הורדת קבצים. הכפתור יעבוד באפליקציה המותקנת (אחרי הפרסום ב־GitHub Pages).',
+            'This preview blocks file downloads. The button works in the installed app (after publishing to GitHub Pages).',
+          )}
         </p>
       )}
       {msg && (
@@ -231,33 +262,68 @@ function WebNotify({ city, settings, onChange, onClose }: Props) {
       )}
 
       <details className="howto" open={done}>
-        <summary>איך זה עובד בטלפון שלי?</summary>
-        {isIOS || !isAndroid ? (
-          <ol>
-            <li>
-              <b>אייפון:</b> אחרי הלחיצה ייפתח חלון עם רשימת האירועים. לוחצים "הוסף הכל" ובוחרים יומן.
-            </li>
-            <li>
-              ההתראה מופיעה בשעה שבחרתם. אם היא לא מגיעה, בדקו ב"הגדרות ← יומן ← עדכונים" שההתראות של היומן מופעלות.
-            </li>
-          </ol>
-        ) : null}
-        {isAndroid || !isIOS ? (
-          <ol>
-            <li>
-              <b>אנדרואיד:</b> פותחים את הקובץ שירד (shabbat-times.ics) באפליקציית היומן, או משתפים אותו ישירות אליה. יומן Samsung
-              ורוב היומנים מייבאים אותו מיד.
-            </li>
-            <li>
-              ב־Google Calendar, אם הקובץ לא נפתח: calendar.google.com במחשב ← הגדרות ← ייבוא. גוגל מצמיד להתראה את התזכורת
-              הרגילה של היומן שלכם.
-            </li>
-          </ol>
-        ) : null}
-        <p className="fine">
-          החלפתם עיר או שעה? יוצרים את הקובץ שוב, ומוחקים מהיומן את ההתראות הקודמות. כדי שיהיה קל למחוק, אפשר להוסיף אותן ליומן נפרד בשם "זמני שבת". הזמנים מחושבים לפי ההגדרות של הדלקת נרות וצאת שבת
-          (כרגע: {settings.candleMins ?? city.candle} דק׳ לפני השקיעה).
-        </p>
+        {isHe() ? (
+          <>
+            <summary>איך זה עובד בטלפון שלי?</summary>
+            {isIOS || !isAndroid ? (
+              <ol>
+                <li>
+                  <b>אייפון:</b> אחרי הלחיצה ייפתח חלון עם רשימת האירועים. לוחצים "הוסף הכל" ובוחרים יומן.
+                </li>
+                <li>
+                  ההתראה מופיעה בשעה שבחרתם. אם היא לא מגיעה, בדקו ב"הגדרות ← יומן ← עדכונים" שההתראות של היומן מופעלות.
+                </li>
+              </ol>
+            ) : null}
+            {isAndroid || !isIOS ? (
+              <ol>
+                <li>
+                  <b>אנדרואיד:</b> פותחים את הקובץ שירד (shabbat-times.ics) באפליקציית היומן, או משתפים אותו ישירות אליה. יומן Samsung
+                  ורוב היומנים מייבאים אותו מיד.
+                </li>
+                <li>
+                  ב־Google Calendar, אם הקובץ לא נפתח: calendar.google.com במחשב ← הגדרות ← ייבוא. גוגל מצמיד להתראה את התזכורת
+                  הרגילה של היומן שלכם.
+                </li>
+              </ol>
+            ) : null}
+            <p className="fine">
+              החלפתם עיר או שעה? יוצרים את הקובץ שוב, ומוחקים מהיומן את ההתראות הקודמות. כדי שיהיה קל למחוק, אפשר להוסיף אותן ליומן נפרד בשם "זמני שבת". הזמנים מחושבים לפי ההגדרות של הדלקת נרות וצאת שבת
+              (כרגע: {settings.candleMins ?? city.candle} דק׳ לפני השקיעה).
+            </p>
+          </>
+        ) : (
+          <>
+            <summary>How does it work on my phone?</summary>
+            {isIOS || !isAndroid ? (
+              <ol>
+                <li>
+                  <b>iPhone:</b> after you tap, a window opens with the list of events. Tap &quot;Add All&quot; and choose a calendar.
+                </li>
+                <li>
+                  The alert shows up at the time you chose. If it doesn&apos;t, check in Settings → Calendar that calendar alerts are on.
+                </li>
+              </ol>
+            ) : null}
+            {isAndroid || !isIOS ? (
+              <ol>
+                <li>
+                  <b>Android:</b> open the downloaded file (shabbat-times.ics) in your calendar app, or share it straight to it. Samsung
+                  Calendar and most calendars import it right away.
+                </li>
+                <li>
+                  In Google Calendar, if the file doesn&apos;t open: calendar.google.com on a computer → Settings → Import. Google adds your
+                  calendar&apos;s usual reminder to the alert.
+                </li>
+              </ol>
+            ) : null}
+            <p className="fine">
+              Changed city or time? Create the file again and delete the old alerts from the calendar. To make deleting easy, add them to
+              a separate calendar called &quot;Shabbat times&quot;. Times follow your candle lighting and end-of-Shabbat settings (now:{' '}
+              {settings.candleMins ?? city.candle} min before sunset).
+            </p>
+          </>
+        )}
       </details>
     </Screen>
   );

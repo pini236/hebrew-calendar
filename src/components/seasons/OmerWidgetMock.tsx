@@ -34,7 +34,7 @@ const PALETTE = {
 const FACE = "WDate, 'Geresh Serif', 'Frank Ruhl Libre', serif";
 
 /** WidgetDraw.date: one line of Frank Ruhl Libre, em tall, the baseline at 0.82 em */
-function Serif({ text, em, color, he, className }: { text: string; em: number; color: string; he: boolean; className?: string }) {
+function Serif({ text, em, color, he, className, baseline }: { text: string; em: number; color: string; he: boolean; className?: string; baseline?: boolean }) {
   const ref = useRef<HTMLCanvasElement>(null);
   useLayoutEffect(() => {
     const cv = ref.current!;
@@ -61,7 +61,8 @@ function Serif({ text, em, color, he, className }: { text: string; em: number; c
       live = false;
     };
   }, [text, em, color, he]);
-  return <canvas ref={ref} className={className} aria-hidden="true" />;
+  // `baseline`: in a row aligned on the baseline, the figure's own baseline (0.82 em) sits on the words' (android:baseline)
+  return <canvas ref={ref} className={className} aria-hidden="true" style={baseline ? { marginBottom: -0.18 * em } : undefined} />;
 }
 
 /** A one-line TextView with autoSizeTextType="uniform" (steps of 1sp, down to `min`), as the layouts set the sefira */
@@ -160,7 +161,7 @@ export function OmerWidgetMock({ m, size = 'm', theme = 'light', ribbon }: { m: 
   const big = (
     <div className="ow-big">
       {m.pre && <span className="ow-big-w">{m.pre}</span>}
-      <Serif text={m.num} em={L.bigEm} color={pal.date} he={m.he} className="ow-big-n" />
+      <Serif text={m.num} em={L.bigEm} color={pal.date} he={m.he} className="ow-big-n" baseline />
       {m.post && <span className="ow-big-w">{m.post}</span>}
     </div>
   );

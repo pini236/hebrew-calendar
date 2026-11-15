@@ -43,7 +43,6 @@ export function drawField(m: OmerWidgetModel, b: number, tab: boolean): HTMLCanv
   const cv = out.map((x) => x.getContext('2d')!);
   const { c, g, o, r } = fieldGeometry(b);
   const hair = c * 0.075;
-  const ring = c * 0.11;
   const before = m.state === 'before';
   const fill = (k: number, a: number, x: number, y: number, rad: number) => {
     cv[k].globalAlpha = a;
@@ -92,14 +91,12 @@ export function drawField(m: OmerWidgetModel, b: number, tab: boolean): HTMLCanv
       case CELL.counted:
         fill(GREEN, 1, x, y, r);
         break;
+      // the day of now is marked by the ribbon alone: its cell is drawn as any other
       case CELL.today:
-        fill(RIBBON, 0.24, x, y, r);
-        stroke(RIBBON, 1, ring, x, y, r - ring / 2);
+        stroke(MUTED, before ? 0.34 : 0.42, hair, x, y, r - hair / 2);
         break;
       case CELL.todayCounted:
         fill(GREEN, 1, x, y, r);
-        // a saffron ring just outside the green, with a hair of paper between
-        stroke(RIBBON, 1, c * 0.09, x, y, r + c * 0.1);
         break;
     }
     // Lag BaOmer, quietly: a small saffron dot in its cell (not under the ribbon)

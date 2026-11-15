@@ -227,17 +227,7 @@ button.om-cell:focus-visible {
   border-radius: 50%;
   background: var(--muted);
 }
-/* the count of now: saffron, under the ribbon */
-.om-cell.c-due {
-  box-shadow: inset 0 0 0 1.5px var(--ribbon);
-}
-.om-cell.c-due .om-fill {
-  background: var(--ribbon-soft);
-}
-.om-cell.here.c-counted,
-.om-cell.here.c-byDay {
-  box-shadow: 0 0 0 2px var(--surface), 0 0 0 3.5px var(--ribbon);
-}
+/* the count of now carries only the ribbon: no ring or tint of its own */
 .silk-omer {
   top: -2px;
   left: calc(50% - var(--silk-half));

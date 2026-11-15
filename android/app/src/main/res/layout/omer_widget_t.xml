@@ -417,8 +417,7 @@
                 android:adjustViewBounds="true"
                 android:baseline="36.1dp"
                 android:importantForAccessibility="no"
-                android:scaleType="fitCenter"
-                android:layout_gravity="bottom" />
+                android:scaleType="fitCenter" />
             <TextView
                 android:id="@+id/w_post"
                 android:layout_width="wrap_content"

@@ -14,8 +14,8 @@ import android.graphics.Shader;
  *   MUTED:  the empty days (a thin ring, dimmer before the season), a day that went by unmarked (a faint
  *           disc), a missed day (a ring and a dot), and the band behind the week of the day shown
  *   GREEN:  the counted days (the diary's green; Shabbat and Yom Tov taken as counted, lighter)
- *   RIBBON: the day of now (a saffron ring, filled softly until it is counted, or a ring round the green),
- *           Lag BaOmer's small dot, and (where no frames play) the ribbon itself, at rest on the day
+ *   RIBBON: Lag BaOmer's small dot, and (where no frames play) the ribbon itself, at rest on the day of now
+ *           (the ribbon is the day's only mark: its cell is drawn as any other)
  * and the sky from dawn to the next count. The large figure and the title are WidgetDraw.date.
  * The HTML twin is src/components/seasons/omerWidgetDraw.ts: the same geometry and alphas, line for line.
  * Geometry: a square of side B, cells of B / 8.82, gaps of 0.26 cell, half a gap round the band.
@@ -84,7 +84,6 @@ final class OmerWidgetDraw {
         float o = g / 2f;
         float r = c / 2f;
         float hair = c * 0.075f;
-        float ring = c * 0.11f;
         boolean before = m.state == OmerWidgetModel.STATE_BEFORE;
 
         Paint fill = new Paint(Paint.ANTI_ALIAS_FLAG);
@@ -122,14 +121,12 @@ final class OmerWidgetDraw {
                 case OmerWidgetModel.COUNTED:
                     disc(cv[GREEN], fill, 1f, x, y, r);
                     break;
+                // the day of now is marked by the ribbon alone: its cell is drawn as any other
                 case OmerWidgetModel.TODAY:
-                    disc(cv[RIBBON], fill, 0.24f, x, y, r);
-                    ring(cv[RIBBON], stroke, 1f, ring, x, y, r - ring / 2f);
+                    ring(cv[MUTED], stroke, before ? 0.34f : 0.42f, hair, x, y, r - hair / 2f);
                     break;
                 case OmerWidgetModel.TODAY_COUNTED:
                     disc(cv[GREEN], fill, 1f, x, y, r);
-                    // a saffron ring just outside the green, with a hair of paper between
-                    ring(cv[RIBBON], stroke, 1f, c * 0.09f, x, y, r + c * 0.1f);
                     break;
                 default:
                     break;

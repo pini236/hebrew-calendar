@@ -16,18 +16,6 @@ interface Props {
   onBackup: () => void;
 }
 
-const repeatWords = (r: MyEvent['repeat']) =>
-  ({
-    none: tr('חד־פעמי', 'One-time'),
-    'heb-yearly': tr('כל שנה, לפי התאריך העברי', 'Every year, by the Hebrew date'),
-    'greg-yearly': tr('כל שנה, לפי התאריך הלועזי', 'Every year, by the Gregorian date'),
-  })[r];
-const remindWords = (r: Exclude<MyEvent['remind'], 'none' | undefined>) =>
-  ({
-    day: tr('תזכורת ביום עצמו', 'Reminder on the day'),
-    eve: tr('תזכורת בערב שלפני', 'Reminder the evening before'),
-    week: tr('תזכורת שבוע לפני', 'Reminder a week before'),
-  })[r];
 
 export function MineTab({ myEvents, today, onAdd, onEdit, onOpenDay, onAlerts, onBackup }: Props) {
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -38,7 +26,6 @@ export function MineTab({ myEvents, today, onAdd, onEdit, onOpenDay, onAlerts, o
     [tr('החודש הקרוב', 'Coming month'), upcoming.filter((u) => u.inDays >= 7 && u.inDays < 31)],
     [tr('בהמשך השנה', 'Later this year'), upcoming.filter((u) => u.inDays >= 31)],
   ];
-  const reminders = myEvents.filter((e) => e.remind && e.remind !== 'none').length;
 
   return (
     <div className="tab mine-tab">
@@ -116,24 +103,14 @@ export function MineTab({ myEvents, today, onAdd, onEdit, onOpenDay, onAlerts, o
               <li>
                 <button className="link-row" onClick={onAlerts}>
                   <Icon name="bell" size={18} />
-                  <span>
-                    {tr('תזכורות והתראות', 'Reminders & alerts')}
-                    <small>
-                      {reminders
-                        ? tr(`תזכורת ל־${reminders} אירועים`, `Reminders for ${reminders} ${plural(reminders, 'event', 'events')}`)
-                        : tr('בוחרים תזכורת בעריכת האירוע', 'Pick a reminder when you edit an event')}
-                    </small>
-                  </span>
+                  <span>{tr('התראות', 'Alerts')}</span>
                   <Icon name="next" size={16} />
                 </button>
               </li>
               <li>
                 <button className="link-row" onClick={onBackup}>
                   <Icon name="download" size={18} />
-                  <span>
-                    {tr('גיבוי והעברה למכשיר אחר', 'Back up or move to another device')}
-                    <small>{tr('האירועים שמורים רק במכשיר הזה', 'Your events are saved only on this device')}</small>
-                  </span>
+                  <span>{tr('גיבוי', 'Backup')}</span>
                   <Icon name="next" size={16} />
                 </button>
               </li>
@@ -173,13 +150,6 @@ function EventRow({ u, onEdit, onOpenDay }: { u: Upcoming; onEdit: (e: MyEvent) 
           {hebDateStr(hd, false)} · {dayName(d)}, {gregDateStr(d, false)}
           {ev.time ? ` · ${ev.time}` : ''}
         </small>
-        {(ev.repeat !== 'none' || (ev.remind && ev.remind !== 'none')) && (
-          <small className="ev-meta">
-            {[ev.repeat !== 'none' ? repeatWords(ev.repeat) : '', ev.remind && ev.remind !== 'none' ? remindWords(ev.remind) : '']
-              .filter(Boolean)
-              .join(' · ')}
-          </small>
-        )}
       </button>
       {ev.remind && ev.remind !== 'none' && (
         <span className="ev-bell" aria-label={tr('יש תזכורת', 'Reminder on')}>

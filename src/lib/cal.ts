@@ -348,20 +348,20 @@ export function zmanim(d: Date, city: City, s: Settings) {
   const sunset = t(c.getSunset());
   const chatzot = t(c.getChatzos()); // astronomical: the sun crosses the meridian
   const list: (Omit<ZmanRow, 'time'> & { time: Date | null })[] = [
-    { id: 'alot', name: tr('עלות השחר', 'Alot HaShachar (dawn)'), hint: tr('16.1° מתחת לאופק', '16.1° below the horizon'), time: t(c.getAlos16Point1Degrees()), round: 'ceil' },
-    { id: 'misheyakir', name: tr('משיכיר — זמן טלית ותפילין', 'Misheyakir (tallit & tefillin)'), hint: '11.5°', time: t(c.getMisheyakir11Point5Degrees()), round: 'ceil' },
-    { id: 'sunrise', name: tr('הנץ החמה', 'Sunrise'), hint: s.useElevation ? tr(`זריחה · לפי גובה ${elev} מ׳`, `at ${elev} m elevation`) : tr('זריחה · גובה פני הים', 'at sea level'), time: sunrise, round: 'round', major: true },
-    { id: 'shmaMGA', name: tr('סוף זמן ק״ש', 'Latest Shema'), hint: tr('מגן אברהם · 72 דק׳', 'Magen Avraham · 72 min'), time: t(c.getSofZmanShmaMGA()), round: 'floor' },
+    { id: 'alot', name: tr('עלות השחר', 'Alot HaShachar (dawn)'), time: t(c.getAlos16Point1Degrees()), round: 'ceil' },
+    { id: 'misheyakir', name: tr('משיכיר', 'Misheyakir'), time: t(c.getMisheyakir11Point5Degrees()), round: 'ceil' },
+    { id: 'sunrise', name: tr('הנץ החמה', 'Sunrise'), time: sunrise, round: 'round', major: true },
+    { id: 'shmaMGA', name: tr('סוף זמן ק״ש', 'Latest Shema'), hint: tr('מגן אברהם', 'Magen Avraham'), time: t(c.getSofZmanShmaMGA()), round: 'floor' },
     { id: 'shma', name: tr('סוף זמן ק״ש', 'Latest Shema'), hint: tr('הגר״א', 'GRA'), time: t(c.getSofZmanShmaGRA()), round: 'floor', major: true },
-    { id: 'tfillaMGA', name: tr('סוף זמן תפילה', 'Latest Shacharit'), hint: tr('מגן אברהם · 72 דק׳', 'Magen Avraham · 72 min'), time: t(c.getSofZmanTfilaMGA()), round: 'floor' },
+    { id: 'tfillaMGA', name: tr('סוף זמן תפילה', 'Latest Shacharit'), hint: tr('מגן אברהם', 'Magen Avraham'), time: t(c.getSofZmanTfilaMGA()), round: 'floor' },
     { id: 'tfilla', name: tr('סוף זמן תפילה', 'Latest Shacharit'), hint: tr('הגר״א', 'GRA'), time: t(c.getSofZmanTfilaGRA()), round: 'floor' },
     { id: 'chatzot', name: tr('חצות היום', 'Chatzot (midday)'), time: chatzot, round: 'round', major: true },
     { id: 'minchaG', name: tr('מנחה גדולה', 'Mincha Gedola'), time: t(gra.getMinchaGedola()), round: 'ceil' },
     { id: 'minchaK', name: tr('מנחה קטנה', 'Mincha Ketana'), time: t(gra.getMinchaKetana()), round: 'ceil' },
     { id: 'plag', name: tr('פלג המנחה', 'Plag HaMincha'), time: t(gra.getPlagHamincha()), round: 'ceil' },
-    { id: 'sunset', name: tr('שקיעה', 'Sunset'), hint: s.useElevation ? tr(`לפי גובה ${elev} מ׳`, `at ${elev} m elevation`) : undefined, time: sunset, round: 'floor', major: true },
-    { id: 'tzeit', name: tr('צאת הכוכבים', 'Nightfall (Tzeit)'), hint: '8.5°', time: t(c.getTzaisGeonim8Point5Degrees()), round: 'ceil', major: true },
-    { id: 'tzeitRT', name: tr('צאת הכוכבים', 'Nightfall (Tzeit)'), hint: tr('רבנו תם · 72 דק׳', 'Rabbeinu Tam · 72 min'), time: t(c.getTzais72()), round: 'ceil' },
+    { id: 'sunset', name: tr('שקיעה', 'Sunset'), time: sunset, round: 'floor', major: true },
+    { id: 'tzeit', name: tr('צאת הכוכבים', 'Nightfall (Tzeit)'), time: t(c.getTzaisGeonim8Point5Degrees()), round: 'ceil', major: true },
+    { id: 'tzeitRT', name: tr('צאת הכוכבים', 'Nightfall (Tzeit)'), hint: tr('רבנו תם', 'Rabbeinu Tam'), time: t(c.getTzais72()), round: 'ceil' },
     { id: 'chatzotNight', name: tr('חצות הלילה', 'Chatzot (midnight)'), time: chatzot ? new Date(chatzot.getTime() + 12 * 3600000) : null, round: 'round' },
   ];
   // Erev Pesach: chametz deadlines

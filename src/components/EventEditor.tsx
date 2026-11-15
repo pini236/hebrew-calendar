@@ -116,12 +116,7 @@ export function EventEditor({ initial, date, onSave, onDelete, onClose }: Props)
         )}
         {dateMode === 'greg' && (
           <label className="toggle" htmlFor="ev-sunset">
-            <span>
-              {tr('אחרי השקיעה', 'After sunset')}
-              <small className="sub">
-                {tr('אירוע שהיה בערב, אחרי השקיעה, חל כבר בתאריך העברי של למחרת', 'An event in the evening, after sunset, falls on the next Hebrew date')}
-              </small>
-            </span>
+            <span>{tr('אחרי השקיעה', 'After sunset')}</span>
             <input id="ev-sunset" type="checkbox" checked={afterSunset} onChange={(e) => setAfterSunset(e.target.checked)} />
             <i aria-hidden="true" />
           </label>
@@ -149,13 +144,6 @@ export function EventEditor({ initial, date, onSave, onDelete, onClose }: Props)
               </button>
             ))}
           </div>
-          {repeat !== 'none' && (
-            <small className="sub">
-              {repeat === 'heb-yearly'
-                ? tr('חוזר כל שנה באותו תאריך עברי, כמו יום הולדת עברי או יארצייט', 'Repeats every year on the same Hebrew date, like a Hebrew birthday or a yahrzeit')
-                : tr('חוזר כל שנה באותו תאריך לועזי', 'Repeats every year on the same Gregorian date')}
-            </small>
-          )}
         </div>
 
         <div className="field col">
@@ -183,14 +171,6 @@ export function EventEditor({ initial, date, onSave, onDelete, onClose }: Props)
               <span>{tr('שעת התזכורת', 'Reminder time')}</span>
               <input id="ev-remind-time" type="time" value={remindTime || REMIND_DEFAULT_TIME[remind]} onChange={(e) => e.target.value && setRemindTime(e.target.value)} />
             </label>
-            <p className="fine">
-              {isNative()
-                ? tr('התזכורת מגיעה כהתראה בטלפון, גם כשהאפליקציה סגורה.', 'The reminder arrives as a notification on your phone, even when the app is closed.')
-                : tr(
-                    'התזכורת נשלחת כהתראה באפליקציה המותקנת לאנדרואיד ולאייפון. באתר היא נשמרת, אבל לא נשלחת.',
-                    'Reminders are sent as notifications by the Android and iPhone apps. On the website they are saved but not sent.',
-                  )}
-            </p>
           </>
         )}
 

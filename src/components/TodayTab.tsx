@@ -102,9 +102,6 @@ export function TodayTab(p: Props) {
         </div>
         <div className="today-side">
           <Notes date={selected} il={city.il} items={items} showLearning={settings.showLearning} />
-          <p className="fine source-line">
-            {city.name} · {tr(`שעה זמנית ${Math.round(z.shaahZmanit)} דק׳`, `Halachic hour ${Math.round(z.shaahZmanit)} min`)}
-          </p>
         </div>
       </div>
     </div>
@@ -374,7 +371,6 @@ function Agenda({ selected, now, items, z, mine, settings, city, fmt, isToday, o
               <i className="tl-dot" aria-hidden="true" />
               <span className="tl-name">
                 {tr(`${pastCount} זמנים שעברו`, `${pastCount} earlier zmanim`)}
-                <small>{rows.slice(0, pastCount).map((r) => r.name.split(' — ')[0]).filter((n, i, a) => a.indexOf(n) === i).join(' · ')}</small>
               </span>
               <Icon name="down" size={16} />
             </button>

@@ -8,7 +8,8 @@ import {
   dateKey,
   daysBetween,
   eventsOn,
-  fromKey,
+  cellLabel,
+  itemTitle,
   gregDateStr,
   hebDateStr,
   rangeItems,
@@ -21,7 +22,7 @@ import { isHe, tr } from '../lib/i18n';
 import type { MyEvent, Settings } from '../lib/store';
 import { Screen } from './Screen';
 import { Icon } from './Icon';
-import { HebDatePicker, hebPartsOf, hebPartsToDate } from './HebDatePicker';
+import { DatePicker, type PickMode } from './DatePicker';
 import { dayName, relWords } from './dayinfo';
 
 interface Props {
@@ -32,8 +33,6 @@ interface Props {
   onGo: (d: Date) => void;
   onClose: () => void;
 }
-
-type Tab = 'soon' | 'heb' | 'greg' | 'rel';
 
 const LIST_KINDS = new Set<Kind>(['yomtov', 'erev', 'fast', 'minor', 'modern', 'roshchodesh']);
 
@@ -51,7 +50,6 @@ function normEn(s: string) {
 }
 
 export function JumpScreen({ selected, city, settings, myEvents, onGo, onClose }: Props) {
-  const [tab, setTab] = useState<Tab>('soon');
   const t0 = today();
 
   /* ----- upcoming ----- */
@@ -95,37 +93,22 @@ export function JumpScreen({ selected, city, settings, myEvents, onGo, onClose }
       ? upcoming.filter((u) => u.title.includes(q.trim()))
       : upcoming.filter((u) => u.title.includes(q.trim()) || (nq !== '' && normEn(u.en).includes(nq)));
 
-  /* ----- hebrew picker ----- */
-  const [heb, setHeb] = useState(() => hebPartsOf(selected));
-  const hebTarget = hebPartsToDate(heb);
+  /* ----- the day picked: chosen in the picker, a shortcut or a search result; "show" opens it ----- */
+  const [pick, setPick] = useState(selected);
+  const [mode, setMode] = useState<PickMode>(settings.monthMode === 'heb' ? 'heb' : 'greg');
+  const choose = (d: Date) => {
+    setPick(d);
+    setQ('');
+  };
+  const pickItems = useMemo(() => rangeItems(pick, pick, city, settings, false).get(dateKey(pick)) ?? [], [pick, city, settings]);
+  const pickLabel = cellLabel(pickItems);
+  const pickMine = eventsOn(myEvents, pick);
 
-  /* ----- gregorian ----- */
-  const [gk, setGk] = useState(dateKey(selected));
-  const gregTarget = /^\d{4}-\d{2}-\d{2}$/.test(gk) ? fromKey(gk) : null;
-
-  /* ----- relative ----- */
-  const [amt, setAmt] = useState(7);
-  const [unit, setUnit] = useState<'d' | 'w' | 'm' | 'y'>('d');
-  const [dirFwd, setDirFwd] = useState(true);
-  const n = (dirFwd ? 1 : -1) * (Number.isFinite(amt) ? amt : 0);
-  const relTarget =
-    unit === 'd'
-      ? addDays(selected, n)
-      : unit === 'w'
-        ? addDays(selected, n * 7)
-        : unit === 'm'
-          ? new Date(selected.getFullYear(), selected.getMonth() + n, selected.getDate(), 12)
-          : new Date(selected.getFullYear() + n, selected.getMonth(), selected.getDate(), 12);
-
-  const target = tab === 'heb' ? hebTarget : tab === 'greg' ? gregTarget : tab === 'rel' ? relTarget : null;
-
-  // quick chips
+  // shortcuts
   const nextSat = addDays(t0, (6 - t0.getDay() + 7) % 7 || 7);
   const th = new HDate(t0);
-  const nextRC = (() => {
-    const last = HDate.daysInMonth(th.getMonth(), th.getFullYear());
-    return addDays(t0, last - th.getDate() + 1);
-  })();
+  const nextRC = addDays(t0, HDate.daysInMonth(th.getMonth(), th.getFullYear()) - th.getDate() + 1);
+  const searching = q.trim().length > 0;
 
   return (
     <Screen title={tr('מעבר לתאריך', 'Go to date')} onClose={onClose}>
@@ -135,117 +118,75 @@ export function JumpScreen({ selected, city, settings, myEvents, onGo, onClose }
           id="jump-search"
           type="search"
           autoComplete="off"
-          placeholder={tr('חג, מועד או אירוע שלי', 'A holiday or one of my events')}
+          placeholder={tr('חיפוש חג או אירוע', 'Search a holiday or event')}
           aria-label={tr('חיפוש חג, מועד או אירוע', 'Search holidays and events')}
           value={q}
-          onChange={(e) => {
-            setQ(e.target.value);
-            setTab('soon');
-          }}
+          onChange={(e) => setQ(e.target.value)}
         />
       </label>
-      <div className="quick">
-        <button onClick={() => onGo(t0)}>{tr('היום', 'Today')}</button>
-        <button onClick={() => onGo(addDays(t0, 1))}>{tr('מחר', 'Tomorrow')}</button>
-        <button onClick={() => onGo(nextSat)}>{tr('שבת הבאה', 'Next Shabbat')}</button>
-        <button onClick={() => onGo(nextRC)}>{tr('ראש חודש הבא', 'Next Rosh Chodesh')}</button>
-        <button onClick={() => onGo(addDays(selected, 7))}>{tr('שבוע קדימה', 'A week ahead')}</button>
-        <button onClick={() => onGo(new Date(selected.getFullYear() + 1, selected.getMonth(), selected.getDate(), 12))}>{tr('שנה קדימה', 'A year ahead')}</button>
-      </div>
 
-      <div className="seg tabs" role="tablist">
-        {(
-          [
-            ['soon', tr('מועדים', 'Holidays')],
-            ['heb', tr('עברי', 'Hebrew')],
-            ['greg', tr('לועזי', 'Gregorian')],
-            ['rel', tr('בעוד / לפני', 'Relative')],
-          ] as [Tab, string][]
-        ).map(([k, l]) => (
-          <button key={k} role="tab" aria-selected={tab === k} className={tab === k ? 'on' : ''} onClick={() => setTab(k)}>
-            {l}
-          </button>
-        ))}
-      </div>
-
-      {tab === 'soon' && (
-        <div className="soon">
-          <ul className="soon-list">
-            {filtered.slice(0, 120).map((u, i) => {
-              const hd = new HDate(u.d);
-              const dd = daysBetween(t0, u.d);
-              return (
-                <li key={i}>
-                  <button onClick={() => onGo(u.d)}>
-                    <span className="s-date">
-                      <b>{hebDateStr(hd, false)}</b>
-                      <small>
-                        {isHe()
-                          ? `${WEEKDAYS[u.d.getDay()]}, ${gregDateStr(u.d, u.d.getFullYear() !== t0.getFullYear())}`
-                          : `${WEEKDAYS_SHORT[u.d.getDay()]}, ${GREG_MONTHS_SHORT[u.d.getMonth()]} ${u.d.getDate()}${u.d.getFullYear() !== t0.getFullYear() ? ', ' + u.d.getFullYear() : ''}`}
-                      </small>
-                    </span>
-                    <span className={`s-title k-${u.kind}`}>
-                      {u.color && <i style={{ background: u.color }} />}
-                      {shortItem(u)}
-                    </span>
-                    <span className="s-in">{relWords(dd)}</span>
-                  </button>
-                </li>
-              );
-            })}
-            {filtered.length === 0 && <li className="empty">{tr('לא נמצא מועד בשם הזה בשנה הקרובה.', 'Nothing by that name in the coming year.')}</li>}
-          </ul>
-        </div>
-      )}
-
-      {tab === 'heb' && <HebDatePicker idPrefix="jump" value={heb} onChange={setHeb} />}
-
-      {tab === 'greg' && (
-        <div className="picker one">
-          <label>
-            <span>{tr('בחרו תאריך לועזי', 'Pick a Gregorian date')}</span>
-            <input id="jump-greg" type="date" value={gk} onChange={(e) => setGk(e.target.value)} />
-          </label>
-        </div>
-      )}
-
-      {tab === 'rel' && (
-        <div className="picker rel">
-          <div className="seg small">
-            <button className={!dirFwd ? 'on' : ''} onClick={() => setDirFwd(false)}>
-              {tr('אחורה', 'Back')}
-            </button>
-            <button className={dirFwd ? 'on' : ''} onClick={() => setDirFwd(true)}>
-              {tr('קדימה', 'Forward')}
-            </button>
+      {searching ? (
+        <SoonList list={filtered} t0={t0} onPick={choose} />
+      ) : (
+        <>
+          <div className="quick">
+            <button onClick={() => choose(t0)}>{tr('היום', 'Today')}</button>
+            <button onClick={() => choose(addDays(t0, 1))}>{tr('מחר', 'Tomorrow')}</button>
+            <button onClick={() => choose(nextSat)}>{tr('שבת הבאה', 'Next Shabbat')}</button>
+            <button onClick={() => choose(nextRC)}>{tr('ראש חודש', 'Rosh Chodesh')}</button>
           </div>
-          <input id="jump-amt" type="number" min={0} inputMode="numeric" value={amt} onChange={(e) => setAmt(Math.max(0, Math.min(100000, +e.target.value)))} />
-          <select id="jump-unit" value={unit} onChange={(e) => setUnit(e.target.value as typeof unit)}>
-            <option value="d">{tr('ימים', 'days')}</option>
-            <option value="w">{tr('שבועות', 'weeks')}</option>
-            <option value="m">{tr('חודשים', 'months')}</option>
-            <option value="y">{tr('שנים', 'years')}</option>
-          </select>
-          <p className="fine">
-            {tr('מהתאריך הנבחר:', 'From the selected date:')} {gregDateStr(selected)}
-          </p>
-        </div>
+          <DatePicker value={pick} mode={mode} onMode={setMode} onPick={setPick} />
+          <h3 className="jump-h">{tr('מועדים קרובים', 'Coming up')}</h3>
+          <SoonList list={upcoming.slice(0, 8)} t0={t0} onPick={choose} />
+        </>
       )}
 
-      {target && (
-        <div className="preview">
-          <div>
-            <div className="p-heb">{hebDateStr(new HDate(target))}</div>
-            <div className="p-greg">
-              {dayName(target)} · {gregDateStr(target)} · {relWords(daysBetween(t0, target))}
-            </div>
+      <div className="preview">
+        <div className="p-text">
+          <div className="p-heb">{hebDateStr(new HDate(pick))}</div>
+          <div className="p-greg">
+            {dayName(pick)} · {gregDateStr(pick)}
           </div>
-          <button className="primary" onClick={() => onGo(target)}>
-            {tr('מעבר לתאריך', 'Go to date')}
-          </button>
+          {(pickLabel || pickMine.length > 0) && (
+            <div className="p-what">{[pickLabel ? itemTitle(pickLabel) : '', ...pickMine.map((m) => m.ev.title)].filter(Boolean).join(' · ')}</div>
+          )}
         </div>
-      )}
+        <button className="primary" onClick={() => onGo(pick)}>
+          {daysBetween(t0, pick) === 0 ? tr('להיום', 'Today') : tr('הצגה', 'Show')}
+        </button>
+      </div>
     </Screen>
+  );
+}
+
+type Soon = { d: Date; title: string; en: string; kind: Kind | 'mine'; color?: string };
+
+function SoonList({ list, t0, onPick }: { list: Soon[]; t0: Date; onPick: (d: Date) => void }) {
+  return (
+    <ul className="soon-list">
+      {list.slice(0, 120).map((u, i) => {
+        const hd = new HDate(u.d);
+        return (
+          <li key={i}>
+            <button onClick={() => onPick(u.d)}>
+              <span className="s-date">
+                <b>{hebDateStr(hd, false)}</b>
+                <small>
+                  {isHe()
+                    ? `${WEEKDAYS[u.d.getDay()]}, ${gregDateStr(u.d, u.d.getFullYear() !== t0.getFullYear())}`
+                    : `${WEEKDAYS_SHORT[u.d.getDay()]}, ${GREG_MONTHS_SHORT[u.d.getMonth()]} ${u.d.getDate()}${u.d.getFullYear() !== t0.getFullYear() ? ', ' + u.d.getFullYear() : ''}`}
+                </small>
+              </span>
+              <span className={`s-title k-${u.kind}`}>
+                {u.color && <i style={{ background: u.color }} />}
+                {shortItem(u)}
+              </span>
+              <span className="s-in">{relWords(daysBetween(t0, u.d))}</span>
+            </button>
+          </li>
+        );
+      })}
+      {list.length === 0 && <li className="empty">{tr('לא נמצא', 'Nothing found')}</li>}
+    </ul>
   );
 }

@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { HDate } from '@hebcal/core';
 import { GREG_MONTHS, WEEKDAYS_SHORT, hebMonthName, hebMonthsOfYear, hebNum, hebYear, sameDay, today } from '../lib/cal';
 import { isHe, tr } from '../lib/i18n';
@@ -58,6 +58,14 @@ export function DatePicker({ value, mode, onMode, onPick }: Props) {
   const [view, setView] = useState<View>('days');
   const [yearsFrom, setYearsFrom] = useState(() => page.y - (page.y % 12));
   const t0 = today();
+
+  // a day picked from outside (a shortcut, a search result) brings its month into view
+  useEffect(() => {
+    const p = pageOf(value, mode);
+    setPage((cur) => (cur.y === p.y && cur.m === p.m ? cur : p));
+    setView('days');
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [value.getTime()]);
 
   const switchMode = (m: PickMode) => {
     if (m === mode) return;

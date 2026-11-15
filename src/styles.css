@@ -2775,3 +2775,73 @@ button.pair-cell + button.pair-cell {
   overflow-wrap: normal;
   hyphens: auto;
 }
+.jump-h {
+  margin: 24px 4px 8px;
+  color: var(--muted);
+  font-size: 0.8125rem;
+  font-weight: 500;
+}
+.preview .p-text {
+  min-width: 0;
+}
+.preview .p-what {
+  margin-top: 2px;
+  color: var(--ink-2);
+  font-size: 0.875rem;
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.preview .primary {
+  flex: none;
+  min-width: 96px;
+}
+/* the way to another date: a visible chip on Today and on the month */
+.head-chips {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 6px;
+  flex: none;
+  max-width: 46%;
+}
+.head-chips .place-chip {
+  max-width: 100%;
+}
+.jump-chip {
+  color: var(--accent-text);
+  border-color: color-mix(in srgb, var(--accent) 40%, var(--line-strong));
+}
+.tools-end {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.tools-end .jump-chip {
+  max-width: none;
+  flex: none;
+}
+.month-tools .seg button {
+  padding: 0 12px;
+}
+/* the picked-day card stays at the bottom of the screen; the list can scroll out from under it */
+.screen-body:has(> .preview) {
+  padding-bottom: calc(120px + env(safe-area-inset-bottom));
+}
+.month-tools .seg button {
+  padding: 0 10px;
+}
+.tools-end {
+  gap: 4px;
+}
+.tools-end .text-btn {
+  padding: 0 6px;
+}
+.tools-end .jump-chip {
+  padding: 0 10px;
+}
+.field.stack .seg button {
+  white-space: normal;
+  line-height: 1.2;
+}

@@ -73,10 +73,16 @@ export function TodayTab(p: Props) {
             <Icon name="down" size={18} />
           </span>
         </button>
-        <button className="place-chip" onClick={p.onLocation} aria-label={tr(`מיקום${city.id === 'gps' ? ' לפי GPS' : ''}: ${city.name}. שינוי מיקום`, `Location${city.id === 'gps' ? ' (GPS)' : ''}: ${city.name}. Change location`)}>
-          <Icon name={city.id === 'gps' ? 'locate' : 'pin'} size={16} />
-          <span>{city.name}</span>
-        </button>
+        <div className="head-chips">
+          <button className="place-chip" onClick={p.onLocation} aria-label={tr(`מיקום${city.id === 'gps' ? ' לפי GPS' : ''}: ${city.name}. שינוי מיקום`, `Location${city.id === 'gps' ? ' (GPS)' : ''}: ${city.name}. Change location`)}>
+            <Icon name={city.id === 'gps' ? 'locate' : 'pin'} size={16} />
+            <span>{city.name}</span>
+          </button>
+          <button className="place-chip jump-chip" onClick={p.onJump}>
+            <Icon name="today" size={16} />
+            <span>{tr('תאריך אחר', 'Other date')}</span>
+          </button>
+        </div>
       </header>
       {afterSunset && (
         <p className="tonight">

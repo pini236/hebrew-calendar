@@ -137,11 +137,17 @@ export function MonthTab({ anchor, selected, now, mode, city, settings, myEvents
             {tr('עברי', 'Hebrew')}
           </button>
         </div>
-        {!nowInMonth && (
-          <button className="text-btn" onClick={onToday}>
-            {tr('חזרה להיום', 'Back to today')}
+        <div className="tools-end">
+          {!nowInMonth && (
+            <button className="text-btn" onClick={onToday}>
+              {tr('להיום', 'Today')}
+            </button>
+          )}
+          <button className="place-chip jump-chip" onClick={onJump}>
+            <Icon name="today" size={16} />
+            <span>{tr('תאריך אחר', 'Other date')}</span>
           </button>
-        )}
+        </div>
       </div>
 
       <div className="month-body">

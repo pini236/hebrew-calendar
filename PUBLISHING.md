@@ -41,7 +41,7 @@ Google Play מקבל רק קובץ ‎.aab חתום. קיבלת ממני קוב�
    - Data safety: לא נאסף ולא משותף מידע.
    - Content rating: לענות על השאלון, והתוצאה תהיה "לכל הגילים".
    - Target audience: ‎13+‎.
-3. **Store listing**: הטקסטים נמצאים ב־`store/listing.md`, צילומי המסך ב־`store/screenshots/android-*.png`, תמונת הנושא ב־`store/screenshots/play-feature-graphic.png`, והאייקון ב־`assets/icon-only.png`. את האייקון צריך להקטין ל־512×512.
+3. **Store listing**: הטקסטים נמצאים ב־`store/listing.md`, צילומי המסך ב־`store/screenshots/android-*.png`, תמונת הנושא ב־`store/screenshots/play-feature-graphic.png`, והאייקון בגודל 512×512 ב־`store/play-icon-512.png`.
 4. **Testing ← Internal testing ← Create release**: מעלים את `app-release.aab`, מוסיפים את עצמך כבודק, ומתקינים מהקישור שמתקבל.
 
 > **חשוב:** חשבון מפתח פרטי שנפתח אחרי נובמבר 2023 חייב להריץ קודם **Closed testing** עם לפחות 12 בודקים במשך 14 יום, ורק אחר כך מקבל גישה ל־Production. חשבון של ארגון פטור מזה.

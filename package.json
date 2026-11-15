@@ -12,6 +12,7 @@
     "verify": "tsx scripts/verify-zmanim.ts",
     "test": "TZ=Asia/Jerusalem tsx scripts/test-alerts.ts && tsx scripts/test-places.ts && TZ=Asia/Jerusalem tsx scripts/test-widget.ts",
     "places": "node scripts/build-places.mjs",
+    "screenshots": "node scripts/store-screenshots.mjs",
     "build:native": "tsc -b && vite build --mode native",
     "cap:sync": "npm run build:native && cap sync",
     "astryx": "node node_modules/@astryxdesign/cli/clients/cli/bin/astryx.mjs"

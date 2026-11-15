@@ -3,7 +3,7 @@ import { HDate } from '@hebcal/core';
 import { dateKey, eventHebDate, fromKey, gregDateStr, hebDateStr } from '../lib/cal';
 import { EVENT_COLORS, REMIND_DEFAULT_TIME, newId, type MyEvent, type Remind, type Repeat } from '../lib/store';
 import { isNative, notificationPermission } from '../lib/native';
-import { Sheet } from './Sheet';
+import { Screen } from './Screen';
 import { HebDatePicker, hebPartsOf, hebPartsToDate, type HebParts } from './HebDatePicker';
 
 interface Props {
@@ -74,7 +74,7 @@ export function EventEditor({ initial, date, onSave, onDelete, onClose }: Props)
   };
 
   return (
-    <Sheet title={initial ? 'עריכת אירוע' : 'אירוע חדש'} onClose={onClose}>
+    <Screen title={initial ? 'עריכת אירוע' : 'אירוע חדש'} onClose={onClose}>
       <form className="editor" onSubmit={save}>
         <label className="field col">
           <span>כותרת</span>
@@ -214,6 +214,6 @@ export function EventEditor({ initial, date, onSave, onDelete, onClose }: Props)
             ))}
         </div>
       </form>
-    </Sheet>
+    </Screen>
   );
 }

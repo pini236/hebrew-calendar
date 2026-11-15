@@ -1,11 +1,11 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { APP_NAME } from '../lib/brand';
 import { CANDLE_OFFSETS, IOS_LIMIT, ZMAN_ALERTS, ZMAN_OFFSETS, planNotifications, type PlannedNotification } from '../lib/alerts';
 import { WEEKDAYS_SHORT, roundTo, timeFmt, today, zmanim } from '../lib/cal';
 import type { City } from '../lib/cities';
 import type { MyEvent, Settings } from '../lib/store';
 import { isNative, notificationPermission } from '../lib/native';
-import { Sheet } from './Sheet';
+import { Screen } from './Screen';
 import { Icon } from './Icon';
 
 interface Props {
@@ -20,7 +20,15 @@ interface Props {
 
 const offsetLabel = (m: number) => (m === 0 ? 'בזמן' : `${m} דק׳ לפני`);
 
-export function AlertsSheet({ city, settings, myEvents, onChange, onFriday, onClose }: Props) {
+export function AlertsScreen({ city, settings, myEvents, onChange, onFriday, onClose, focus }: Props & { focus?: string }) {
+  // opened from a zman's bell: bring that zman's row into view
+  useEffect(() => {
+    if (!focus) return;
+    const el = document.getElementById(`al-z-${focus}`)?.closest('.za-row');
+    if (!el) return;
+    el.scrollIntoView({ block: 'center' });
+    el.classList.add('focus');
+  }, [focus]);
   const native = isNative();
   const [msg, setMsg] = useState('');
   const set = (p: Partial<Settings>) => onChange({ ...settings, ...p });
@@ -68,7 +76,7 @@ export function AlertsSheet({ city, settings, myEvents, onChange, onFriday, onCl
   };
 
   return (
-    <Sheet title="התראות" onClose={onClose} wide>
+    <Screen title="התראות" onClose={onClose}>
       {native ? (
         <p className="lead">
           ההתראות מגיעות גם כשהאפליקציה סגורה. הן מחושבות לפי <b>{city.name}</b>, ומתעדכנות בכל פתיחה של האפליקציה ובכל החלפת מיקום.
@@ -195,7 +203,7 @@ export function AlertsSheet({ city, settings, myEvents, onChange, onFriday, onCl
           </p>
         )}
       </section>
-    </Sheet>
+    </Screen>
   );
 }
 

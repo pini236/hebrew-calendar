@@ -10,7 +10,7 @@ export async function initNative() {
     const { StatusBar, Style } = await import('@capacitor/status-bar');
     const dark = window.matchMedia?.('(prefers-color-scheme: dark)').matches;
     await StatusBar.setStyle({ style: dark ? Style.Dark : Style.Light });
-    if (Capacitor.getPlatform() === 'android') await StatusBar.setBackgroundColor({ color: dark ? '#0a0e20' : '#eef0f6' });
+    if (Capacitor.getPlatform() === 'android') await StatusBar.setBackgroundColor({ color: dark ? '#131311' : '#f5f4f0' });
   } catch {
     /* status bar plugin unavailable */
   }

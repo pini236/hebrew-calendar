@@ -3,7 +3,7 @@ import { CITIES, nearestCity, type City } from '../lib/cities';
 import { loadPlaces, nearestPlace, placeSub, placeToCity, searchPlaces, type PlaceDB } from '../lib/places';
 import type { Settings } from '../lib/store';
 import { isNative, nativePosition } from '../lib/native';
-import { Sheet } from './Sheet';
+import { Screen } from './Screen';
 import { Icon } from './Icon';
 
 interface Props {
@@ -20,7 +20,7 @@ export function choosePlace(settings: Settings, c: City): Settings {
   return builtIn ? { ...settings, cityId: c.id, gps: null, place: null, recentPlaces } : { ...settings, place: c, gps: null, recentPlaces };
 }
 
-export function LocationSheet({ settings, city, onChange, onClose }: Props) {
+export function LocationScreen({ settings, city, onChange, onClose }: Props) {
   const [q, setQ] = useState('');
   const [db, setDb] = useState<PlaceDB | null>(null);
   const [loadErr, setLoadErr] = useState(false);
@@ -92,7 +92,7 @@ export function LocationSheet({ settings, city, onChange, onClose }: Props) {
   const searching = q.trim().length > 0;
 
   return (
-    <Sheet title="מיקום" onClose={onClose} wide>
+    <Screen title="מיקום" onClose={onClose}>
       <p className="fine loc-now">
         כרגע: <b>{city.name}</b> · <bdi dir="ltr">{city.lat.toFixed(3)}, {city.lon.toFixed(3)}</bdi> · {city.il ? 'ארץ ישראל' : 'חו״ל'} · {city.tz}
         {city.elev ? ` · גובה ${city.elev} מ׳` : ''}
@@ -182,6 +182,6 @@ export function LocationSheet({ settings, city, onChange, onClose }: Props) {
           </p>
         </>
       )}
-    </Sheet>
+    </Screen>
   );
 }

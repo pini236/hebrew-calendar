@@ -16,7 +16,7 @@ import {
 } from '../lib/cal';
 import type { City } from '../lib/cities';
 import type { MyEvent, Settings } from '../lib/store';
-import { Sheet } from './Sheet';
+import { Screen } from './Screen';
 import { Icon } from './Icon';
 import { HebDatePicker, hebPartsOf, hebPartsToDate } from './HebDatePicker';
 
@@ -41,7 +41,7 @@ function relWords(n: number) {
   return n > 0 ? `בעוד ${n.toLocaleString('he-IL')} ימים` : `לפני ${(-n).toLocaleString('he-IL')} ימים`;
 }
 
-export function JumpSheet({ selected, city, settings, myEvents, onGo, onClose }: Props) {
+export function JumpScreen({ selected, city, settings, myEvents, onGo, onClose }: Props) {
   const [tab, setTab] = useState<Tab>('soon');
   const t0 = today();
 
@@ -106,7 +106,22 @@ export function JumpSheet({ selected, city, settings, myEvents, onGo, onClose }:
   })();
 
   return (
-    <Sheet title="קפיצה בזמן" onClose={onClose} wide>
+    <Screen title="מעבר לתאריך" onClose={onClose}>
+      <label className="search big">
+        <Icon name="search" size={20} />
+        <input
+          id="jump-search"
+          type="search"
+          autoComplete="off"
+          placeholder="חג, מועד או אירוע שלי"
+          aria-label="חיפוש חג, מועד או אירוע"
+          value={q}
+          onChange={(e) => {
+            setQ(e.target.value);
+            setTab('soon');
+          }}
+        />
+      </label>
       <div className="quick">
         <button onClick={() => onGo(t0)}>היום</button>
         <button onClick={() => onGo(addDays(t0, 1))}>מחר</button>
@@ -119,10 +134,10 @@ export function JumpSheet({ selected, city, settings, myEvents, onGo, onClose }:
       <div className="seg tabs" role="tablist">
         {(
           [
-            ['soon', 'חגים ומועדים'],
-            ['heb', 'תאריך עברי'],
-            ['greg', 'תאריך לועזי'],
-            ['rel', 'קדימה / אחורה'],
+            ['soon', 'מועדים'],
+            ['heb', 'עברי'],
+            ['greg', 'לועזי'],
+            ['rel', 'בעוד / לפני'],
           ] as [Tab, string][]
         ).map(([k, l]) => (
           <button key={k} role="tab" aria-selected={tab === k} className={tab === k ? 'on' : ''} onClick={() => setTab(k)}>
@@ -133,10 +148,6 @@ export function JumpSheet({ selected, city, settings, myEvents, onGo, onClose }:
 
       {tab === 'soon' && (
         <div className="soon">
-          <label className="search">
-            <Icon name="search" size={18} />
-            <input id="jump-search" type="search" placeholder="חיפוש: פסח, חנוכה, יום הולדת…" value={q} onChange={(e) => setQ(e.target.value)} />
-          </label>
           <ul className="soon-list">
             {filtered.slice(0, 120).map((u, i) => {
               const hd = new HDate(u.d);
@@ -209,6 +220,6 @@ export function JumpSheet({ selected, city, settings, myEvents, onGo, onClose }:
           </button>
         </div>
       )}
-    </Sheet>
+    </Screen>
   );
 }

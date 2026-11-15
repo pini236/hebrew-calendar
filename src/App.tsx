@@ -1,31 +1,45 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { Suspense, lazy, useCallback, useEffect, useMemo, useState } from 'react';
 import { DEFAULT_CITY, findCity } from './lib/cities';
-import { addDays, dateKey, dayItems, eventsOn, sameDay, timeFmt, today, zmanim } from './lib/cal';
+import { addDays, dateKey, dayItems, eventsOn, timeFmt, today, zmanim } from './lib/cal';
 import { DEFAULT_SETTINGS, EVENTS_KEY, SETTINGS_KEY, mergeSettings, usePersistent, type MyEvent, type Settings } from './lib/store';
-import { DayHero } from './components/DayHero';
-import { MonthView, shiftMonth } from './components/MonthView';
-import { LearningCard, MyEventsCard, PrayerCard, ShabbatCard, ZmanimCard } from './components/DayDetails';
-import { JumpSheet } from './components/JumpSheet';
-import { SettingsSheet } from './components/SettingsSheet';
-import { EventEditor } from './components/EventEditor';
-import { NotifySheet } from './components/NotifySheet';
+import { TodayTab } from './components/TodayTab';
+import { MonthTab, shiftMonth } from './components/MonthTab';
+import { ZmanimTab } from './components/ZmanimTab';
+import { MineTab } from './components/MineTab';
+import { SettingsTab } from './components/SettingsTab';
+// pushed screens load on first use, so the first paint only carries the tabs
+const JumpScreen = lazy(() => import('./components/JumpScreen').then((m) => ({ default: m.JumpScreen })));
+const EventEditor = lazy(() => import('./components/EventEditor').then((m) => ({ default: m.EventEditor })));
+const NotifyScreen = lazy(() => import('./components/NotifyScreen').then((m) => ({ default: m.NotifyScreen })));
+const AlertsScreen = lazy(() => import('./components/AlertsScreen').then((m) => ({ default: m.AlertsScreen })));
+const LocationScreen = lazy(() => import('./components/LocationScreen').then((m) => ({ default: m.LocationScreen })));
 import { BrandMark, Icon } from './components/Icon';
-import { AlertsSheet } from './components/AlertsSheet';
-import { LocationSheet } from './components/LocationSheet';
 import { isNative, pushWidget, syncNotifications } from './lib/native';
 import { buildWidgetData } from './lib/widget';
 import { APP_NAME } from './lib/brand';
 import { planNotifications } from './lib/alerts';
 
-type SheetName = null | 'jump' | 'settings' | 'event' | 'notify' | 'alerts' | 'location';
+/** The five destinations, in thumb order (right to left) */
+type Tab = 'today' | 'month' | 'zmanim' | 'mine' | 'settings';
+const TABS: { id: Tab; label: string; icon: string }[] = [
+  { id: 'today', label: 'היום', icon: 'tabToday' },
+  { id: 'month', label: 'לוח', icon: 'tabMonth' },
+  { id: 'zmanim', label: 'זמנים', icon: 'tabZmanim' },
+  { id: 'mine', label: 'שלי', icon: 'tabMine' },
+  { id: 'settings', label: 'הגדרות', icon: 'tabSettings' },
+];
+
+/** Screens pushed over the tabs */
+type ScreenState = null | { name: 'jump' } | { name: 'event' } | { name: 'notify' } | { name: 'alerts'; focus?: string } | { name: 'location' };
 
 export default function App() {
   const [settings, setSettings] = usePersistent<Settings>(SETTINGS_KEY, DEFAULT_SETTINGS, mergeSettings);
   const [myEvents, setMyEvents] = usePersistent<MyEvent[]>(EVENTS_KEY, []);
+  const [tab, setTab] = useState<Tab>('today');
   const [selected, setSelected] = useState(today);
   const [anchor, setAnchor] = useState(today);
   const [now, setNow] = useState(() => new Date());
-  const [sheet, setSheet] = useState<SheetName>(null);
+  const [screen, setScreen] = useState<ScreenState>(null);
   const [editing, setEditing] = useState<MyEvent | null>(null);
 
   // live clock
@@ -93,182 +107,252 @@ export default function App() {
       window.removeEventListener('luachi:resume', run);
     };
   }, [city, settings.candleMins, settings.havdalah, settings.useElevation, settings.showModern]); // eslint-disable-line react-hooks/exhaustive-deps
+
   const fmt = useMemo(() => timeFmt(city.tz), [city.tz]);
   const selKey = dateKey(selected);
   const items = useMemo(() => dayItems(selected, city, settings), [selKey, city, settings]); // eslint-disable-line react-hooks/exhaustive-deps
   const z = useMemo(() => zmanim(selected, city, settings), [selKey, city, settings.useElevation]); // eslint-disable-line react-hooks/exhaustive-deps
   const mine = useMemo(() => eventsOn(myEvents, selected), [myEvents, selKey]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const go = useCallback((d: Date) => {
+  /* ----- pushed screens: one history entry, so the phone's back gesture closes them ----- */
+  const openScreen = useCallback((s: Exclude<ScreenState, null>) => {
+    setScreen((cur) => {
+      if (!cur) {
+        try {
+          history.pushState({ luachScreen: true }, '');
+        } catch {
+          /* sandboxed preview */
+        }
+      }
+      return s;
+    });
+  }, []);
+  const closeScreen = useCallback(() => {
+    if (history.state?.luachScreen) history.back();
+    else {
+      setScreen(null);
+      setEditing(null);
+    }
+  }, []);
+  useEffect(() => {
+    const onPop = () => {
+      setScreen(null);
+      setEditing(null);
+    };
+    window.addEventListener('popstate', onPop);
+    return () => window.removeEventListener('popstate', onPop);
+  }, []);
+
+  const showTab = useCallback((t: Tab) => {
+    setTab(t);
+    window.scrollTo({ top: 0 });
+  }, []);
+
+  /** go to a date: from the month and zmanim tabs stay there, from anywhere else open that day's agenda */
+  const go = useCallback(
+    (d: Date) => {
+      setSelected(d);
+      setAnchor(d);
+      setTab((t) => (t === 'month' || t === 'zmanim' ? t : 'today'));
+      closeScreen();
+    },
+    [closeScreen],
+  );
+  const openDay = useCallback(
+    (d: Date) => {
+      setSelected(d);
+      setAnchor(d);
+      showTab('today');
+    },
+    [showTab],
+  );
+  const select = useCallback((d: Date) => {
     setSelected(d);
     setAnchor(d);
-    setSheet(null);
   }, []);
-  const moveDay = useCallback((n: number) => go(addDays(selected, n)), [go, selected]);
+  const toToday = useCallback(() => select(today()), [select]);
+  const moveDay = useCallback((n: number) => select(addDays(selected, n)), [select, selected]);
 
-  // keyboard: ← next day (RTL), → previous day, PageUp/PageDown months, t = today, g = jump
+  const addEvent = useCallback(() => {
+    setEditing(null);
+    openScreen({ name: 'event' });
+  }, [openScreen]);
+  const editEvent = useCallback(
+    (e: MyEvent) => {
+      setEditing(e);
+      openScreen({ name: 'event' });
+    },
+    [openScreen],
+  );
+
+  // keyboard: ← next day (RTL), → previous day, PageUp/PageDown months, t = today, g = go to date, 1–5 tabs
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      if (sheet) return;
+      if (screen || e.ctrlKey || e.metaKey || e.altKey) return;
       const tag = (e.target as HTMLElement)?.tagName;
       if (tag === 'INPUT' || tag === 'SELECT' || tag === 'TEXTAREA') return;
       if (e.key === 'ArrowLeft') moveDay(1);
       else if (e.key === 'ArrowRight') moveDay(-1);
-      else if (e.key === 'ArrowDown') moveDay(7);
-      else if (e.key === 'ArrowUp') moveDay(-7);
-      else if (e.key === 'PageDown') setAnchor((a) => shiftMonth(a, 1, settings.monthMode));
+      else if (e.key === 'ArrowDown' && tab !== 'settings') {
+        e.preventDefault();
+        moveDay(7);
+      } else if (e.key === 'ArrowUp' && tab !== 'settings') {
+        e.preventDefault();
+        moveDay(-7);
+      } else if (e.key === 'PageDown') setAnchor((a) => shiftMonth(a, 1, settings.monthMode));
       else if (e.key === 'PageUp') setAnchor((a) => shiftMonth(a, -1, settings.monthMode));
-      else if (e.key === 't' || e.key === 'א') go(today());
+      else if (e.key === 't' || e.key === 'א') toToday();
       else if (e.key === 'g' || e.key === 'ע' || e.key === '/') {
         e.preventDefault();
-        setSheet('jump');
-      } else return;
+        openScreen({ name: 'jump' });
+      } else if (/^[1-5]$/.test(e.key)) showTab(TABS[+e.key - 1].id);
+      else return;
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [sheet, moveDay, go, settings.monthMode]);
+  }, [screen, tab, moveDay, toToday, openScreen, showTab, settings.monthMode]);
 
-  const closeSheet = useCallback(() => {
-    setSheet(null);
-    setEditing(null);
-  }, []);
-
-  const isToday = sameDay(selected, now);
-  const zChatzot = z.rows.find((r) => r.id === 'chatzot')?.time ?? z.sunrise;
+  const jump = () => openScreen({ name: 'jump' });
+  const location = () => openScreen({ name: 'location' });
 
   return (
-    <div className="app">
-      <header className="topbar">
-        <div className="brand">
-          <BrandMark />
-          <span className="brand-name">{APP_NAME}</span>
+    <div className={`app tab-${tab} ${screen ? 'has-screen' : ''}`}>
+      <nav className="tabbar" aria-label="ניווט ראשי">
+        <div className="rail-brand">
+          <BrandMark size={32} />
+          <span>{APP_NAME}</span>
         </div>
-        <div className="top-actions">
-          <button className="chip-btn" onClick={() => setSheet('location')} aria-label={`מיקום: ${city.name}. שינוי מיקום`}>
-            <Icon name="pin" size={16} />
-            <span className="city-name">{city.name}</span>
+        {TABS.map((t) => (
+          <button key={t.id} className={`tabbtn ${tab === t.id ? 'on' : ''}`} aria-current={tab === t.id ? 'page' : undefined} onClick={() => showTab(t.id)}>
+            <Icon name={t.icon} size={24} />
+            <span>{t.label}</span>
           </button>
-          {!isToday && (
-            <button className="chip-btn accent" onClick={() => go(today())}>
-              <Icon name="today" size={16} /> היום
-            </button>
-          )}
-          <button className="icon-btn" onClick={() => setSheet('jump')} aria-label="קפיצה בזמן">
-            <Icon name="jump" />
-          </button>
-          <button className="icon-btn" onClick={() => setSheet('settings')} aria-label="הגדרות">
-            <Icon name="settings" />
-          </button>
-        </div>
-      </header>
+        ))}
+      </nav>
 
-      <main className="layout">
-        <div className="col col-day">
-          <div className="o-hero">
-            <DayHero
-              date={selected}
-              now={now}
-              items={items}
-              times={{ dawn: z.dawn, sunrise: z.sunrise, sunset: z.sunset, dusk: z.dusk, chatzot: zChatzot }}
-              fmt={fmt}
-              cityName={city.name}
-              onDay={moveDay}
-              onToday={() => go(today())}
-            />
-          </div>
-          <div className="o-zmanim">
-            <ZmanimCard date={selected} now={now} rows={z.rows} items={items} shaahZmanit={z.shaahZmanit} fmt={fmt} city={city} candleMins={settings.candleMins ?? city.candle} onAlerts={() => setSheet('alerts')} />
-          </div>
-        </div>
-        <div className="col col-cal">
-          <div className="o-month">
-            <MonthView
-              anchor={anchor}
-              selected={selected}
-              now={now}
-              mode={settings.monthMode}
-              city={city}
-              settings={settings}
-              myEvents={myEvents}
-              onSelect={(d) => setSelected(d)}
-              onMonth={(d) => setAnchor((a) => shiftMonth(a, d, settings.monthMode))}
-              onMode={(m) => {
-                setSettings((s) => ({ ...s, monthMode: m }));
-                setAnchor(selected);
-              }}
-            />
-          </div>
-          <div className="o-shabbat">
-            <ShabbatCard date={selected} city={city} settings={settings} fmt={fmt} onJump={go} onNotify={() => setSheet('notify')} />
-          </div>
-          <div className="o-mine">
-            <MyEventsCard
-              date={selected}
-              list={mine}
-              onAdd={() => {
-                setEditing(null);
-                setSheet('event');
-              }}
-              onEdit={(e) => {
-                setEditing(e);
-                setSheet('event');
-              }}
-            />
-          </div>
-          <div className="o-prayer">
-            <PrayerCard date={selected} il={city.il} items={items} />
-          </div>
-          {settings.showLearning && (
-            <div className="o-learning">
-              <LearningCard items={items} />
-            </div>
-          )}
-        </div>
+      <main className="main" inert={screen ? true : undefined}>
+        {tab === 'today' && (
+          <TodayTab
+            selected={selected}
+            now={now}
+            city={city}
+            settings={settings}
+            myEvents={myEvents}
+            fmt={fmt}
+            items={items}
+            z={z}
+            mine={mine}
+            onSelect={select}
+            onToday={toToday}
+            onJump={jump}
+            onLocation={location}
+            onAddEvent={addEvent}
+            onEditEvent={editEvent}
+            onAllZmanim={() => showTab('zmanim')}
+          />
+        )}
+        {tab === 'month' && (
+          <MonthTab
+            anchor={anchor}
+            selected={selected}
+            now={now}
+            mode={settings.monthMode}
+            city={city}
+            settings={settings}
+            myEvents={myEvents}
+            fmt={fmt}
+            onSelect={setSelected}
+            onOpenDay={openDay}
+            onMonth={(d) => setAnchor((a) => shiftMonth(a, d, settings.monthMode))}
+            onMode={(m) => {
+              setSettings((s) => ({ ...s, monthMode: m }));
+              setAnchor(selected);
+            }}
+            onToday={toToday}
+            onJump={jump}
+          />
+        )}
+        {tab === 'zmanim' && (
+          <ZmanimTab
+            selected={selected}
+            now={now}
+            city={city}
+            settings={settings}
+            fmt={fmt}
+            items={items}
+            z={z}
+            onSelect={select}
+            onJump={jump}
+            onLocation={location}
+            onAlerts={(focus) => openScreen({ name: 'alerts', focus })}
+            onFriday={() => openScreen({ name: 'notify' })}
+            onSettings={() => showTab('settings')}
+          />
+        )}
+        {tab === 'mine' && (
+          <MineTab
+            myEvents={myEvents}
+            today={today()}
+            onAdd={addEvent}
+            onEdit={editEvent}
+            onOpenDay={openDay}
+            onAlerts={() => openScreen({ name: 'alerts' })}
+            onBackup={() => {
+              showTab('settings');
+              setTimeout(() => document.getElementById('backup')?.scrollIntoView({ block: 'start' }), 50);
+            }}
+          />
+        )}
+        {tab === 'settings' && (
+          <SettingsTab
+            settings={settings}
+            city={city}
+            myEvents={myEvents}
+            onChange={setSettings}
+            onImport={(list) =>
+              setMyEvents((cur) => {
+                const ids = new Set(cur.map((e) => e.id));
+                return [...cur, ...list.filter((e) => !ids.has(e.id))];
+              })
+            }
+            onNotify={() => openScreen({ name: 'notify' })}
+            onAlerts={() => openScreen({ name: 'alerts' })}
+            onLocation={location}
+          />
+        )}
       </main>
 
-      <footer className="foot">
-        {APP_NAME} · יומן עברי־לועזי ללא פרסומות · מקשי קיצור: ← → ימים, PgUp/PgDn חודשים, T היום, G קפיצה
-      </footer>
-
-      {sheet === 'notify' && <NotifySheet city={city} settings={settings} onChange={setSettings} onClose={closeSheet} />}
-      {sheet === 'alerts' && (
-        <AlertsSheet city={city} settings={settings} myEvents={myEvents} onChange={setSettings} onFriday={() => setSheet('notify')} onClose={closeSheet} />
-      )}
-      {sheet === 'location' && <LocationSheet city={city} settings={settings} onChange={setSettings} onClose={closeSheet} />}
-      {sheet === 'jump' && <JumpSheet selected={selected} city={city} settings={settings} myEvents={myEvents} onGo={go} onClose={closeSheet} />}
-      {sheet === 'settings' && (
-        <SettingsSheet
-          settings={settings}
+      <Suspense fallback={null}>
+      {screen?.name === 'notify' && <NotifyScreen city={city} settings={settings} onChange={setSettings} onClose={closeScreen} />}
+      {screen?.name === 'alerts' && (
+        <AlertsScreen
           city={city}
+          settings={settings}
           myEvents={myEvents}
+          focus={screen.focus}
           onChange={setSettings}
-          onImport={(list) =>
-            setMyEvents((cur) => {
-              const ids = new Set(cur.map((e) => e.id));
-              return [...cur, ...list.filter((e) => !ids.has(e.id))];
-            })
-          }
-          onNotify={() => setSheet('notify')}
-          onAlerts={() => setSheet('alerts')}
-          onLocation={() => setSheet('location')}
-          onClose={closeSheet}
+          onFriday={() => openScreen({ name: 'notify' })}
+          onClose={closeScreen}
         />
       )}
-      {sheet === 'event' && (
+      {screen?.name === 'location' && <LocationScreen city={city} settings={settings} onChange={setSettings} onClose={closeScreen} />}
+      {screen?.name === 'jump' && <JumpScreen selected={selected} city={city} settings={settings} myEvents={myEvents} onGo={go} onClose={closeScreen} />}
+      {screen?.name === 'event' && (
         <EventEditor
           initial={editing}
           date={selKey}
           onSave={(ev) => {
             setMyEvents((cur) => (cur.some((x) => x.id === ev.id) ? cur.map((x) => (x.id === ev.id ? ev : x)) : [...cur, ev]));
-            closeSheet();
+            closeScreen();
           }}
           onDelete={(id) => {
             setMyEvents((cur) => cur.filter((x) => x.id !== id));
-            closeSheet();
+            closeScreen();
           }}
-          onClose={closeSheet}
+          onClose={closeScreen}
         />
       )}
+      </Suspense>
     </div>
   );
 }

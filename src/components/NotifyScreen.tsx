@@ -4,7 +4,7 @@ import { WEEKDAYS, gregDateStr, today } from '../lib/cal';
 import type { City } from '../lib/cities';
 import { alertText, buildShabbatIcs, shabbatAlerts } from '../lib/ics';
 import type { Settings } from '../lib/store';
-import { Sheet } from './Sheet';
+import { Screen } from './Screen';
 import { Icon } from './Icon';
 import { cancelGroups, isNative, notificationPermission } from '../lib/native';
 
@@ -20,7 +20,7 @@ declare const __SINGLE__: boolean;
 const isIOS = typeof navigator !== 'undefined' && /iPad|iPhone|iPod/.test(navigator.userAgent + (navigator.maxTouchPoints > 1 && /Mac/.test(navigator.userAgent) ? 'iPad' : ''));
 const isAndroid = typeof navigator !== 'undefined' && /Android/i.test(navigator.userAgent);
 
-export function NotifySheet(props: Props) {
+export function NotifyScreen(props: Props) {
   return isNative() ? <NativeNotify {...props} /> : <WebNotify {...props} />;
 }
 
@@ -60,7 +60,7 @@ function NativeNotify({ city, settings, onChange, onClose }: Props) {
   };
 
   return (
-    <Sheet title="התראה בכל יום שישי" onClose={onClose}>
+    <Screen title="התראה בכל יום שישי" onClose={onClose}>
       <p className="lead">
         בכל יום שישי בבוקר תקבלו התראה עם שעת כניסת השבת ושעת היציאה ב<b>{city.name}</b>.
       </p>
@@ -82,7 +82,7 @@ function NativeNotify({ city, settings, onChange, onClose }: Props) {
       <p className="fine">
         הזמנים לפי הגדרות הדלקת הנרות וצאת השבת (כרגע {settings.candleMins ?? city.candle} דק׳ לפני השקיעה). באנדרואיד ההתראה עשויה להגיע באיחור של כמה דקות כשהטלפון במצב חיסכון.
       </p>
-    </Sheet>
+    </Screen>
   );
 }
 
@@ -167,7 +167,7 @@ function WebNotify({ city, settings, onChange, onClose }: Props) {
   const preview = alerts.slice(0, 3);
 
   return (
-    <Sheet title="התראה בכל יום שישי" onClose={onClose}>
+    <Screen title="התראה בכל יום שישי" onClose={onClose}>
       <p className="lead">
         בכל יום שישי בבוקר תקבלו התראה עם שעת כניסת השבת ושעת היציאה ב<b>{city.name}</b>. ההתראות נכנסות ליומן של הטלפון,
         ולכן הן מגיעות גם כשהאפליקציה סגורה.
@@ -259,6 +259,6 @@ function WebNotify({ city, settings, onChange, onClose }: Props) {
           (כרגע: {settings.candleMins ?? city.candle} דק׳ לפני השקיעה).
         </p>
       </details>
-    </Sheet>
+    </Screen>
   );
 }

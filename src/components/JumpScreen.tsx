@@ -1,7 +1,9 @@
 import { useMemo, useState } from 'react';
 import { HDate } from '@hebcal/core';
 import {
+  GREG_MONTHS_SHORT,
   WEEKDAYS,
+  WEEKDAYS_SHORT,
   addDays,
   dateKey,
   daysBetween,
@@ -178,7 +180,9 @@ export function JumpScreen({ selected, city, settings, myEvents, onGo, onClose }
                     <span className="s-date">
                       <b>{hebDateStr(hd, false)}</b>
                       <small>
-                        {WEEKDAYS[u.d.getDay()]}, {gregDateStr(u.d, u.d.getFullYear() !== t0.getFullYear())}
+                        {isHe()
+                          ? `${WEEKDAYS[u.d.getDay()]}, ${gregDateStr(u.d, u.d.getFullYear() !== t0.getFullYear())}`
+                          : `${WEEKDAYS_SHORT[u.d.getDay()]}, ${GREG_MONTHS_SHORT[u.d.getMonth()]} ${u.d.getDate()}${u.d.getFullYear() !== t0.getFullYear() ? ', ' + u.d.getFullYear() : ''}`}
                       </small>
                     </span>
                     <span className={`s-title k-${u.kind}`}>

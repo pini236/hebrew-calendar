@@ -181,7 +181,7 @@ export function LocationScreen({ settings, city, onChange, onClose }: Props) {
                 {settings.recentPlaces.map((c) => (
                   <button key={c.id} className={current(c) ? 'on' : ''} onClick={() => pick(c)}>
                     {cityLabel(c)}
-                    {!c.il && <small> · {tr('חו״ל', 'abroad')}</small>}
+                    {!c.il && isHe() && <small> · חו״ל</small>}
                   </button>
                 ))}
               </div>
@@ -193,7 +193,7 @@ export function LocationScreen({ settings, city, onChange, onClose }: Props) {
               {CITIES.map((c) => (
                 <button key={c.id} className={current(c) ? 'on' : ''} onClick={() => pick(c)}>
                   {cityLabel(c)}
-                  {!c.il && <small> · {tr('חו״ל', 'abroad')}</small>}
+                  {!c.il && isHe() && <small> · חו״ל</small>}
                 </button>
               ))}
             </div>

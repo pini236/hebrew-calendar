@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import { HDate } from '@hebcal/core';
 import { dateKey, eventHebDate, fromKey, gregDateStr, hebDateStr } from '../lib/cal';
-import { plural, tr } from '../lib/i18n';
+import { isHe, plural, tr } from '../lib/i18n';
 import type { MyEvent } from '../lib/store';
 import { Icon } from './Icon';
 import { dayName, upcomingEvents, yearsWord, type Upcoming } from './dayinfo';
@@ -149,15 +149,17 @@ function EventRow({ u, onEdit, onOpenDay }: { u: Upcoming; onEdit: (e: MyEvent) 
   const { ev, d, years, inDays } = u;
   const hd = new HDate(d);
   const when = inDays === 0 ? tr('היום', 'Today') : inDays === 1 ? tr('מחר', 'Tomorrow') : null;
+  // "Tomorrow" is too wide for the box in English: it shows "1 day" there
+  const word = inDays === 1 && !isHe() ? null : when;
   return (
     <div className="ev-row">
       <button className="ev-when" onClick={() => onOpenDay(d)} aria-label={tr(`${when ?? `בעוד ${inDays} ימים`}. פתיחת היום`, `${when ?? `In ${inDays} days`}. Open the day`)}>
-        {when ? (
-          <b className="word">{when}</b>
+        {word ? (
+          <b className="word">{word}</b>
         ) : (
           <>
             <b>{inDays}</b>
-            <small>{tr('ימים', 'days')}</small>
+            <small>{tr('ימים', plural(inDays, 'day', 'days'))}</small>
           </>
         )}
       </button>

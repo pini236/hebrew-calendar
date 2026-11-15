@@ -22,7 +22,7 @@ const reminds = (): [Remind, string][] => [
   ['none', tr('ללא', 'None')],
   ['day', tr('ביום עצמו', 'Same day')],
   ['eve', tr('בערב שלפני', 'Day before')],
-  ['week', tr('שבוע לפני', 'Week before')],
+  ['week', tr('שבוע לפני', 'A week')],
 ];
 
 export function EventEditor({ initial, date, onSave, onDelete, onClose }: Props) {

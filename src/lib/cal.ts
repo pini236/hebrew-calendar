@@ -433,6 +433,13 @@ export function eventOccursOn(e: MyEvent, d: Date, hd: HDate): number | null {
     return d.getMonth() === m && d.getDate() === day ? d.getFullYear() - orig.getFullYear() : null;
   }
   const ohd = eventHebDate(e);
+  if (e.repeat === 'yahrzeit') {
+    // the day of death itself, then the halachic anniversary: Adar of a leap year, 30 Cheshvan / Kislev
+    // in a year where the month is short, etc. (Calendrical Calculations, via Hebcal)
+    if (hd.getFullYear() === ohd.getFullYear()) return ohd.isSameDate(hd) ? 0 : null;
+    const y = HebrewCalendar.getYahrzeit(hd.getFullYear(), ohd);
+    return y && y.isSameDate(hd) ? hd.getFullYear() - ohd.getFullYear() : null;
+  }
   const occ = HebrewCalendar.getBirthdayOrAnniversary(hd.getFullYear(), ohd);
   if (occ && occ.isSameDate(hd)) return hd.getFullYear() - ohd.getFullYear();
   return null;

@@ -257,11 +257,13 @@ export function eventNotifications(from: Date, days: number, events: MyEvent[], 
       slots.set(k, slot + 1);
       const when = kind === 'day' ? tr('היום', 'Today') : kind === 'eve' ? tr('מחר', 'Tomorrow') : tr('בעוד שבוע', 'In a week');
       const age = e.repeat !== 'none' && years > 0 ? ` · ${tr(`${years} שנה`, `${years} ${plural(years, 'year', 'years')}`)}` : '';
+      // a yahrzeit begins the evening before: the memorial candle is lit then
+      const candle = e.repeat === 'yahrzeit' && kind !== 'week' ? tr(' · נר נשמה בערב', ' · light a memorial candle in the evening') : '';
       out.push({
         id: makeId('events', fire, slot),
         at,
         title: e.title,
-        body: `${when}, ${tr('יום ', '')}${WEEKDAYS_SHORT[d.getDay()]} ${hebDateStr(hd, false)}${e.time ? ` · ${e.time}` : ''}${age}`,
+        body: `${when}, ${tr('יום ', '')}${WEEKDAYS_SHORT[d.getDay()]} ${hebDateStr(hd, false)}${e.time ? ` · ${e.time}` : ''}${age}${kind === 'eve' && e.repeat === 'yahrzeit' ? tr(' · נר נשמה הערב', ' · memorial candle tonight') : candle}`,
         group: 'events',
         channel: 'reminders',
       });

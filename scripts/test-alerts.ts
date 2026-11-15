@@ -3,10 +3,10 @@
  * The scheduling itself needs a phone; everything that decides *what* is scheduled is pure
  * and is tested here:   npm test
  */
-import { HDate } from '@hebcal/core';
+import { HDate, HebrewCalendar } from '@hebcal/core';
 import { GROUP_RANGES, IOS_LIMIT, ZMAN_ALERTS, eventNotifications, groupOf, holidayNotifications, planNotifications, type Group } from '../src/lib/alerts';
 import { CITIES, findCity } from '../src/lib/cities';
-import { addDays, eventOccursOn, eventsOn, fromKey } from '../src/lib/cal';
+import { addDays, dateKey, eventOccursOn, eventsOn, fromKey } from '../src/lib/cal';
 import { DEFAULT_SETTINGS, mergeSettings, type MyEvent, type Settings } from '../src/lib/store';
 
 let failed = 0;
@@ -192,6 +192,25 @@ console.log(`year of plans with everything on: max ${maxLen} pending (limit ${IO
   for (const [a, ra] of r) for (const [b, rb] of r) if (a !== b) check(ra[1] <= rb[0] || rb[1] <= ra[0], `ranges ${a}/${b} disjoint`);
   check(Math.max(...r.map(([, x]) => x[1])) < 2 ** 31, 'ranges < 2^31');
   check(CITIES.length >= 50, 'cities list intact');
+}
+
+/* yahrzeit: the halachic anniversary rules (not the birthday rules) */
+{
+  // died 30 Cheshvan 5784 (a full Cheshvan); in 5786 Cheshvan has 29 days → the day before 1 Kislev
+  const died = new HDate(30, 8, 5784);
+  const y = ev({ date: dateKey(died.greg()), repeat: 'yahrzeit' });
+  const expect = HebrewCalendar.getYahrzeit(5786, died)!;
+  check(eventsOn([y], expect.greg()).length === 1, `yahrzeit 30 Cheshvan → ${expect.toString()}`);
+  check(eventsOn([y], died.greg()).length === 1, 'the day of death itself');
+  // died in Adar of a regular year → in a leap year, Adar I (Hebcal: the last Adar for Adar II only)
+  const adarDied = new HDate(10, 12, 5785);
+  const ay = ev({ date: dateKey(adarDied.greg()), repeat: 'yahrzeit' });
+  const exp2 = HebrewCalendar.getYahrzeit(5787, adarDied)!;
+  check(eventsOn([ay], exp2.greg()).length === 1, `yahrzeit in Adar, leap year → ${exp2.toString()}`);
+  // the evening-before reminder mentions the memorial candle
+  const ny = { ...y, remind: 'eve' as const };
+  const plan = eventNotifications(addDays(expect.greg(), -3), 10, [ny], addDays(expect.greg(), -3));
+  check(plan.length === 1 && plan[0].body.includes('נר נשמה'), `yahrzeit reminder: ${plan[0]?.body}`);
 }
 
 console.log(`\n${passed} passed, ${failed} failed`);

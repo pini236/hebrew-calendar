@@ -72,7 +72,8 @@ export const DEFAULT_SETTINGS: Settings = {
   fastAlerts: false,
 };
 
-export type Repeat = 'none' | 'heb-yearly' | 'greg-yearly';
+/** 'yahrzeit': yearly by the Hebrew date with the anniversary-of-death rules (Hebcal getYahrzeit) */
+export type Repeat = 'none' | 'heb-yearly' | 'greg-yearly' | 'yahrzeit';
 /** reminder for a personal event: on the day, the evening before, or a week before */
 export type Remind = 'none' | 'day' | 'eve' | 'week';
 

@@ -134,12 +134,26 @@ export function EventEditor({ initial, date, onSave, onDelete, onClose }: Props)
           <div className="seg small wrap" role="group" aria-labelledby="lbl-ev-repeat">
             {(
               [
-                ['none', tr('חד־פעמי', 'One-time')],
-                ['heb-yearly', tr('כל שנה · עברי', 'Hebrew date')],
-                ['greg-yearly', tr('כל שנה · לועזי', 'Gregorian date')],
+                ['none', tr('חד־פעמי', 'Once')],
+                ['heb-yearly', tr('שנתי · עברי', 'Hebrew')],
+                ['greg-yearly', tr('שנתי · לועזי', 'Gregorian')],
+                ['yahrzeit', tr('יארצייט', 'Yahrzeit')],
               ] as [Repeat, string][]
             ).map(([k, l]) => (
-              <button type="button" key={k} className={repeat === k ? 'on' : ''} aria-pressed={repeat === k} onClick={() => setRepeat(k)}>
+              <button
+                type="button"
+                key={k}
+                className={repeat === k ? 'on' : ''}
+                aria-pressed={repeat === k}
+                onClick={() => {
+                  setRepeat(k);
+                  // a yahrzeit is remembered the evening before (the candle is lit then)
+                  if (k === 'yahrzeit' && remind === 'none') {
+                    setRemind('eve');
+                    setRemindTime(REMIND_DEFAULT_TIME.eve);
+                  }
+                }}
+              >
                 {l}
               </button>
             ))}

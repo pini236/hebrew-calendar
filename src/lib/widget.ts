@@ -15,6 +15,7 @@ import { WEEKDAYS, WEEKDAYS_SHORT, addDays, dateKey, gregDateStr, hebDateStr, ra
 import type { City } from './cities';
 import { shabbatAlerts } from './ics';
 import type { Settings } from './store';
+import { EMPTY_STATE, SEFIRA_WORDS, countedHow, firstEve, offlineDay, omerYear, tzeitOn, type OmerState } from './seasons/omer';
 
 export interface WidgetZman {
   /** label, e.g. "סוף זמן ק״ש" */
@@ -72,6 +73,23 @@ export interface WidgetData {
   days: WidgetDay[];
   /** Shabbatot and Yamim Tovim in the range, in order */
   hol: WidgetHoly[];
+  /** Sefirat HaOmer, for the Omer widget: this year's count, or the next one (see omerWidgetModel) */
+  om?: WidgetOmer;
+}
+
+/** The Omer widget's data: when each count begins, and what the user marked in the app */
+export interface WidgetOmer {
+  /** Hebrew year */
+  y: number;
+  /** nightfall that begins each day's count: t[k] begins day k+1; t[49] ends the 49th day (epoch ms) */
+  t: number[];
+  /** counted days as of the app's last push, bit k-1 for day k (0 when the user doesn't mark them here) */
+  c: number;
+  /** days on Shabbat or Yom Tov (the app can't be told about them), bit k-1 */
+  f: number;
+  /** the seven sefirot, and their "within" forms ("שבחסד") */
+  sw: string[];
+  sp: string[];
 }
 
 const LABEL_KINDS: Kind[] = ['yomtov', 'cholhamoed', 'fast', 'erev', 'minor', 'roshchodesh', 'special-shabbat', 'parasha', 'modern'];
@@ -91,7 +109,7 @@ const WIDGET_ZMANIM: Record<string, string> = {
 
 const MIN = 60000;
 
-export function buildWidgetData(from: Date, days: number, city: City, s: Settings): WidgetData {
+export function buildWidgetData(from: Date, days: number, city: City, s: Settings, omer?: OmerState): WidgetData {
   const fmt = timeFmt(city.tz);
   const end = addDays(from, days);
   // a few days on both sides, so a Shabbat or Yom Tov that runs over the edges is whole
@@ -189,7 +207,23 @@ export function buildWidgetData(from: Date, days: number, city: City, s: Setting
     if (!open && cn && (!hv || cn.getTime() > hv.getTime())) open = { c: cn, day: d };
   }
 
-  return { v: 1, city: city.name, tz: city.tz, generated: Date.now(), days: out, hol };
+  return { v: 1, city: city.name, tz: city.tz, generated: Date.now(), days: out, hol, om: widgetOmer(from, city, s, omer) };
+}
+
+/** The season the Omer widget shows: this year's until two weeks after Shavuot, then next year's */
+export function widgetOmer(from: Date, city: City, s: Settings, state: OmerState = EMPTY_STATE): WidgetOmer {
+  let y = new HDate(from).getFullYear();
+  const end = (year: number) => omerYear(year).days[48];
+  if (from.getTime() > addDays(end(y), 14).getTime()) y++;
+  const t = [firstEve(y), ...omerYear(y).days].map((d) => tzeitOn(d, city, s).getTime());
+  let c = 0;
+  let f = 0;
+  for (let k = 1; k <= 49; k++) {
+    // 2^(k-1), not a bit shift: JavaScript shifts are 32-bit
+    if (countedHow(state, y, k)) c += 2 ** (k - 1);
+    if (offlineDay(y, k, city.il)) f += 2 ** (k - 1);
+  }
+  return { y, t, c, f, sw: SEFIRA_WORDS.he, sp: SEFIRA_WORDS.in };
 }
 
 /** What the widget shows at `now` — mirrors the native logic, used by the tests and the in-app preview */
@@ -295,4 +329,100 @@ export function widgetModel(data: WidgetData, now: Date): WidgetModel | null {
     sky: { dawn: frac(day.sk[0], midnight), sunrise: frac(day.sk[1], midnight), sunset: frac(day.sk[2], midnight), dusk: frac(day.sk[3], midnight), now: frac(t, midnight) },
     wake,
   };
+}
+
+/* ---------------- the Omer widget (mirrors OmerWidgetModel.java) ---------------- */
+
+/** a cell of the 7×7 field */
+export const CELL = { future: 0, counted: 1, missed: 2, passed: 3, today: 4, todayCounted: 5, assumed: 6 } as const;
+
+export interface OmerWidgetModel {
+  state: 'before' | 'count' | 'after';
+  /** the day shown: 1–49 (49 after the count), 0 before it */
+  n: number;
+  /** "ל״ג" ('' before the count) */
+  num: string;
+  /** "הוד שבהוד", or "ספירת העומר" before it */
+  sefira: string;
+  /** "4 שבועות ו־5 ימים" · "תתחיל בעוד 12 ימים" · "ספרתם 47 מתוך 49" */
+  sub: string;
+  /** the 49 cells (CELL), day 1 first */
+  cells: number[];
+  /** the week of the day shown (1–7), 0 for none */
+  week: number;
+  /** when the widget has to redraw next (epoch ms) */
+  wake: number;
+}
+
+const bit = (mask: number, k: number) => Math.floor(mask / 2 ** (k - 1)) % 2 === 1;
+
+/** Gematria for 1–49, as the widget writes it ("ט״ו", "ל״ג", "ז׳") */
+export function omerGem(n: number) {
+  const tens = ['', 'י', 'כ', 'ל', 'מ'];
+  const ones = ['', 'א', 'ב', 'ג', 'ד', 'ה', 'ו', 'ז', 'ח', 'ט'];
+  let s = tens[Math.floor(n / 10)] + ones[n % 10];
+  if (n === 15) s = 'טו';
+  if (n === 16) s = 'טז';
+  return s.length === 1 ? s + '׳' : s.slice(0, -1) + '״' + s.slice(-1);
+}
+
+/** "4 שבועות ו־5 ימים" (the widget is Hebrew) */
+export function omerWeeksHe(n: number) {
+  const w = Math.floor(n / 7);
+  const d = n % 7;
+  const days = d === 1 ? 'יום אחד' : `${d} ימים`;
+  if (w === 0) return days;
+  const weeks = w === 1 ? 'שבוע אחד' : `${w} שבועות`;
+  if (d === 0) return weeks;
+  return d === 1 ? `${weeks} ויום אחד` : `${weeks} ו־${d} ימים`;
+}
+
+export function omerWidgetModel(data: WidgetData, now: Date): OmerWidgetModel | null {
+  const om = data.om;
+  if (!om || om.t.length !== 50) return null;
+  const t = now.getTime();
+  let n = 0;
+  while (n < 49 && om.t[n] <= t) n++;
+  const after = t >= om.t[49];
+  const midnight = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+  const nextMidnight = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1).getTime();
+  let wake = Math.min(t + 6 * HOUR, nextMidnight + 5000);
+  for (const x of om.t) {
+    if (x > t) {
+      wake = Math.min(wake, x + 1000);
+      break;
+    }
+  }
+
+  let first = 0;
+  let counted = 0;
+  for (let k = 1; k <= 49; k++) {
+    if (bit(om.c, k)) {
+      counted++;
+      if (!first) first = k;
+    }
+  }
+  const cells: number[] = [];
+  for (let k = 1; k <= 49; k++) {
+    const c = bit(om.c, k);
+    if (n === 0 || k > n) cells.push(n === 0 && k === 1 ? CELL.today : CELL.future);
+    else if (k === n && !after) cells.push(c ? CELL.todayCounted : CELL.today);
+    else if (c) cells.push(CELL.counted);
+    else if (first === 0 || k < first) cells.push(CELL.passed);
+    else cells.push(bit(om.f, k) ? CELL.assumed : CELL.missed);
+  }
+
+  if (n === 0) {
+    // days from today to the evening the count begins
+    const e = new Date(om.t[0]);
+    const days = Math.round((new Date(e.getFullYear(), e.getMonth(), e.getDate()).getTime() - midnight) / 86400000);
+    const sub = days <= 0 ? 'מתחילה הלילה' : days === 1 ? 'מתחילה מחר בערב' : `תתחיל בעוד ${days} ימים`;
+    return { state: 'before', n: 0, num: '', sefira: 'ספירת העומר', sub, cells, week: 0, wake };
+  }
+  const sefira = `${om.sw[(n - 1) % 7]} ${om.sp[Math.floor((n - 1) / 7)]}`;
+  if (after) {
+    const sub = first ? `ספרתם ${counted} מתוך 49` : 'הספירה הושלמה';
+    return { state: 'after', n: 49, num: omerGem(49), sefira, sub, cells, week: 0, wake };
+  }
+  return { state: 'count', n, num: omerGem(n), sefira, sub: omerWeeksHe(n), cells, week: Math.floor((n - 1) / 7) + 1, wake };
 }

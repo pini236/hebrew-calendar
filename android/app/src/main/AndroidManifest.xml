@@ -35,6 +35,21 @@
                 android:resource="@xml/luach_widget_info" />
         </receiver>
 
+        <!-- home-screen widget: Sefirat HaOmer (the app can ask the launcher to add it: WidgetBridgePlugin.pinOmer) -->
+        <receiver
+            android:name=".OmerWidgetProvider"
+            android:exported="false"
+            android:label="@string/widget_omer_label">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+                <action android:name="android.intent.action.TIMEZONE_CHANGED" />
+                <action android:name="android.intent.action.TIME_SET" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/omer_widget_info" />
+        </receiver>
+
         <provider
             android:name="androidx.core.content.FileProvider"
             android:authorities="${applicationId}.fileprovider"

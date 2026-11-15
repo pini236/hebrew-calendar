@@ -1,0 +1,674 @@
+/*
+ * Sefirat HaOmer (OmerCard, OmerIntro, OmerWidgetMock). The field is the moment: the diary's green
+ * for the days counted, the saffron ribbon on the day of now, everything else ink at low strength.
+ * The app's tokens only (src/styles.css): 4px grid, radii 6 / 10 / 16 / 20, one easing curve.
+ */
+:root {
+  --ribbon-soft: rgba(215, 156, 43, 0.2);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    --ribbon-soft: rgba(226, 174, 76, 0.2);
+  }
+}
+:root[data-theme='dark'] {
+  --ribbon-soft: rgba(226, 174, 76, 0.2);
+}
+
+/* ---------------- the card ---------------- */
+
+.omer {
+  position: relative;
+  padding: 12px 20px 20px;
+  border-radius: 20px;
+}
+.om-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 36px;
+  margin-inline-end: -8px;
+}
+.om-body {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 16px;
+  margin-top: 4px;
+}
+.om-day {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+  min-width: 0;
+  padding: 4px 0;
+  border-radius: 10px;
+  text-align: start;
+  color: var(--ink);
+}
+.om-day:disabled {
+  opacity: 1;
+  color: var(--ink);
+  cursor: default;
+}
+.om-day:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 4px;
+}
+.om-num {
+  font-family: var(--f-display);
+  font-size: 4rem;
+  font-weight: 500;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+  animation: om-rise 480ms var(--ease) both;
+}
+.om-num:not(.heb) {
+  font-family: var(--f-body);
+  font-size: 3.5rem;
+  letter-spacing: -0.02em;
+}
+.om-sefira {
+  margin-top: 8px;
+  font-family: var(--f-display);
+  font-size: 1.1875rem;
+  line-height: 1.3;
+}
+.om-weeks {
+  color: var(--muted);
+  font-size: 0.875rem;
+  line-height: 1.4;
+}
+
+.om-foot {
+  display: grid;
+  gap: 8px;
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid var(--line);
+}
+.om-acts {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 44px;
+}
+.om-go {
+  min-width: 128px;
+}
+.om-when {
+  color: var(--ribbon-ink);
+  font-size: 0.9375rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+.om-hint {
+  color: var(--ink-2);
+  font-size: 0.875rem;
+}
+.om-done {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--accent-text);
+  font-size: 0.9375rem;
+  font-weight: 600;
+  animation: om-rise 360ms var(--ease) both;
+}
+.om-done + .text-btn {
+  margin-inline-start: auto;
+}
+.om-acts .om-go + .text-btn {
+  margin-inline-start: auto;
+}
+
+@keyframes om-rise {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+}
+
+/* ---------------- the field ---------------- */
+
+.om-field {
+  --c: 18px;
+  --g: 6px;
+  display: grid;
+  direction: inherit;
+}
+.om-large {
+  --c: 30px;
+  --g: 9px;
+}
+@media (max-width: 370px) {
+  .om-field.om-card {
+    --c: 16px;
+  }
+}
+.om-row {
+  display: flex;
+  gap: var(--g);
+  padding: calc(var(--g) / 2);
+  border-radius: 999px;
+  transition: background-color 320ms var(--ease);
+}
+.om-row.wk {
+  background: var(--raised);
+}
+.om-cell {
+  position: relative;
+  display: block;
+  flex: none;
+  width: var(--c);
+  height: var(--c);
+  padding: 0;
+  border-radius: 50%;
+  box-shadow: inset 0 0 0 1px var(--line-strong);
+  transition: box-shadow 240ms var(--ease);
+}
+button.om-cell:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+.om-fill {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+}
+/* a day that went by unmarked (before the user began marking, or on Shabbat and Yom Tov) */
+.om-cell.c-passed {
+  box-shadow: none;
+}
+.om-cell.c-passed .om-fill {
+  background: var(--line-strong);
+  opacity: 0.55;
+}
+/* counted: the day fills with the diary's green (in order, once, when the card appears) */
+.om-cell.c-counted,
+.om-cell.c-byDay {
+  box-shadow: none;
+}
+.om-cell.c-counted .om-fill,
+.om-cell.c-byDay .om-fill {
+  background: var(--accent);
+  animation: om-fill 520ms var(--ease) both;
+  animation-delay: calc(var(--i) * 7ms);
+}
+.om-cell.c-assumed {
+  box-shadow: none;
+}
+.om-cell.c-assumed .om-fill {
+  background: var(--accent);
+  opacity: 0.4;
+}
+.om-cell.here.c-counted .om-fill,
+.om-cell.here.c-byDay .om-fill {
+  animation-duration: 760ms;
+  animation-delay: 60ms;
+}
+@keyframes om-fill {
+  from {
+    transform: scale(0.3);
+    opacity: 0;
+  }
+}
+/* a whole day missed after the user began marking: a small dot, nothing louder */
+.om-cell.c-missed .om-fill::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 4px;
+  height: 4px;
+  margin: -2px 0 0 -2px;
+  border-radius: 50%;
+  background: var(--muted);
+}
+/* the count of now: saffron, under the ribbon */
+.om-cell.c-due {
+  box-shadow: inset 0 0 0 1.5px var(--ribbon);
+}
+.om-cell.c-due .om-fill {
+  background: var(--ribbon-soft);
+}
+.om-cell.here.c-counted,
+.om-cell.here.c-byDay {
+  box-shadow: 0 0 0 2px var(--surface), 0 0 0 3.5px var(--ribbon);
+}
+.silk-omer {
+  top: -2px;
+  left: calc(50% - var(--silk-half));
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .om-cell .om-fill,
+  .om-num,
+  .om-done {
+    animation: none !important;
+  }
+}
+
+/* ---------------- the sheets ---------------- */
+
+.om-sheet-wrap {
+  position: fixed;
+  inset: 0;
+  z-index: 70;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  background: rgba(16, 16, 14, 0.32);
+  animation: om-fade 220ms var(--ease) both;
+}
+.om-sheet {
+  width: 100%;
+  max-width: 560px;
+  max-height: 88vh;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 4px 20px calc(24px + env(safe-area-inset-bottom));
+  border-radius: 20px 20px 0 0;
+  background: var(--surface);
+  box-shadow: var(--shadow-float);
+  outline: none;
+  animation: om-sheet-in 320ms var(--ease) both;
+}
+.om-sheet-wrap.leaving {
+  opacity: 0;
+  transition: opacity 180ms var(--ease);
+}
+.om-sheet-wrap.leaving .om-sheet {
+  transform: translateY(24px);
+  transition: transform 180ms var(--ease);
+}
+@keyframes om-fade {
+  from {
+    opacity: 0;
+  }
+}
+@keyframes om-sheet-in {
+  from {
+    transform: translateY(32px);
+    opacity: 0;
+  }
+}
+@media (min-width: 960px) {
+  .om-sheet-wrap {
+    align-items: center;
+  }
+  .om-sheet {
+    border-radius: 20px;
+    padding-bottom: 24px;
+  }
+}
+.om-sheet-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 52px;
+  margin-inline-end: -8px;
+}
+.om-sheet-head h2 {
+  font-size: 1.0625rem;
+  font-weight: 600;
+}
+.om-nusach {
+  display: flex;
+  width: 100%;
+  margin-top: 4px;
+}
+.om-nusach button {
+  flex: 1;
+  padding: 0 8px;
+}
+.om-why {
+  margin-top: 16px;
+  padding: 12px 16px;
+  border-radius: 10px;
+  background: var(--raised);
+  color: var(--ink-2);
+  font-size: 0.875rem;
+  line-height: 1.55;
+}
+.om-text {
+  display: grid;
+  gap: 16px;
+  margin-top: 24px;
+}
+.om-bless {
+  color: var(--ink-2);
+  font-family: var(--f-display);
+  font-size: 1.25rem;
+  line-height: 1.75;
+}
+.om-count {
+  font-family: var(--f-display);
+  font-size: 1.625rem;
+  line-height: 1.6;
+}
+.om-sef {
+  color: var(--muted);
+  font-family: var(--f-display);
+  font-size: 1.0625rem;
+}
+.om-latin {
+  display: grid;
+  gap: 12px;
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid var(--line);
+}
+.om-latin i {
+  display: block;
+  color: var(--ink-2);
+  font-style: normal;
+  font-weight: 500;
+}
+.om-latin span {
+  display: block;
+  color: var(--muted);
+  font-size: 0.875rem;
+}
+.om-sheet-act {
+  width: 100%;
+  margin-top: 24px;
+}
+.om-set h3 {
+  margin: 24px 0 8px;
+  padding: 0 4px;
+  color: var(--muted);
+  font-size: 0.8125rem;
+  font-weight: 500;
+}
+.om-set h3:first-child {
+  margin-top: 8px;
+}
+.om-set-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.om-set-row .toggle {
+  flex: 1;
+  min-width: 0;
+}
+.om-set-row select,
+.om-set-row input[type='time'] {
+  flex: none;
+  width: 116px;
+}
+.om-set .fine {
+  margin-top: 8px;
+  padding: 0 4px;
+}
+.om-set-link {
+  margin-top: 16px;
+  padding-inline: 4px;
+  border-radius: 10px;
+}
+
+/* ---------------- the introduction ---------------- */
+
+.oi-hero {
+  display: grid;
+  justify-items: center;
+  gap: 8px;
+  padding: 24px 0 32px;
+  text-align: center;
+}
+.oi-title {
+  margin-top: 24px;
+  font-family: var(--f-display);
+  font-size: 1.75rem;
+  font-weight: 500;
+  line-height: 1.2;
+}
+.oi-lead {
+  max-width: 30ch;
+  color: var(--ink-2);
+  font-size: 0.9375rem;
+  line-height: 1.5;
+}
+.oi-when {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 16px 0;
+}
+.oi-when small {
+  display: block;
+  margin-bottom: 2px;
+  color: var(--muted);
+  font-size: 0.8125rem;
+}
+.oi-when b {
+  font-size: 1.0625rem;
+  font-weight: 500;
+}
+.oi-time {
+  text-align: end;
+}
+.oi-time b {
+  font-size: 1.75rem;
+  line-height: 1.1;
+  font-variant-numeric: tabular-nums;
+}
+.oi-nusach {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px 16px;
+  min-height: 56px;
+  padding: 8px 0;
+  font-size: 0.9375rem;
+  font-weight: 500;
+}
+.oi-nusach .om-nusach {
+  width: auto;
+  flex: 1;
+  max-width: 320px;
+  margin: 0;
+}
+.oi-widget {
+  margin-top: 32px;
+}
+.oi-plate {
+  display: grid;
+  place-items: center;
+  padding: 32px 16px;
+  border-radius: 16px;
+  background: var(--raised);
+}
+.oi-pin {
+  width: 100%;
+  margin-top: 16px;
+}
+.oi-note {
+  margin-top: 12px;
+  padding: 0 4px;
+  text-align: center;
+}
+
+/* ---------------- the widget, as Android draws it (OmerWidgetMock; android/.../res/layout/omer_widget_*.xml) ---------------- */
+
+.ow {
+  --ow-paper: #faf6ec;
+  --ow-edge: #dfdcd2;
+  --ow-ink: #1d1c19;
+  --ow-muted: #6c685f;
+  --ow-date: #1e5a45;
+  --ow-ribbon: #e3a73a;
+  position: relative;
+  display: flex;
+  align-items: stretch;
+  gap: 14px;
+  width: 250px;
+  height: 166px;
+  padding: 16px;
+  overflow: hidden;
+  border-radius: 20px;
+  background: var(--ow-paper);
+  box-shadow: inset 0 0 0 1px var(--ow-edge);
+  color: var(--ow-ink);
+  font-family: Roboto, 'Noto Sans Hebrew', var(--f-body);
+  text-align: right;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) .ow:not(.ow-light) {
+    --ow-paper: #1b1a18;
+    --ow-edge: #353331;
+    --ow-ink: #eeebe4;
+    --ow-muted: #9a958b;
+    --ow-date: #f3ecdd;
+    --ow-ribbon: #e2ae4c;
+  }
+}
+:root[data-theme='dark'] .ow:not(.ow-light),
+.ow.ow-dark {
+  --ow-paper: #1b1a18;
+  --ow-edge: #353331;
+  --ow-ink: #eeebe4;
+  --ow-muted: #9a958b;
+  --ow-date: #f3ecdd;
+  --ow-ribbon: #e2ae4c;
+}
+.ow-ribbon {
+  position: absolute;
+  top: 0;
+  left: 8px;
+  width: 22px;
+  height: 22px;
+}
+.ow-ribbon-css {
+  left: 14px;
+  width: 10px;
+  height: 18px;
+  background: var(--ow-ribbon);
+  clip-path: polygon(0 0, 100% 0, 100% 100%, 50% 76%, 0 100%);
+}
+.ow-text {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  justify-content: flex-end;
+  min-width: 0;
+}
+.ow-num {
+  color: var(--ow-date);
+  font-family: 'Geresh Serif', 'Frank Ruhl Libre', serif;
+  font-size: 46px;
+  font-weight: 500;
+  line-height: 1;
+}
+.ow-title {
+  color: var(--ow-date);
+  font-family: 'Geresh Serif', 'Frank Ruhl Libre', serif;
+  font-size: 22px;
+  font-weight: 500;
+  line-height: 1.15;
+}
+.ow-sef {
+  margin-top: 8px;
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.25;
+}
+.ow-sub {
+  margin-top: 2px;
+  color: var(--ow-muted);
+  font-size: 12px;
+  line-height: 1.3;
+}
+/* the field: F square, 7 cells, 6 gaps of 0.26 cell and half a gap round the band (OmerWidgetDraw.field) */
+.ow-field {
+  --F: 118px;
+  --c: calc(var(--F) / 8.82);
+  --g: calc(var(--c) * 0.26);
+  padding: calc(var(--g) / 2);
+  display: flex;
+  flex: none;
+  flex-direction: column;
+  align-self: center;
+  gap: var(--g);
+  width: var(--F);
+}
+.ow-row {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: var(--g);
+  margin: calc(var(--g) / -2);
+  padding: calc(var(--g) / 2);
+  border-radius: 999px;
+}
+.ow-row.wk {
+  background: color-mix(in srgb, var(--ow-muted) 11%, transparent);
+}
+.ow-c {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 1;
+  border-radius: 50%;
+}
+.ow-c.future,
+.ow-c.missed {
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--ow-muted) 42%, transparent);
+}
+.ow-c.missed::after {
+  content: '';
+  position: absolute;
+  inset: 38%;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--ow-muted) 75%, transparent);
+}
+.ow-c.passed {
+  background: color-mix(in srgb, var(--ow-muted) 18%, transparent);
+}
+.ow-c.counted,
+.ow-c.today-counted {
+  background: var(--ow-date);
+}
+.ow-c.assumed {
+  background: color-mix(in srgb, var(--ow-date) 40%, transparent);
+}
+.ow-c.today {
+  background: color-mix(in srgb, var(--ow-ribbon) 26%, transparent);
+  box-shadow: inset 0 0 0 1.5px var(--ow-ribbon);
+}
+.ow-c.today-counted {
+  box-shadow: 0 0 0 0.8px var(--ow-paper), 0 0 0 2px var(--ow-ribbon);
+}
+
+/* 2×2: the number and the sefira above, the field below */
+.ow-s {
+  flex-direction: column;
+  gap: 8px;
+  width: 117px;
+  padding: 12px;
+}
+.ow-s .ow-text {
+  flex: none;
+  justify-content: flex-start;
+  padding-top: 6px;
+}
+.ow-s .ow-num {
+  font-size: 30px;
+}
+.ow-s .ow-title {
+  font-size: 16px;
+}
+.ow-s .ow-sef {
+  margin-top: 4px;
+  font-size: 11px;
+}
+.ow-s .ow-sub {
+  font-size: 11px;
+}
+.ow-s .ow-field {
+  --F: 88px;
+  align-self: center;
+}

@@ -95,6 +95,8 @@ export interface PlannedNotification {
   at: Date;
   title: string;
   body: string;
+  /** handed back when the notification is tapped: { screen } opens that screen (App.tsx) */
+  extra?: Record<string, string>;
   group: Group;
   channel: Channel;
 }

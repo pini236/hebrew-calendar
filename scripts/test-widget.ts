@@ -1,7 +1,9 @@
 /** Tests for the widget data (run with TZ=Asia/Jerusalem): npm test */
 import { CITIES } from '../src/lib/cities';
 import { DEFAULT_SETTINGS } from '../src/lib/store';
-import { buildWidgetData, widgetModel, widgetView } from '../src/lib/widget';
+import { gematriya } from '@hebcal/core';
+import { EMPTY_STATE, mark } from '../src/lib/seasons/omer';
+import { CELL, buildWidgetData, omerGem, omerWeeksHe, omerWidgetModel, widgetModel, widgetOmer, widgetView, type WidgetData } from '../src/lib/widget';
 
 let pass = 0;
 let fail = 0;
@@ -83,6 +85,39 @@ const rhDay = widgetModel(rh, new Date('2027-10-03T12:00:00+03:00'))!;
 ok(!!rhDay.holy?.inside && rhDay.holy.havdalah.startsWith('א׳ '), `Rosh Hashana model ${JSON.stringify(rhDay.holy)}`);
 const rhEve = widgetModel(rh, new Date('2027-10-01T10:00:00+03:00'))!;
 ok(rhEve.holy?.candlesToday === true, 'erev Rosh Hashana: candles today');
+
+/* ---------------- the Omer widget: omerWidgetModel (mirrors OmerWidgetModel.java) ---------------- */
+ok(!!data.om && data.om.t.length === 50 && data.om.y === 5787, 'widget data carries the coming Omer (5787)');
+ok(JSON.stringify(data.om).length < 1500, `omer block is small: ${JSON.stringify(data.om).length} bytes`);
+for (let n = 1; n <= 49; n++) ok(omerGem(n) === gematriya(n), `widget gematria ${n}: ${omerGem(n)} = ${gematriya(n)}`);
+ok(omerWeeksHe(1) === 'יום אחד' && omerWeeksHe(7) === 'שבוע אחד' && omerWeeksHe(8) === 'שבוע אחד ויום אחד' && omerWeeksHe(33) === '4 שבועות ו־5 ימים' && omerWeeksHe(49) === '7 שבועות', 'widget weeks text');
+
+// Pesach 5787: 15 Nisan is Thursday 22.4.2027; the count begins at that night's nightfall
+let st = EMPTY_STATE;
+for (let k = 1; k <= 32; k++) if (![2, 9, 16, 23, 30, 20].includes(k)) st = mark(st, 5787, k, 'night', 0);
+const om = widgetOmer(new Date(2027, 3, 1, 12), jer, DEFAULT_SETTINGS, st);
+const ow = (iso: string) => omerWidgetModel({ om } as WidgetData, new Date(iso))!;
+ok(om.t.every((t, i) => i === 0 || t - om.t[i - 1] > 23 * 3600000), 'one nightfall a day');
+ok(new Date(om.t[0]).getDate() === 22 && new Date(om.t[0]).getHours() === 19, `first count: the evening of 22.4 (${new Date(om.t[0])})`);
+const before = ow('2027-04-10T12:00:00+03:00');
+ok(before.state === 'before' && before.sub === 'תתחיל בעוד 12 ימים' && before.cells[0] === CELL.today && before.n === 0, `before: ${before.sub}`);
+ok(ow('2027-04-21T12:00:00+03:00').sub === 'מתחילה מחר בערב' && ow('2027-04-22T12:00:00+03:00').sub === 'מתחילה הלילה', 'before: tomorrow evening, tonight');
+const first = ow('2027-04-22T21:00:00+03:00');
+ok(first.state === 'count' && first.n === 1 && first.num === 'א׳' && first.sefira === 'חסד שבחסד' && first.sub === 'יום אחד', `first night: ${first.num} ${first.sefira}`);
+// Lag BaOmer: day 33 begins at nightfall on Monday 24.5; at 17:00 it is still day 32
+const day32 = ow('2027-05-24T17:00:00+03:00');
+const lag = ow('2027-05-24T21:00:00+03:00');
+ok(day32.n === 32 && lag.n === 33 && lag.num === 'ל״ג' && lag.sefira === 'הוד שבהוד' && lag.sub === '4 שבועות ו־5 ימים' && lag.week === 5, `day turns at nightfall: ${day32.n} → ${lag.n} ${lag.sefira}`);
+ok(day32.cells[31] === CELL.todayCounted && lag.cells[32] === CELL.today && lag.cells[31] === CELL.counted, 'the day of now: counted, then tonight');
+ok(lag.cells[19] === CELL.missed && lag.cells[1] === CELL.assumed && lag.cells[40] === CELL.future, 'missed day 20, Shabbat assumed, the future empty');
+ok(day32.wake <= om.t[32] + 1000 && day32.wake > Date.parse('2027-05-24T17:00:00+03:00'), 'the widget wakes at nightfall');
+const after = ow('2027-06-13T12:00:00+03:00');
+ok(after.state === 'after' && after.num === 'מ״ט' && after.sub === 'ספרתם 26 מתוך 49' && after.week === 0, `after: ${after.sub}`);
+const none = omerWidgetModel({ om: widgetOmer(new Date(2027, 3, 1, 12), jer, DEFAULT_SETTINGS) } as WidgetData, new Date('2027-05-03T10:00:00+03:00'))!;
+ok(none.cells.slice(0, none.n - 1).every((c) => c === CELL.passed) && none.cells[none.n - 1] === CELL.today, 'no marks: the days that went by are quiet, none missed');
+// two weeks after Shavuot the widget moves on to next year's count
+ok(widgetOmer(new Date(2027, 5, 30, 12), jer, DEFAULT_SETTINGS).y === 5788, 'after the season: next year');
+ok(omerWidgetModel({} as WidgetData, new Date()) === null, 'no Omer data: null');
 
 console.log(`widget: ${data.days.length} days, ${Math.round(size / 1024)} KB json, built in ${ms} ms`);
 console.log('example:', JSON.stringify(morning));

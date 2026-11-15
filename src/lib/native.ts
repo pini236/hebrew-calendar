@@ -1,4 +1,4 @@
-import { Capacitor } from '@capacitor/core';
+import { Capacitor, registerPlugin } from '@capacitor/core';
 import { CHANNELS, IOS_LIMIT, groupOf, type Group, type PlannedNotification } from './alerts';
 
 export const isNative = () => Capacitor.isNativePlatform();
@@ -13,6 +13,30 @@ export async function initNative() {
   } catch {
     /* ignore */
   }
+  // a tapped notification can name a screen to open (PlannedNotification.extra.screen)
+  try {
+    const { LocalNotifications } = await import('@capacitor/local-notifications');
+    LocalNotifications.addListener('localNotificationActionPerformed', (a) => {
+      const screen = (a.notification.extra as { screen?: unknown } | undefined)?.screen;
+      if (typeof screen === 'string') requestOpen(screen);
+    });
+  } catch {
+    /* notifications plugin unavailable */
+  }
+}
+
+/* ---------------- opening a screen from outside (a tapped notification, a season card) ---------------- */
+
+let pendingOpen: string | null = null;
+/** Ask the app to open a screen; App.tsx listens for 'luachi:open', and takes one that came before it was ready */
+export function requestOpen(screen: string) {
+  pendingOpen = screen;
+  window.dispatchEvent(new CustomEvent('luachi:open', { detail: screen }));
+}
+export function takePendingOpen() {
+  const s = pendingOpen;
+  pendingOpen = null;
+  return s;
 }
 
 /** Status bar icons to match the page: light icons on the dark theme, dark icons on the light one */
@@ -82,6 +106,7 @@ export function syncNotifications(list: PlannedNotification[]): Promise<number> 
           body: a.body,
           largeBody: a.body,
           channelId: a.channel,
+          ...(a.extra ? { extra: a.extra } : {}),
           schedule: { at: a.at, allowWhileIdle: true },
           // inexact on Android: may arrive a few minutes late, but needs no special "alarms" permission
           isExactNotification: false,
@@ -115,15 +140,36 @@ export async function shareTextFile(filename: string, data: string, title: strin
 
 interface LuachWidgetPlugin {
   setData(o: { json: string }): Promise<void>;
+  /** Android 8+: the launcher can pin a widget for us (it asks the user) */
+  canPin(): Promise<{ value: boolean }>;
+  /** ask the launcher to add the Omer widget; resolves once the request is shown */
+  pinOmer(): Promise<{ value: boolean }>;
 }
 let widgetPlugin: LuachWidgetPlugin | null = null;
 
 /** Hand the precomputed widget data to the native widget (Android only for now). */
 export async function pushWidget(json: string) {
   if (Capacitor.getPlatform() !== 'android') return;
-  if (!widgetPlugin) {
-    const { registerPlugin } = await import('@capacitor/core');
-    widgetPlugin = registerPlugin<LuachWidgetPlugin>('LuachWidget');
+  await widgetBridge().setData({ json });
+}
+
+function widgetBridge() {
+  if (!widgetPlugin) widgetPlugin = registerPlugin<LuachWidgetPlugin>('LuachWidget');
+  return widgetPlugin;
+}
+/** The Omer widget can be added from the app (Android 8+ with a launcher that supports it) */
+export async function canPinOmerWidget(): Promise<boolean> {
+  if (Capacitor.getPlatform() !== 'android') return false;
+  try {
+    return (await widgetBridge().canPin()).value;
+  } catch {
+    return false;
   }
-  await widgetPlugin.setData({ json });
+}
+export async function pinOmerWidget(): Promise<boolean> {
+  try {
+    return (await widgetBridge().pinOmer()).value;
+  } catch {
+    return false;
+  }
 }

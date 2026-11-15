@@ -16,7 +16,9 @@ const AlertsScreen = lazy(() => import('./components/AlertsScreen').then((m) => 
 const LocationScreen = lazy(() => import('./components/LocationScreen').then((m) => ({ default: m.LocationScreen })));
 import { BrandMark, Icon } from './components/Icon';
 import { SilkRibbon } from './components/SilkRibbon';
-import { isNative, pushWidget, setStatusBar, syncNotifications } from './lib/native';
+import { isNative, pushWidget, setStatusBar, syncNotifications, takePendingOpen } from './lib/native';
+import { SEASON_SCREENS, SeasonScreen } from './components/seasons';
+import { loadOmer } from './lib/seasons/omer';
 import { buildWidgetData } from './lib/widget';
 import { APP_NAME } from './lib/brand';
 import { planNotifications } from './lib/alerts';
@@ -66,7 +68,7 @@ const tabLabel = (t: Tab) =>
   })[t];
 
 /** Screens pushed over the tabs */
-type ScreenState = null | { name: 'jump' } | { name: 'event' } | { name: 'notify' } | { name: 'alerts'; focus?: string } | { name: 'location' };
+type ScreenState = null | { name: 'jump' } | { name: 'event' } | { name: 'notify' } | { name: 'alerts'; focus?: string } | { name: 'location' } | { name: 'season'; id: string };
 
 export default function App() {
   const [settings, setSettings] = usePersistent<Settings>(SETTINGS_KEY, DEFAULT_SETTINGS, mergeSettings);
@@ -141,11 +143,21 @@ export default function App() {
     };
     const t = setTimeout(run, 600);
     window.addEventListener('luachi:resume', run);
+    // after a count (a season's state): once the card's animation has played
+    let later = 0;
+    const soon = () => {
+      clearTimeout(later);
+      later = window.setTimeout(run, 1200);
+    };
+    window.addEventListener('luachi:season-state', soon);
     return () => {
       clearTimeout(t);
+      clearTimeout(later);
       window.removeEventListener('luachi:resume', run);
+      window.removeEventListener('luachi:season-state', soon);
     };
   }, [
+    settings.seasons,
     city,
     myEvents,
     settings.nativeAlerts,
@@ -165,16 +177,25 @@ export default function App() {
     if (!isNative()) return;
     const run = () => {
       try {
-        pushWidget(JSON.stringify(buildWidgetData(today(), 60, city, settings))).catch(() => {});
+        pushWidget(JSON.stringify(buildWidgetData(today(), 60, city, settings, loadOmer()))).catch(() => {});
       } catch {
         /* never let the widget break the app */
       }
     };
     const t = setTimeout(run, 900);
     window.addEventListener('luachi:resume', run);
+    // after a count (a season's state): once the card's animation has played
+    let later = 0;
+    const soon = () => {
+      clearTimeout(later);
+      later = window.setTimeout(run, 1200);
+    };
+    window.addEventListener('luachi:season-state', soon);
     return () => {
       clearTimeout(t);
+      clearTimeout(later);
       window.removeEventListener('luachi:resume', run);
+      window.removeEventListener('luachi:season-state', soon);
     };
   }, [city, settings.candleMins, settings.havdalah, settings.useElevation, settings.showModern]); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -212,6 +233,26 @@ export default function App() {
     window.addEventListener('popstate', onPop);
     return () => window.removeEventListener('popstate', onPop);
   }, []);
+
+  // a tapped notification (or a season card) asks for a screen: a season's own screen, or Today
+  useEffect(() => {
+    const open = (name: string | null) => {
+      if (!name) return;
+      takePendingOpen();
+      if (SEASON_SCREENS[name]) openScreen({ name: 'season', id: name });
+      else {
+        closeScreen();
+        setSelected(today());
+        setAnchor(today());
+        setTab('today');
+        requestAnimationFrame(() => window.scrollTo({ top: 0 }));
+      }
+    };
+    const onOpen = (e: Event) => open((e as CustomEvent<string>).detail);
+    open(takePendingOpen());
+    window.addEventListener('luachi:open', onOpen);
+    return () => window.removeEventListener('luachi:open', onOpen);
+  }, [openScreen, closeScreen]);
 
   // each tab keeps its own scroll position; tapping the open tab again goes back to its top
   const scrolls = useRef<Partial<Record<Tab, number>>>({});
@@ -422,6 +463,7 @@ export default function App() {
         />
       )}
       {screen?.name === 'location' && <LocationScreen city={city} settings={settings} onChange={setSettings} onClose={closeScreen} />}
+      {screen?.name === 'season' && <SeasonScreen id={screen.id} now={now} city={city} settings={settings} onSettings={setSettings} onClose={closeScreen} />}
       {screen?.name === 'jump' && <JumpScreen selected={selected} city={city} settings={settings} myEvents={myEvents} onGo={go} onClose={closeScreen} />}
       {screen?.name === 'event' && (
         <EventEditor

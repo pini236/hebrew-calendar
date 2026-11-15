@@ -1,0 +1,221 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Sefirat HaOmer, 4×2 and up: the day and its sefira beside the 49 days.
+     The same page as the main widget (paper, hairline edge, the silk ribbon's frames, the day in Frank Ruhl Libre as
+     a bitmap) and the 7×7 field as three tinted masks (OmerWidgetDraw). OmerWidgetProvider sets the colours in code
+     (values/widget_colors.xml and values-night) so light and dark never mix. Its HTML twin: OmerWidgetMock.tsx. -->
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@android:id/background"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/widget_paper"
+    android:clipToOutline="true"
+    android:layoutDirection="rtl">
+
+    <ImageView
+        android:id="@+id/w_paper"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:importantForAccessibility="no"
+        android:scaleType="fitXY"
+        android:src="@drawable/widget_paper" />
+
+    <ImageView
+        android:id="@+id/w_edge"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:importantForAccessibility="no"
+        android:scaleType="fitXY"
+        android:src="@drawable/widget_edge" />
+
+    <ViewFlipper
+        android:id="@+id/w_ribbon"
+        android:layout_width="22dp"
+        android:layout_height="22dp"
+        android:layout_gravity="top|left"
+        android:layout_marginLeft="8dp"
+        android:autoStart="true"
+        android:flipInterval="91"
+        android:importantForAccessibility="no">
+        <!-- the frames of scripts/build-widget-ribbon.mjs (copied from widget_s.xml): the silk ribbon at the top inline-end corner,
+             as on the app's "now" card, clear of the number -->
+        <ImageView android:layout_width="22dp" android:layout_height="22dp" android:src="@drawable/widget_ribbon_f00" />
+        <ImageView android:layout_width="22dp" android:layout_height="22dp" android:src="@drawable/widget_ribbon_f00" />
+        <ImageView android:layout_width="22dp" android:layout_height="22dp" android:src="@drawable/widget_ribbon_f00" />
+        <ImageView android:layout_width="22dp" android:layout_height="22dp" android:src="@drawable/widget_ribbon_f00" />
+        <ImageView android:layout_width="22dp" android:layout_height="22dp" android:src="@drawable/widget_ribbon_f00" />
+        <ImageView android:layout_width="22dp" android:layout_height="22dp" android:src="@drawable/widget_ribbon_f00" />
+        <ImageView android:layout_width="22dp" android:layout_height="22dp" android:src="@drawable/widget_ribbon_f00" />
+        <ImageView android:layout_width="22dp" android:layout_height="22dp" android:src="@drawable/widget_ribbon_f00" />
+        <ImageView android:layout_width="22dp" android:layout_height="22dp" android:src="@drawable/widget_ribbon_f00" />
+        <ImageView android:layout_width="22dp" android:layout_height="22dp" android:src="@drawable/widget_ribbon_f00" />
+        <ImageView android:layout_width="22dp" android:layout_height="22dp" android:src="@drawable/widget_ribbon_f00" />
+        <ImageView android:layout_width="22dp" android:layout_height="22dp" android:src="@drawable/widget_ribbon_f00" />
+        <ImageView android:layout_width="22dp" android:layout_height="22dp" android:src="@drawable/widget_ribbon_f00" />
+        <ImageView android:layout_width="22dp" android:layout_height="22dp" android:src="@drawable/widget_ribbon_f00" />
+        <ImageView android:layout_width="22dp" android:layout_height="22dp" android:src="@drawable/widget_ribbon_f00" />
+        <ImageView android:layout_width="22dp" android:layout_height="22dp" android:src="@drawable/widget_ribbon_f00" />
+        <ImageView android:layout_width="22dp" android:layout_height="22dp" android:src="@drawable/widget_ribbon_f00" />
+        <ImageView android:layout_width="22dp" android:layout_height="22dp" android:src="@drawable/widget_ribbon_f00" />
+        <ImageView android:layout_width="22dp" android:layout_height="22dp" android:src="@drawable/widget_ribbon_f00" />
+        <ImageView android:layout_width="22dp" android:layout_height="22dp" android:src="@drawable/widget_ribbon_f00" />
+        <ImageView android:layout_width="22dp" android:layout_height="22dp" android:src="@drawable/widget_ribbon_f00" />
+        <ImageView android:layout_width="22dp" android:layout_height="22dp" android:src="@drawable/widget_ribbon_f00" />
+        <ImageView android:layout_width="22dp" android:layout_height="22dp" android:src="@drawable/widget_ribbon_f00" />
+        <ImageView android:layout_width="22dp" android:layout_height="22dp" android:src="@drawable/widget_ribbon_f00" />
+        <ImageView android:layout_width="22dp" android:layout_height="22dp" android:src="@drawable/widget_ribbon_f00" />
+        <ImageView android:layout_width="22dp" android:layout_height="22dp" android:src="@drawable/widget_ribbon_f00" />
+        <ImageView android:layout_width="22dp" android:layout_height="22dp" android:src="@drawable/widget_ribbon_f00" />
+        <ImageView android:layout_width="22dp" android:layout_height="22dp" android:src="@drawable/widget_ribbon_f00" />
+        <ImageView android:layout_width="22dp" android:layout_height="22dp" android:src="@drawable/widget_ribbon_f00" />
+        <ImageView android:layout_width="22dp" android:layout_height="22dp" android:src="@drawable/widget_ribbon_f00" />
+        <ImageView android:layout_width="22dp" android:layout_height="22dp" android:src="@drawable/widget_ribbon_f00" />
+        <ImageView android:layout_width="22dp" android:layout_height="22dp" android:src="@drawable/widget_ribbon_f00" />
+        <ImageView android:layout_width="22dp" android:layout_height="22dp" android:src="@drawable/widget_ribbon_f00" />
+        <ImageView android:layout_width="22dp" android:layout_height="22dp" android:src="@drawable/widget_ribbon_f00" />
+        <ImageView android:layout_width="22dp" android:layout_height="22dp" android:src="@drawable/widget_ribbon_f00" />
+        <ImageView android:layout_width="22dp" android:layout_height="22dp" android:src="@drawable/widget_ribbon_f00" />
+        <ImageView android:layout_width="22dp" android:layout_height="22dp" android:src="@drawable/widget_ribbon_f00" />
+        <ImageView android:layout_width="22dp" android:layout_height="22dp" android:src="@drawable/widget_ribbon_f00" />
+        <ImageView android:layout_width="22dp" android:layout_height="22dp" android:src="@drawable/widget_ribbon_f00" />
+        <ImageView android:layout_width="22dp" android:layout_height="22dp" android:src="@drawable/widget_ribbon_f00" />
+        <ImageView android:layout_width="22dp" android:layout_height="22dp" android:src="@drawable/widget_ribbon_f01" />
+        <ImageView android:layout_width="22dp" android:layout_height="22dp" android:src="@drawable/widget_ribbon_f02" />
+        <ImageView android:layout_width="22dp" android:layout_height="22dp" android:src="@drawable/widget_ribbon_f03" />
+        <ImageView android:layout_width="22dp" android:layout_height="22dp" android:src="@drawable/widget_ribbon_f04" />
+        <ImageView android:layout_width="22dp" android:layout_height="22dp" android:src="@drawable/widget_ribbon_f05" />
+        <ImageView android:layout_width="22dp" android:layout_height="22dp" android:src="@drawable/widget_ribbon_f06" />
+        <ImageView android:layout_width="22dp" android:layout_height="22dp" android:src="@drawable/widget_ribbon_f07" />
+        <ImageView android:layout_width="22dp" android:layout_height="22dp" android:src="@drawable/widget_ribbon_f08" />
+        <ImageView android:layout_width="22dp" android:layout_height="22dp" android:src="@drawable/widget_ribbon_f09" />
+        <ImageView android:layout_width="22dp" android:layout_height="22dp" android:src="@drawable/widget_ribbon_f10" />
+        <ImageView android:layout_width="22dp" android:layout_height="22dp" android:src="@drawable/widget_ribbon_f11" />
+        <ImageView android:layout_width="22dp" android:layout_height="22dp" android:src="@drawable/widget_ribbon_f12" />
+        <ImageView android:layout_width="22dp" android:layout_height="22dp" android:src="@drawable/widget_ribbon_f13" />
+        <ImageView android:layout_width="22dp" android:layout_height="22dp" android:src="@drawable/widget_ribbon_f14" />
+        <ImageView android:layout_width="22dp" android:layout_height="22dp" android:src="@drawable/widget_ribbon_f15" />
+        <ImageView android:layout_width="22dp" android:layout_height="22dp" android:src="@drawable/widget_ribbon_f16" />
+        <ImageView android:layout_width="22dp" android:layout_height="22dp" android:src="@drawable/widget_ribbon_f17" />
+        <ImageView android:layout_width="22dp" android:layout_height="22dp" android:src="@drawable/widget_ribbon_f18" />
+        <ImageView android:layout_width="22dp" android:layout_height="22dp" android:src="@drawable/widget_ribbon_f19" />
+        <ImageView android:layout_width="22dp" android:layout_height="22dp" android:src="@drawable/widget_ribbon_f20" />
+        <ImageView android:layout_width="22dp" android:layout_height="22dp" android:src="@drawable/widget_ribbon_f21" />
+        <ImageView android:layout_width="22dp" android:layout_height="22dp" android:src="@drawable/widget_ribbon_f22" />
+        <ImageView android:layout_width="22dp" android:layout_height="22dp" android:src="@drawable/widget_ribbon_f23" />
+        <ImageView android:layout_width="22dp" android:layout_height="22dp" android:src="@drawable/widget_ribbon_f24" />
+        <ImageView android:layout_width="22dp" android:layout_height="22dp" android:src="@drawable/widget_ribbon_f25" />
+        <ImageView android:layout_width="22dp" android:layout_height="22dp" android:src="@drawable/widget_ribbon_f26" />
+        <ImageView android:layout_width="22dp" android:layout_height="22dp" android:src="@drawable/widget_ribbon_f27" />
+        <ImageView android:layout_width="22dp" android:layout_height="22dp" android:src="@drawable/widget_ribbon_f28" />
+        <ImageView android:layout_width="22dp" android:layout_height="22dp" android:src="@drawable/widget_ribbon_f29" />
+        <ImageView android:layout_width="22dp" android:layout_height="22dp" android:src="@drawable/widget_ribbon_f30" />
+        <ImageView android:layout_width="22dp" android:layout_height="22dp" android:src="@drawable/widget_ribbon_f31" />
+        <ImageView android:layout_width="22dp" android:layout_height="22dp" android:src="@drawable/widget_ribbon_f32" />
+        <ImageView android:layout_width="22dp" android:layout_height="22dp" android:src="@drawable/widget_ribbon_f33" />
+        <ImageView android:layout_width="22dp" android:layout_height="22dp" android:src="@drawable/widget_ribbon_f34" />
+        <ImageView android:layout_width="22dp" android:layout_height="22dp" android:src="@drawable/widget_ribbon_f35" />
+        <ImageView android:layout_width="22dp" android:layout_height="22dp" android:src="@drawable/widget_ribbon_f36" />
+        <ImageView android:layout_width="22dp" android:layout_height="22dp" android:src="@drawable/widget_ribbon_f37" />
+        <ImageView android:layout_width="22dp" android:layout_height="22dp" android:src="@drawable/widget_ribbon_f38" />
+        <ImageView android:layout_width="22dp" android:layout_height="22dp" android:src="@drawable/widget_ribbon_f39" />
+        <ImageView android:layout_width="22dp" android:layout_height="22dp" android:src="@drawable/widget_ribbon_f40" />
+        <ImageView android:layout_width="22dp" android:layout_height="22dp" android:src="@drawable/widget_ribbon_f41" />
+        <ImageView android:layout_width="22dp" android:layout_height="22dp" android:src="@drawable/widget_ribbon_f42" />
+        <ImageView android:layout_width="22dp" android:layout_height="22dp" android:src="@drawable/widget_ribbon_f43" />
+        <ImageView android:layout_width="22dp" android:layout_height="22dp" android:src="@drawable/widget_ribbon_f44" />
+        <ImageView android:layout_width="22dp" android:layout_height="22dp" android:src="@drawable/widget_ribbon_f45" />
+        <ImageView android:layout_width="22dp" android:layout_height="22dp" android:src="@drawable/widget_ribbon_f46" />
+        <ImageView android:layout_width="22dp" android:layout_height="22dp" android:src="@drawable/widget_ribbon_f47" />
+        <ImageView android:layout_width="22dp" android:layout_height="22dp" android:src="@drawable/widget_ribbon_f48" />
+        <ImageView android:layout_width="22dp" android:layout_height="22dp" android:src="@drawable/widget_ribbon_f49" />
+    </ViewFlipper>
+
+    <LinearLayout
+        android:id="@+id/w_content"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="horizontal"
+        android:padding="16dp">
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:gravity="bottom|start"
+            android:orientation="vertical">
+            <ImageView
+                android:id="@+id/w_num"
+                android:layout_width="match_parent"
+                android:layout_height="46dp"
+                android:scaleType="fitEnd" />
+            <TextView
+                android:id="@+id/w_title"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:fontFamily="serif"
+                android:gravity="start"
+                android:includeFontPadding="false"
+                android:maxLines="2"
+                android:textColor="@color/widget_date"
+                android:textSize="20sp"
+                android:visibility="gone" />
+            <TextView
+                android:id="@+id/w_sef"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:ellipsize="end"
+                android:fontFamily="sans-serif-medium"
+                android:gravity="start"
+                android:includeFontPadding="false"
+                android:maxLines="2"
+                android:textColor="@color/widget_ink"
+                android:textSize="13sp" />
+            <TextView
+                android:id="@+id/w_sub"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="2dp"
+                android:ellipsize="end"
+                android:gravity="start"
+                android:includeFontPadding="false"
+                android:maxLines="2"
+                android:textColor="@color/widget_muted"
+                android:textSize="12sp" />
+        </LinearLayout>
+        <FrameLayout
+            android:id="@+id/w_field"
+            android:layout_width="118dp"
+            android:layout_height="118dp"
+            android:layout_gravity="center_vertical"
+            android:layout_marginStart="14dp">
+            <ImageView
+                android:id="@+id/w_f_muted"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:importantForAccessibility="no"
+                android:scaleType="fitCenter" />
+            <ImageView
+                android:id="@+id/w_f_date"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:importantForAccessibility="no"
+                android:scaleType="fitCenter" />
+            <ImageView
+                android:id="@+id/w_f_ribbon"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:importantForAccessibility="no"
+                android:scaleType="fitCenter" />
+        </FrameLayout>
+    </LinearLayout>
+
+    <TextView
+        android:id="@+id/w_empty"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:gravity="center"
+        android:padding="16dp"
+        android:text="@string/widget_empty"
+        android:textColor="@color/widget_ink"
+        android:textSize="13sp"
+        android:visibility="gone" />
+</FrameLayout>

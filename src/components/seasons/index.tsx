@@ -24,7 +24,9 @@ export interface SeasonCardProps {
 type Card = LazyExoticComponent<ComponentType<SeasonCardProps>>;
 
 /** id → card. Seasons add theirs: omer: lazy(() => import('./OmerCard')), … */
-export const SEASON_CARDS: Partial<Record<SeasonId, Card>> = {};
+export const SEASON_CARDS: Partial<Record<SeasonId, Card>> = {
+  omer: lazy(() => import('./OmerCard')),
+};
 
 // keep `lazy` imported for the season cards registered above
 void lazy;
@@ -46,5 +48,30 @@ export function SeasonCards(p: Omit<SeasonCardProps, 'setPrefs'> & { onSettings:
         );
       })}
     </div>
+  );
+}
+
+/* ---------------- a season's own screens (pushed over the tabs; App.tsx opens them by name) ---------------- */
+
+export interface SeasonScreenProps {
+  now: Date;
+  city: City;
+  settings: Settings;
+  onSettings: (s: Settings) => void;
+  onClose: () => void;
+}
+
+/** name → screen. A notification opens one through its extra { screen: name } (lib/native.ts requestOpen) */
+export const SEASON_SCREENS: Record<string, LazyExoticComponent<ComponentType<SeasonScreenProps>>> = {
+  'omer-intro': lazy(() => import('./OmerIntro')),
+};
+
+export function SeasonScreen({ id, ...p }: SeasonScreenProps & { id: string }) {
+  const S = SEASON_SCREENS[id];
+  if (!S) return null;
+  return (
+    <Suspense fallback={null}>
+      <S {...p} />
+    </Suspense>
   );
 }

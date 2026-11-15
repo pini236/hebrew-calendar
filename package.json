@@ -10,7 +10,7 @@
     "preview": "vite preview",
     "build:preview": "tsc -b && vite build --mode single && node scripts/artifact.mjs",
     "verify": "tsx scripts/verify-zmanim.ts",
-    "test": "TZ=Asia/Jerusalem tsx scripts/test-alerts.ts && tsx scripts/test-places.ts && TZ=Asia/Jerusalem tsx scripts/test-widget.ts && tsx scripts/test-silk.ts",
+    "test": "TZ=Asia/Jerusalem tsx scripts/test-alerts.ts && tsx scripts/test-places.ts && TZ=Asia/Jerusalem tsx scripts/test-widget.ts && tsx scripts/test-silk.ts && TZ=Asia/Jerusalem tsx scripts/test-chanukah.ts",
     "places": "node scripts/build-places.mjs",
     "screenshots": "node scripts/store-screenshots.mjs",
     "build:native": "tsc -b && vite build --mode native",

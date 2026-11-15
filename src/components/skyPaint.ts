@@ -5,7 +5,8 @@
  * What is real (handed in by SkyScene, never computed here): the sky colours (skyAt(), the same colours
  * as the day ribbon), the sun's place along the day (the fraction between KosherJava's sunrise and
  * sunset), its height and the depth of twilight (KosherJava's solar elevation), the moon's phase (the
- * Hebrew date) and whether Shabbat candles are lit (Hebcal's candle lighting and havdalah).
+ * Hebrew date), whether Shabbat candles are lit (Hebcal's candle lighting and havdalah) and how many
+ * Chanukah candles burn tonight (the seasons engine, src/lib/seasons/chanukah.ts).
  * What is made up, seeded so it is the same every time: the shape of the land, the distant houses, the
  * stars' places and the high clouds (the app has no weather data).
  *
@@ -179,6 +180,8 @@ export interface SkyInput {
   moonAz: number;
   /** Shabbat or Yom Tov candles are burning (candle lighting → havdalah) */
   candles: boolean;
+  /** Chanukah: how many candles burn tonight (1–8; the shamash burns with them), 0 or absent for none */
+  chanukah?: number;
   /** 0 in the evening → 1 after chatzot halayla (most windows go dark) */
   late: number;
   /** 0..1 how many high clouds today (made up, seeded by the date) */
@@ -983,6 +986,7 @@ export class SkyPainter {
     ctx.drawImage(sl.near, Math.round((-M + shift) * dpr), 0);
     this.ghosts(ctx, sun, sunA);
     if (s.candles) this.candles(ctx, shift, time, s.elev);
+    if (s.chanukah) this.chanukiah(ctx, s, shift, time);
   }
 
   /**
@@ -1011,12 +1015,22 @@ export class SkyPainter {
       this.clouds(ctx, sl, 0, time);
       ctx.drawImage(sl.front, 0, 0);
       if (full && s.candles) this.candles(ctx, 0, time, s.elev);
+      if (full && s.chanukah) this.chanukiah(ctx, s, 0, time);
     });
-    if (!full && s.candles) {
+    if (!full && (s.candles || s.chanukah)) {
+      // one box around the Shabbat candles and the chanukiah, whichever burn
       const c = g.candle;
-      region(c.x - 34, c.y - 78, 68, H - c.y + 78, () => {
+      let x0 = c.x - 34;
+      let x1 = c.x + 34;
+      if (s.chanukah) {
+        const k = this.chanukiahX(s);
+        x0 = Math.min(x0, k - 34);
+        x1 = Math.max(x1, k + 34);
+      }
+      region(x0, c.y - 78, x1 - x0, H - c.y + 78, () => {
         ctx.drawImage(sl.front, 0, 0);
-        this.candles(ctx, 0, time, s.elev);
+        if (s.candles) this.candles(ctx, 0, time, s.elev);
+        if (s.chanukah) this.chanukiah(ctx, s, 0, time);
       });
     }
   }
@@ -1171,22 +1185,126 @@ export class SkyPainter {
       ctx.fillStyle = '#3a2e22';
       ctx.fillRect(bx - 0.35, top - 2.2, 0.7, 2.4);
       // the flame
-      const fh = 8 * (1 + flick);
-      const tipX = bx + sway;
-      const baseY = top - 1.4;
-      ctx.beginPath();
-      ctx.moveTo(bx, baseY + 0.6);
-      ctx.bezierCurveTo(bx - 2.7, baseY - 0.4, bx - 2.1 + sway * 0.4, baseY - fh * 0.62, tipX, baseY - fh);
-      ctx.bezierCurveTo(bx + 2.1 + sway * 0.4, baseY - fh * 0.62, bx + 2.7, baseY - 0.4, bx, baseY + 0.6);
-      const fg = ctx.createRadialGradient(bx, baseY - fh * 0.3, 0, bx, baseY - fh * 0.35, fh * 0.75);
-      fg.addColorStop(0, 'rgba(255,252,236,1)');
-      fg.addColorStop(0.45, 'rgba(255,218,140,0.95)');
-      fg.addColorStop(1, 'rgba(244,150,70,0.75)');
-      ctx.fillStyle = fg;
-      ctx.fill();
+      flame(ctx, bx, top - 1.4, 8 * (1 + flick), sway, 1);
     }
     ctx.setTransform(1, 0, 0, 1, 0, 0);
   }
+
+  /** Where the chanukiah stands: in the candles' corner, or just inside the Shabbat candles when they burn too */
+  private chanukiahX(s: SkyInput) {
+    const g = this.g!;
+    const inward = g.rtl ? 1 : -1;
+    return g.candle.x + inward * (s.candles ? 42 : 12);
+  }
+
+  /**
+   * Chanukah: a small brass chanukiah beside the Shabbat candles' corner, on the same table behind the
+   * page. Eight cups in a row on nested arms and the shamash raised in the middle; tonight's candles in
+   * the rightmost cups (they are set from the right), each flame swaying on its own like the Shabbat ones.
+   */
+  private chanukiah(ctx: CanvasRenderingContext2D, s: SkyInput, shift: number, time: number) {
+    const g = this.g!;
+    const n = Math.max(0, Math.min(8, Math.round(s.chanukah ?? 0)));
+    if (!n) return;
+    ctx.setTransform(g.dpr, 0, 0, g.dpr, 0, 0);
+    const day = smooth(-4, 10, s.elev);
+    const T = 2 * Math.PI;
+    const cx = this.chanukiahX(s) + shift;
+    const yb = g.candle.y;
+    const sp = 4.7;
+    const cupY = yb - 6.5;
+    const lift = 5.5; // the shamash stands higher
+    const slotX = (i: number) => cx + (i - 4) * sp;
+    // the cups that hold candles tonight: the rightmost n of the eight (slot 4 is the shamash)
+    const cups = [0, 1, 2, 3, 5, 6, 7, 8];
+    const lit = [...cups.slice(8 - n), 4];
+
+    // one soft pool of light on the air around the lights
+    const a = 1 - 0.55 * day;
+    const span = (n / 8) * 4 * sp + 8;
+    const pcx = (slotX(cups[8 - n]) + slotX(8)) / 2;
+    ctx.save();
+    ctx.translate(pcx, cupY - 9);
+    ctx.scale(1, 0.7);
+    const pool = ctx.createRadialGradient(0, 0, 0, 0, 0, span + 14);
+    pool.addColorStop(0, `rgba(255,196,120,${0.16 * a})`);
+    pool.addColorStop(0.55, `rgba(255,196,120,${0.05 * a})`);
+    pool.addColorStop(1, 'rgba(255,196,120,0)');
+    ctx.fillStyle = pool;
+    ctx.fillRect(-span - 14, -span - 14, 2 * span + 28, 2 * span + 28);
+    ctx.restore();
+
+    // the arms: nested half-rounds from the stem to each pair of cups, and the stem down behind the page
+    ctx.lineCap = 'round';
+    ctx.strokeStyle = '#4b4334';
+    ctx.lineWidth = 1.15;
+    ctx.beginPath();
+    for (let k = 1; k <= 4; k++) {
+      const rx = k * sp;
+      ctx.moveTo(cx + rx, cupY);
+      ctx.ellipse(cx, cupY, rx, 1.6 + k * 1.5, 0, 0, Math.PI);
+    }
+    ctx.moveTo(cx, cupY - lift);
+    ctx.lineTo(cx, yb + 30);
+    ctx.stroke();
+    // a warm gleam along the top of the metal, from the flames above it
+    ctx.strokeStyle = `rgba(255,206,140,${0.32 * a})`;
+    ctx.lineWidth = 0.5;
+    ctx.beginPath();
+    for (let k = 1; k <= 4; k++) {
+      const rx = k * sp;
+      ctx.moveTo(cx + rx - 0.4, cupY + 0.2);
+      ctx.ellipse(cx, cupY, rx - 0.4, 1.2 + k * 1.5, 0, 0.05, Math.PI - 0.05);
+    }
+    ctx.stroke();
+    // the cups
+    ctx.fillStyle = '#5b5141';
+    for (const i of [...cups, 4]) {
+      const y = i === 4 ? cupY - lift : cupY;
+      ctx.fillRect(slotX(i) - 1.6, y - 1.5, 3.2, 1.9);
+    }
+
+    for (const i of lit) {
+      const bx = slotX(i);
+      const y = (i === 4 ? cupY - lift : cupY) - 1.5;
+      const top = y - 6.5;
+      const ph = i * 1.37 + 0.4;
+      const flick = time === 0 ? 0 : 0.06 * Math.sin(time * T * 0.95 + ph) + 0.03 * Math.sin(time * T * 2.4 + ph * 1.7);
+      const sway = time === 0 ? 0 : 0.2 * Math.sin(time * T * 0.5 + ph) + 0.08 * Math.sin(time * T * 1.2 + ph);
+      const fy = top - 3;
+      const halo = ctx.createRadialGradient(bx, fy, 0, bx, fy, 9);
+      halo.addColorStop(0, `rgba(255,196,120,${0.2 * a})`);
+      halo.addColorStop(1, 'rgba(255,196,120,0)');
+      ctx.fillStyle = halo;
+      ctx.fillRect(bx - 9, fy - 9, 18, 18);
+      // the candle: thin, as Chanukah candles are
+      const body = ctx.createLinearGradient(bx - 0.9, 0, bx + 0.9, 0);
+      body.addColorStop(0, '#cfc4ad');
+      body.addColorStop(0.4, '#f4eddd');
+      body.addColorStop(1, '#b7ab93');
+      ctx.fillStyle = body;
+      ctx.fillRect(bx - 0.85, top, 1.7, y - top + 0.3);
+      ctx.fillStyle = 'rgba(255,214,150,0.6)';
+      ctx.fillRect(bx - 0.85, top, 1.7, 0.7);
+      flame(ctx, bx, top - 0.7, 4.6 * (1 + flick), sway, 0.52);
+    }
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+  }
+}
+
+/** A small candle flame: a teardrop from the wick, white at the heart and amber at the edge; `k` scales its width */
+function flame(ctx: CanvasRenderingContext2D, bx: number, baseY: number, fh: number, sway: number, k: number) {
+  const tipX = bx + sway;
+  ctx.beginPath();
+  ctx.moveTo(bx, baseY + 0.6 * k);
+  ctx.bezierCurveTo(bx - 2.7 * k, baseY - 0.4 * k, bx - 2.1 * k + sway * 0.4, baseY - fh * 0.62, tipX, baseY - fh);
+  ctx.bezierCurveTo(bx + 2.1 * k + sway * 0.4, baseY - fh * 0.62, bx + 2.7 * k, baseY - 0.4 * k, bx, baseY + 0.6 * k);
+  const fg = ctx.createRadialGradient(bx, baseY - fh * 0.3, 0, bx, baseY - fh * 0.35, fh * 0.75);
+  fg.addColorStop(0, 'rgba(255,252,236,1)');
+  fg.addColorStop(0.45, 'rgba(255,218,140,0.95)');
+  fg.addColorStop(1, 'rgba(244,150,70,0.75)');
+  ctx.fillStyle = fg;
+  ctx.fill();
 }
 
 

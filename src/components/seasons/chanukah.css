@@ -1,0 +1,145 @@
+/* Chanukah on היום (ChanukahCard.tsx): loaded with the card, only during Chanukah */
+
+/* the card is the app's "what matters now" card; its top is a window, edge to edge */
+.ch-card {
+  padding: 0;
+  overflow: hidden;
+}
+.ch-stage {
+  position: relative;
+  height: 216px;
+  /* the window's colour before the first paint: night ink, as the sky's own */
+  background: #0b1230;
+}
+.ch-stage canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+.ch-body {
+  padding: 16px 20px 8px;
+}
+.ch-head {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px;
+}
+.ch-words {
+  min-width: 0;
+}
+.ch-lit {
+  flex: none;
+}
+.ch-line {
+  margin-top: 4px;
+  color: var(--ink-2);
+  font-size: 0.9375rem;
+  font-variant-numeric: tabular-nums;
+}
+.ch-count {
+  color: var(--ribbon-ink);
+  font-weight: 600;
+}
+.ch-links {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin: 8px -8px 0;
+}
+.ch-set {
+  margin-inline-start: auto;
+}
+
+/* ---------------- the sheet ---------------- */
+
+.ch-sheet {
+  width: 100%;
+  max-width: 640px;
+  max-height: min(86vh, 780px);
+  margin: auto auto 0;
+  padding: 0;
+  border: 0;
+  border-radius: 20px 20px 0 0;
+  background: var(--surface);
+  color: var(--ink);
+  box-shadow: var(--shadow-float);
+  overflow: hidden;
+}
+.ch-sheet::backdrop {
+  background: rgb(12 12 10 / 0.42);
+}
+.ch-sheet[open] {
+  animation: ch-sheet-in 320ms var(--ease);
+}
+@keyframes ch-sheet-in {
+  from {
+    opacity: 0;
+    transform: translateY(24px);
+  }
+}
+@media (min-width: 720px) {
+  .ch-sheet {
+    margin: auto;
+    border-radius: 20px;
+  }
+}
+.ch-sheet-in {
+  display: flex;
+  flex-direction: column;
+  max-height: inherit;
+}
+.ch-sheet-bar {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 12px 8px 12px 16px;
+  border-bottom: 1px solid var(--line);
+}
+[dir='rtl'] .ch-sheet-bar {
+  padding: 12px 16px 12px 8px;
+}
+.ch-sheet-bar .seg.tabs {
+  flex: 1;
+  min-width: 0;
+  margin: 0;
+}
+.ch-sheet-bar .seg.tabs button {
+  padding: 0 4px;
+  font-size: 0.8125rem;
+}
+.ch-sheet-body {
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 20px 20px calc(28px + env(safe-area-inset-bottom));
+}
+.ch-text {
+  font-family: var(--f-display);
+  font-size: 1.3125rem;
+  line-height: 1.9;
+  text-align: start;
+}
+.ch-text + .ch-text {
+  margin-top: 20px;
+}
+.ch-verse span {
+  display: block;
+}
+.ch-en {
+  margin-top: 6px;
+  color: var(--ink-2);
+  font-family: var(--f-body);
+  font-size: 0.9375rem;
+  line-height: 1.55;
+}
+.ch-note {
+  margin: 0 0 12px;
+  color: var(--muted);
+  font-size: 0.875rem;
+}
+.ch-text + .ch-note {
+  margin-top: 20px;
+}
+.ch-form .field.stack .sub {
+  margin-top: 0;
+}

@@ -12,6 +12,8 @@
 	</array>
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string>המיקום משמש רק לחישוב זמני היום המדויקים למקום שבו אתם נמצאים. הוא לא נשלח לשום מקום.</string>
+	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+	<string>המיקום משמש רק לחישוב זמני היום המדויקים למקום שבו אתם נמצאים, ורק כשהאפליקציה פתוחה. הוא לא נשלח לשום מקום.</string>
 	<key>ITSAppUsesNonExemptEncryption</key>
 	<false/>
 	<key>CFBundleDisplayName</key>

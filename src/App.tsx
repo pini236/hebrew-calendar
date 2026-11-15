@@ -1,5 +1,6 @@
 import { Suspense, lazy, useCallback, useEffect, useMemo, useState } from 'react';
-import { DEFAULT_CITY, findCity } from './lib/cities';
+import { DEFAULT_CITY, cityLabel, findCity } from './lib/cities';
+import { resolveLang, setLang } from './lib/i18n';
 import { addDays, dateKey, dayItems, eventsOn, timeFmt, today, zmanim } from './lib/cal';
 import { DEFAULT_SETTINGS, EVENTS_KEY, SETTINGS_KEY, mergeSettings, usePersistent, type MyEvent, type Settings } from './lib/store';
 import { TodayTab } from './components/TodayTab';
@@ -35,6 +36,9 @@ type ScreenState = null | { name: 'jump' } | { name: 'event' } | { name: 'notify
 export default function App() {
   const [settings, setSettings] = usePersistent<Settings>(SETTINGS_KEY, DEFAULT_SETTINGS, mergeSettings);
   const [myEvents, setMyEvents] = usePersistent<MyEvent[]>(EVENTS_KEY, []);
+  // the interface language, set before anything renders text (Hebrew or English, from the phone or the settings)
+  const language = resolveLang(settings.lang);
+  setLang(language);
   const [tab, setTab] = useState<Tab>('today');
   const [selected, setSelected] = useState(today);
   const [anchor, setAnchor] = useState(today);
@@ -72,7 +76,13 @@ export default function App() {
     return () => mq?.removeEventListener?.('change', apply);
   }, [settings.theme]);
 
-  const city = settings.gps ?? settings.place ?? findCity(settings.cityId) ?? DEFAULT_CITY;
+  const baseCity = settings.gps ?? settings.place ?? findCity(settings.cityId) ?? DEFAULT_CITY;
+  // the listed cities carry an English name for the English interface
+  const city = useMemo(() => {
+    const name = cityLabel(baseCity);
+    return name === baseCity.name ? baseCity : { ...baseCity, name };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [baseCity, language]);
 
   // native apps: replace the pending notifications (Friday alerts, zmanim, candle lighting, fasts, my events)
   // on every open / resume and whenever the location, the settings or the events change

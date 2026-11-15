@@ -52,6 +52,7 @@ ap.add_argument('--samples', type=int, default=128)
 ap.add_argument('--light-samples', type=int, default=80)
 ap.add_argument('--only', default='')
 ap.add_argument('--preview', action='store_true', help='a quick look: few samples, beauty only unless --only')
+ap.add_argument('--design', default='bench', choices=['bench', 'plate', 'stem', 'modern'], help='which chanukiah')
 ap.add_argument('--closeup', action='store_true', help='look at the chanukiah from near (to check its making)')
 ap.add_argument('--blend', default='', help='also save the .blend here')
 args = ap.parse_args(argv)
@@ -69,25 +70,73 @@ SPRING = 0.80  # where the arch begins
 GLASS_Y = 0.43  # the casement's glass
 SILL_FRONT = -0.055
 
+# the chanukiah: one of a few designs (--design). Every one keeps the eight lights in one straight row at one
+# height, and the shamash apart, a wax taper in a socket that can be lifted out to light them
+DESIGN = args.design
 CH_Y = 0.19  # the chanukiah's row, on the sill
-SP = 0.044  # between cups
-SHAMASH_GAP = 0.085
-ROW_W = 7 * SP + SHAMASH_GAP
-X0 = -ROW_W / 2 - 0.004  # slot 0, the leftmost
-SLOT_X = [X0 + i * SP for i in range(8)]
-SHAMASH_X = SLOT_X[7] + SHAMASH_GAP
 CUP_Y = CH_Y
+SH_Y = CH_Y
 FLOOR = 0.0
-BENCH_TOP = 0.046
-CUP_Z0 = BENCH_TOP + 0.002  # the cup's foot
-CUP_H = 0.048
-OIL_Z = CUP_Z0 + 0.040
-FLAME_Z = OIL_Z + 0.006  # the flame's foot (the wick's top)
 OIL_FLAME_H = 0.028
-SH_SOCKET = 0.142  # the shamash's socket rim
-SH_LEN = 0.078  # the taper
-SH_WICK = SH_SOCKET - 0.008 + SH_LEN + 0.004
 SH_FLAME_H = 0.028
+SH_LEN = 0.078  # the taper
+if DESIGN == 'bench':
+    # brass bench, glass cups (v2)
+    SP = 0.044  # between cups
+    SHAMASH_GAP = 0.085
+    X0 = -(7 * SP + SHAMASH_GAP) / 2 - 0.004  # slot 0, the leftmost
+    SLOT_X = [X0 + i * SP for i in range(8)]
+    SHAMASH_X = SLOT_X[7] + SHAMASH_GAP
+    BENCH_TOP = 0.046
+    CUP_Z0 = BENCH_TOP + 0.002  # the cup's foot
+    CUP_H = 0.048
+    CUP_R = 0.021  # what a cup with its oil covers, round its axis
+    OIL_Z = CUP_Z0 + 0.040
+    SH_SOCKET = 0.142  # the shamash's socket rim
+elif DESIGN == 'plate':
+    # a Jerusalem oil chanukiah: a pierced, hammered brass back plate under a domed crest, a tray, brass bowls
+    SP = 0.05
+    X0 = -0.196
+    SLOT_X = [X0 + i * SP for i in range(8)]
+    CUP_Y = CH_Y - 0.008
+    SHAMASH_X = 0.214
+    SH_Y = CH_Y - 0.004
+    TRAY_TOP = 0.024
+    CUP_Z0 = 0.044  # the bowl's foot
+    CUP_H = 0.019
+    CUP_R = 0.023
+    OIL_Z = CUP_Z0 + 0.0145
+    SH_SOCKET = 0.2
+elif DESIGN == 'stem':
+    # a turned brass candelabrum: a baluster stem on a stepped foot, a straight beam on scrolled brackets,
+    # eight equal turned arms with glass oil cups in drip pans, the shamash raised on top of the stem
+    SP = 0.056
+    GAP = 0.094  # the stem between the fourth and fifth light
+    SLOT_X = [-(GAP / 2 + (3 - i) * SP) for i in range(4)] + [GAP / 2 + i * SP for i in range(4)]
+    SHAMASH_X = 0.0
+    BEAM_Z = 0.118
+    CUP_Z0 = BEAM_Z + 0.03
+    CUP_H = 0.036
+    CUP_R = 0.026
+    OIL_Z = CUP_Z0 + 0.029
+    SH_SOCKET = 0.262
+elif DESIGN == 'modern':
+    # polished brass: a thin bridge on two arched legs, eight glass tulips hung through it, the shamash on a rod
+    SP = 0.05
+    SHAMASH_GAP = 0.085
+    X0 = -(7 * SP + SHAMASH_GAP) / 2
+    SLOT_X = [X0 + i * SP for i in range(8)]
+    SHAMASH_X = SLOT_X[7] + SHAMASH_GAP
+    BAR_Z = 0.088  # the bridge's top
+    CUP_Z0 = 0.046  # the tulip's round bottom
+    CUP_H = 0.062
+    CUP_R = 0.024
+    OIL_Z = CUP_Z0 + 0.054
+    SH_SOCKET = 0.228
+FLAME_Z = OIL_Z + 0.006  # the flame's foot (the wick's top)
+SH_WICK = SH_SOCKET - 0.008 + SH_LEN + 0.004
+SH_POST_TOP = SH_SOCKET - 0.016
+TAPER_FOOT = SH_SOCKET - 0.008
 
 OPP_Y = 4.6  # the house across the alley
 STREET_Z = -4.2
@@ -290,14 +339,14 @@ def mat_paint(name, paint, rust, rough=0.55, rust_amt=0.45, scale=6.0):
     return m
 
 
-def mat_brass(name, hammered=False):
+def mat_brass(name, hammered=False, rough=(0.26, 0.12), tone=1.0):
     m = bpy.data.materials.new(name)
     nt, out = nodes_of(m)
     tc = tex_coord(nt)
     n = noise(nt, 18, 6, 0.6, tc.outputs['Object'])
     # aged brass: polished where hands touch, darker in the hollows
-    col = ramp(nt, n.outputs['Fac'], [(0.3, (0.70, 0.48, 0.20)), (0.7, (0.95, 0.74, 0.38))])
-    rr = ramp(nt, n.outputs['Fac'], [(0.3, (0.26, 0.26, 0.26)), (0.7, (0.12, 0.12, 0.12))])
+    col = ramp(nt, n.outputs['Fac'], [(0.3, tuple(c * tone for c in (0.70, 0.48, 0.20))), (0.7, tuple(c * tone for c in (0.95, 0.74, 0.38)))])
+    rr = ramp(nt, n.outputs['Fac'], [(0.3, (rough[0],) * 3), (0.7, (rough[1],) * 3)])
     p = principled(nt, Metallic=1.0)
     link(nt, col.outputs['Color'], p.inputs['Base Color'])
     link(nt, rr.outputs['Color'], p.inputs['Roughness'])
@@ -858,67 +907,285 @@ for (x, y, z) in ((-3.0, OPP_Y + 8.95, 3.15), (-2.2, OPP_Y + 8.95, 3.15), (4.4, 
 
 # ---------------------------------------------------------------- the chanukiah
 
-# a brass bench on four bun feet: mouldings top and bottom, a little arcade of arches pressed into its long
-# sides (one under each cup), and on its top eight collars that hold the glass cups, all at one height
-BENCH_X0, BENCH_X1 = SLOT_X[0] - 0.03, SHAMASH_X + 0.024
-BENCH_D = 0.058
-BZ = (0.013, BENCH_TOP)
-bench = Builder()
-# the body: a long loaf of brass, its edges rounded so they catch the flames above and the lit sill below
-bench.cuboid(BENCH_X0 + 0.003, BENCH_X1 - 0.003, CUP_Y - BENCH_D / 2 + 0.003, CUP_Y + BENCH_D / 2 - 0.003, BZ[0], BZ[1] - 0.005, bevel=0.0105, segs=8, val=0.5)
-# the top: a thin plate with a rounded lip
-bench.cuboid(BENCH_X0, BENCH_X1, CUP_Y - BENCH_D / 2, CUP_Y + BENCH_D / 2, BZ[1] - 0.0065, BZ[1], bevel=0.0028, segs=4, val=0.5)
-bench_o = bench.obj('bench', M['brass'], smooth=True)
-for x in (BENCH_X0 + 0.016, BENCH_X1 - 0.016):
-    for y in (CUP_Y - BENCH_D / 2 + 0.012, CUP_Y + BENCH_D / 2 - 0.012):
-        lathe('foot', [(0.0, 0.0), (0.006, 0.0), (0.0095, 0.004), (0.0105, 0.0075), (0.0085, 0.011), (0.006, 0.013), (0.0, 0.013)], M['brass'], loc=(x, y, FLOOR), segs=32)
-for x in SLOT_X:
-    lathe('collar', [(0.0, 0.0), (0.0205, 0.0), (0.0205, 0.002), (0.0196, 0.0035), (0.0196, 0.010), (0.0212, 0.0115), (0.0212, 0.0135), (0.0186, 0.0135), (0.0186, 0.002), (0.0, 0.002)], M['brass'], loc=(x, CUP_Y, BENCH_TOP - 0.0005), segs=48, cap=False)
+M['brass_polished'] = mat_brass('brass_polished', rough=(0.10, 0.05))
+M['brass_hammered'] = mat_brass('brass_hammered', hammered=True, rough=(0.42, 0.26), tone=0.72)
 
-# the shamash: a turned post at the right, raised, with a socket and a wax taper
-SH_POST_TOP = SH_SOCKET - 0.016
-SH_L = SH_POST_TOP - BENCH_TOP + 0.0005
-lathe(
-    'shamash_post',
-    [(0.0, 0.0), (0.0125, 0.0), (0.0125, 0.003), (0.0075, 0.007), (0.005, 0.014), (0.005, SH_L * 0.45), (0.0082, SH_L * 0.45 + 0.004), (0.005, SH_L * 0.45 + 0.008), (0.0045, SH_L), (0.0, SH_L)],
-    M['brass'],
-    loc=(SHAMASH_X, CUP_Y, BENCH_TOP - 0.0005),
-)
-lathe(
-    'shamash_socket',
-    [(0.0, 0.0), (0.006, 0.0), (0.012, 0.004), (0.016, 0.012), (0.0175, 0.016), (0.0168, 0.0165), (0.0074, 0.006), (0.0074, 0.016), (0.0, 0.016)],
-    M['brass'],
-    loc=(SHAMASH_X, CUP_Y, SH_POST_TOP),
-    cap=False,
-)
-# the taper: slightly tapered, a few drips, its top melted into a cup round the wick
-TAPER_FOOT = SH_SOCKET - 0.008
-taper_prof = [(0.0, 0.0), (0.0068, 0.0), (0.0066, SH_LEN * 0.5), (0.0060, SH_LEN - 0.004), (0.0056, SH_LEN - 0.0015), (0.0044, SH_LEN), (0.0022, SH_LEN - 0.0022), (0.0, SH_LEN - 0.0025)]
-taper = lathe('shamash_candle', taper_prof, M['wax'], loc=(SHAMASH_X, CUP_Y, TAPER_FOOT))
-drips = []
-for k, (a, L) in enumerate([(-1.2, 0.024), (-2.5, 0.013), (-0.2, 0.034)]):
-    d = ellipsoid('drip', 0.0019, 0.0019, L / 2, (SHAMASH_X + math.cos(a) * 0.0063, CUP_Y + math.sin(a) * 0.0063, TAPER_FOOT + SH_LEN - L / 2 - 0.0015), M['wax'])
-    drips.append(d)
-sh_wick = cylinder('shamash_wick', 0.0008, TAPER_FOOT + SH_LEN - 0.003, SH_WICK, (SHAMASH_X, CUP_Y), M['char'], segs=8)
-SHAMASH_PARTS = [taper, sh_wick] + drips
 
-# the cups: glass tumblers, olive oil, a floating wick on a little tin float
-cups, oils = [], []
-for i, x in enumerate(SLOT_X):
-    c = lathe(
-        f'cup_{i}',
-        [(0.0, 0.0), (0.0150, 0.0), (0.0158, 0.002), (0.0162, 0.006), (0.0182, CUP_H - 0.001), (0.0178, CUP_H), (0.0164, CUP_H - 0.0008), (0.0145, 0.0085), (0.0125, 0.0065), (0.0, 0.0065)],
-        M['cupglass'],
-        loc=(x, CUP_Y, CUP_Z0),
-        segs=40,
+def tube(name, pts, r, mat, res=12):
+    """A round rod along a smooth curve through `pts` (a scroll, an arm, a rim)"""
+    cu = bpy.data.curves.new(name, 'CURVE')
+    cu.dimensions = '3D'
+    cu.bevel_depth = r
+    cu.bevel_resolution = 4
+    cu.use_fill_caps = True
+    sp_ = cu.splines.new('NURBS')
+    sp_.points.add(len(pts) - 1)
+    for p_, v in zip(sp_.points, pts):
+        p_.co = (*v, 1)
+    sp_.use_endpoint_u = True
+    sp_.order_u = min(4, len(pts))
+    sp_.resolution_u = res
+    o = bpy.data.objects.new(name, cu)
+    bpy.context.collection.objects.link(o)
+    o.data.materials.append(mat)
+    return o
+
+
+def prism(b, outline, y0, y1):
+    """An outline in the x-z plane, extruded from y0 to y1, into builder b"""
+    va = [b.bm.verts.new((x, y0, z)) for (x, z) in outline]
+    vb = [b.bm.verts.new((x, y1, z)) for (x, z) in outline]
+    b.bm.faces.new(va)
+    b.bm.faces.new(list(reversed(vb)))
+    n_ = len(outline)
+    for i in range(n_):
+        j = (i + 1) % n_
+        b.bm.faces.new([va[i], va[j], vb[j], vb[i]])
+
+
+def arch_outline(cx, w, z0, z1, n=10):
+    """A round-headed opening: straight sides from z0, a half circle on top reaching z1"""
+    r = w / 2
+    pts = [(cx - r, z0), (cx + r, z0)]
+    for k in range(n + 1):
+        a = math.pi * k / n
+        pts.append((cx + math.cos(a) * r, z1 - r + math.sin(a) * r))
+    return pts
+
+
+def circle_outline(cx, cz, r, n=20):
+    return [(cx + math.cos(2 * math.pi * k / n) * r, cz + math.sin(2 * math.pi * k / n) * r) for k in range(n)]
+
+
+def boolean_cut(target, cutter_builder):
+    co = cutter_builder.obj('cutter', M['brass'])
+    mod = target.modifiers.new('cut', 'BOOLEAN')
+    mod.object = co
+    mod.operation = 'DIFFERENCE'
+    mod.solver = 'EXACT'
+    bpy.context.view_layer.objects.active = target
+    bpy.ops.object.modifier_apply(modifier='cut')
+    bpy.data.objects.remove(co)
+
+
+def shamash_socket(x, y, mat):
+    lathe(
+        'shamash_socket',
+        [(0.0, 0.0), (0.006, 0.0), (0.012, 0.004), (0.016, 0.012), (0.0175, 0.016), (0.0168, 0.0165), (0.0074, 0.006), (0.0074, 0.016), (0.0, 0.016)],
+        mat,
+        loc=(x, y, SH_POST_TOP),
+        cap=False,
     )
-    cups.append(c)
+
+
+def shamash_candle(x, y):
+    """The taper: slightly tapered, a few drips, its top melted into a cup round the wick"""
+    prof = [(0.0, 0.0), (0.0068, 0.0), (0.0066, SH_LEN * 0.5), (0.0060, SH_LEN - 0.004), (0.0056, SH_LEN - 0.0015), (0.0044, SH_LEN), (0.0022, SH_LEN - 0.0022), (0.0, SH_LEN - 0.0025)]
+    parts = [lathe('shamash_candle', prof, M['wax'], loc=(x, y, TAPER_FOOT))]
+    for a, L in [(-1.2, 0.024), (-2.5, 0.013), (-0.2, 0.034)]:
+        parts.append(ellipsoid('drip', 0.0019, 0.0019, L / 2, (x + math.cos(a) * 0.0063, y + math.sin(a) * 0.0063, TAPER_FOOT + SH_LEN - L / 2 - 0.0015), M['wax']))
+    parts.append(cylinder('shamash_wick', 0.0008, TAPER_FOOT + SH_LEN - 0.003, SH_WICK, (x, y), M['char'], segs=8))
+    return parts
+
+
+def glass_cup(i, x, y, r, base=0.0065):
+    """A glass cup of olive oil with a floating wick; returns the parts that are there only when it holds oil"""
+    h = CUP_H
+    rb = r * 0.86
+    lathe(f'cup_{i}', [(0.0, 0.0), (rb, 0.0), (rb + 0.0008, 0.002), (rb + 0.0012, 0.006), (r, h - 0.001), (r - 0.0004, h), (r - 0.0018, h - 0.0008), (rb - 0.0005, base + 0.002), (rb - 0.0025, base), (0.0, base)], M['cupglass'], loc=(x, y, CUP_Z0), segs=40)
     oz = OIL_Z - CUP_Z0
-    o = lathe(f'oil_{i}', [(0.0, 0.0066), (0.0125, 0.0066), (0.0145, 0.0087), (0.0146 + 0.0034 * (oz - 0.009) / (CUP_H - 0.009), oz), (0.0, oz)], M['oil'], loc=(x, CUP_Y, CUP_Z0), segs=40)
-    fl_ = cylinder(f'float_{i}', 0.0075, OIL_Z - 0.0004, OIL_Z + 0.0008, (x, CUP_Y), M['tin'], segs=24)
-    wk = cylinder(f'wick_{i}', 0.0011, OIL_Z - 0.006, FLAME_Z - 0.0015, (x, CUP_Y), M['wick'], segs=8)
-    wt = cylinder(f'wicktip_{i}', 0.0012, FLAME_Z - 0.0015, FLAME_Z, (x, CUP_Y), M['char'], segs=8)
-    oils.append([o, fl_, wk, wt])
+    ri = lambda z: rb - 0.0005 + (r - 0.0018 - rb + 0.0005) * (z - base - 0.002) / (h - base - 0.003)  # noqa: E731
+    o = lathe(f'oil_{i}', [(0.0, base + 0.0001), (rb - 0.0026, base + 0.0001), (rb - 0.0006, base + 0.0021), (ri(oz), oz), (0.0, oz)], M['oil'], loc=(x, y, CUP_Z0), segs=40)
+    return [o] + floating_wick(i, x, y)
+
+
+def floating_wick(i, x, y):
+    fl_ = cylinder(f'float_{i}', 0.0075, OIL_Z - 0.0004, OIL_Z + 0.0008, (x, y), M['tin'], segs=24)
+    wk = cylinder(f'wick_{i}', 0.0011, OIL_Z - 0.006, FLAME_Z - 0.0015, (x, y), M['wick'], segs=8)
+    wt = cylinder(f'wicktip_{i}', 0.0012, FLAME_Z - 0.0015, FLAME_Z, (x, y), M['char'], segs=8)
+    return [fl_, wk, wt]
+
+
+oils = []
+
+if DESIGN == 'bench':
+    # a brass bench on four bun feet, its edges rounded; on its top eight collars that hold the glass cups
+    BENCH_X0, BENCH_X1 = SLOT_X[0] - 0.03, SHAMASH_X + 0.024
+    BENCH_D = 0.058
+    bench = Builder()
+    bench.cuboid(BENCH_X0 + 0.003, BENCH_X1 - 0.003, CUP_Y - BENCH_D / 2 + 0.003, CUP_Y + BENCH_D / 2 - 0.003, 0.013, BENCH_TOP - 0.005, bevel=0.0105, segs=8, val=0.5)
+    bench.cuboid(BENCH_X0, BENCH_X1, CUP_Y - BENCH_D / 2, CUP_Y + BENCH_D / 2, BENCH_TOP - 0.0065, BENCH_TOP, bevel=0.0028, segs=4, val=0.5)
+    bench.obj('bench', M['brass'], smooth=True)
+    for x in (BENCH_X0 + 0.016, BENCH_X1 - 0.016):
+        for y in (CUP_Y - BENCH_D / 2 + 0.012, CUP_Y + BENCH_D / 2 - 0.012):
+            lathe('foot', [(0.0, 0.0), (0.006, 0.0), (0.0095, 0.004), (0.0105, 0.0075), (0.0085, 0.011), (0.006, 0.013), (0.0, 0.013)], M['brass'], loc=(x, y, FLOOR), segs=32)
+    for x in SLOT_X:
+        lathe('collar', [(0.0, 0.0), (0.0205, 0.0), (0.0205, 0.002), (0.0196, 0.0035), (0.0196, 0.010), (0.0212, 0.0115), (0.0212, 0.0135), (0.0186, 0.0135), (0.0186, 0.002), (0.0, 0.002)], M['brass'], loc=(x, CUP_Y, BENCH_TOP - 0.0005), segs=48, cap=False)
+    SH_L = SH_POST_TOP - BENCH_TOP + 0.0005
+    lathe('shamash_post', [(0.0, 0.0), (0.0125, 0.0), (0.0125, 0.003), (0.0075, 0.007), (0.005, 0.014), (0.005, SH_L * 0.45), (0.0082, SH_L * 0.45 + 0.004), (0.005, SH_L * 0.45 + 0.008), (0.0045, SH_L), (0.0, SH_L)], M['brass'], loc=(SHAMASH_X, SH_Y, BENCH_TOP - 0.0005))
+    shamash_socket(SHAMASH_X, SH_Y, M['brass'])
+    for i, x in enumerate(SLOT_X):
+        oils.append(glass_cup(i, x, CUP_Y, 0.0182))
+
+elif DESIGN == 'plate':
+    # the tray: a shallow brass tray with a rolled front edge, on four ball feet
+    TX = 0.246
+    TY0, TY1 = CH_Y - 0.04, CH_Y + 0.066
+    tray = Builder()
+    tray.cuboid(-TX, TX, TY0, TY1, 0.011, TRAY_TOP, bevel=0.004, segs=4, val=0.5)
+    tray.obj('tray', M['brass'], smooth=True)
+    tube('tray_lip', [(-TX + 0.004, TY0 + 0.002, TRAY_TOP + 0.001), (0.0, TY0 + 0.002, TRAY_TOP + 0.001), (TX - 0.004, TY0 + 0.002, TRAY_TOP + 0.001)], 0.003, M['brass'])
+    for x in (-TX + 0.024, TX - 0.024):
+        for y in (TY0 + 0.016, TY1 - 0.016):
+            ellipsoid('foot', 0.0095, 0.0095, 0.0075, (x, y, 0.0075), M['brass'])
+    # the back plate: hammered brass, a gentle arch over the row and a domed crest in the middle
+    PY0, PY1 = CH_Y + 0.052, CH_Y + 0.0545
+    W2, Z_SH, RISE = 0.236, 0.158, 0.03
+    RS = (W2 * W2 + RISE * RISE) / (2 * RISE)
+    CR, CZ = 0.058, 0.176  # the crest: a half circle on the arch
+
+    def top_at(x):
+        z = Z_SH + RISE - RS + math.sqrt(max(0.0, RS * RS - x * x))
+        if abs(x) < CR:
+            z = max(z, CZ + math.sqrt(CR * CR - x * x))
+        return z
+
+    outline = [(-W2, TRAY_TOP - 0.002), (W2, TRAY_TOP - 0.002)]
+    for k in range(97):
+        x = W2 - 2 * W2 * k / 96
+        outline.append((x, top_at(x)))
+    plate_b = Builder()
+    prism(plate_b, outline, PY0, PY1)
+    plate = plate_b.obj('backplate', M['brass_hammered'])
+    # pierced: an arcade of eight tall arched windows, one behind each light so that every flame stands in its
+    # own arch against the night outside, a row of small round holes over it, and a rosette in the crest
+    cut = Builder()
+    for x in SLOT_X:
+        prism(cut, arch_outline(x, 0.034, 0.064, 0.138), PY0 - 0.01, PY1 + 0.01)
+    for k in range(16):
+        x = -0.21 + k * 0.028
+        if abs(x) > CR - 0.002:
+            prism(cut, circle_outline(x, 0.151, 0.004, 14), PY0 - 0.01, PY1 + 0.01)
+    RC = (0.0, 0.197)
+    prism(cut, circle_outline(RC[0], RC[1], 0.008, 24), PY0 - 0.01, PY1 + 0.01)
+    for k in range(8):
+        a = 2 * math.pi * k / 8 + math.pi / 8
+        prism(cut, circle_outline(RC[0] + math.cos(a) * 0.021, RC[1] + math.sin(a) * 0.021, 0.0056, 16), PY0 - 0.01, PY1 + 0.01)
+    boolean_cut(plate, cut)
+    # a rolled rim along the top edge, rails under and over the arcade, a ring round the rosette
+    tube('plate_rim', [(x, PY0 - 0.0016, z) for (x, z) in outline[2:]], 0.0026, M['brass'], res=3)
+    for zz, r in ((0.058, 0.0026), (0.144, 0.0022)):
+        xs = W2 - 0.006
+        tube('rail', [(-xs, PY0 - 0.002, zz), (0.0, PY0 - 0.002, zz), (xs, PY0 - 0.002, zz)], r, M['brass'])
+    tube('rosette_ring', [(RC[0] + math.cos(2 * math.pi * k / 24) * 0.033, PY0 - 0.002, RC[1] + math.sin(2 * math.pi * k / 24) * 0.033) for k in range(25)], 0.0018, M['brass'], res=3)
+    lathe('finial', [(0.0, 0.0), (0.006, 0.0), (0.009, 0.006), (0.006, 0.012), (0.002, 0.016), (0.0, 0.03)], M['brass'], loc=(0.0, (PY0 + PY1) / 2, CZ + CR - 0.003), segs=32)
+    # the bowls: brass oil lamps on short turned stems, each with its floating wick
+    for i, x in enumerate(SLOT_X):
+        lathe('bowl_stem', [(0.0, 0.0), (0.011, 0.0), (0.011, 0.003), (0.006, 0.007), (0.0042, CUP_Z0 - TRAY_TOP - 0.004), (0.0075, CUP_Z0 - TRAY_TOP), (0.0, CUP_Z0 - TRAY_TOP)], M['brass'], loc=(x, CUP_Y, TRAY_TOP), segs=32)
+        lathe(f'cup_{i}', [(0.0, 0.0), (0.008, 0.0), (0.0135, 0.004), (0.0172, 0.009), (0.019, 0.015), (0.0196, CUP_H - 0.001), (0.0203, CUP_H), (0.0188, CUP_H), (0.0178, 0.015), (0.016, 0.0095), (0.0125, 0.006), (0.007, 0.0035), (0.0, 0.003)], M['brass'], loc=(x, CUP_Y, CUP_Z0), segs=48)
+        oz = OIL_Z - CUP_Z0
+        o = lathe(f'oil_{i}', [(0.0, 0.003), (0.007, 0.0036), (0.0125, 0.0062), (0.016, 0.0097), (0.0178, oz), (0.0, oz)], M['oil'], loc=(x, CUP_Y, CUP_Z0), segs=48)
+        oils.append([o] + floating_wick(i, x, CUP_Y))
+    # the shamash: on a scrolled arm out of the plate, high at the right, beyond the last bowl
+    tube('shamash_arm', [(SHAMASH_X, PY0, 0.085), (SHAMASH_X, PY0 - 0.016, 0.11), (SHAMASH_X, SH_Y + 0.016, SH_POST_TOP - 0.035), (SHAMASH_X, SH_Y, SH_POST_TOP - 0.006)], 0.003, M['brass'])
+    tube('shamash_arm_curl', [(SHAMASH_X, PY0 - 0.016, 0.11), (SHAMASH_X, PY0 - 0.026, 0.1), (SHAMASH_X, PY0 - 0.02, 0.09), (SHAMASH_X, PY0 - 0.012, 0.096)], 0.0024, M['brass'])
+    lathe('shamash_cup_foot', [(0.0, 0.0), (0.006, 0.0), (0.0045, 0.006), (0.0, 0.006)], M['brass'], loc=(SHAMASH_X, SH_Y, SH_POST_TOP - 0.006), segs=24)
+    shamash_socket(SHAMASH_X, SH_Y, M['brass'])
+
+elif DESIGN == 'stem':
+    P = M['brass_polished']
+    # the foot and the baluster: a stepped dome, a vase, knops, up to the beam and on to the shamash
+    B_ = BEAM_Z - 0.01
+    lathe(
+        'stem',
+        [
+            (0.0, 0.0), (0.054, 0.0), (0.054, 0.005), (0.05, 0.009), (0.04, 0.013), (0.04, 0.017), (0.028, 0.024),
+            (0.016, 0.03), (0.0115, 0.036), (0.016, 0.040), (0.0115, 0.044), (0.0105, B_ * 0.5), (0.0155, B_ * 0.6),
+            (0.0175, B_ * 0.7), (0.0145, B_ * 0.8), (0.009, B_ * 0.88), (0.0135, B_ * 0.92), (0.009, B_ * 0.96), (0.0085, B_), (0.0, B_),
+        ],
+        P,
+        loc=(0.0, CUP_Y, FLOOR),
+        segs=64,
+    )
+    above = SH_POST_TOP - BEAM_Z
+    lathe(
+        'stem_top',
+        [(0.0, 0.0), (0.009, 0.0), (0.0105, 0.004), (0.006, 0.010), (0.0048, above * 0.45), (0.0095, above * 0.52), (0.0048, above * 0.6), (0.0042, above - 0.004), (0.0075, above), (0.0, above)],
+        P,
+        loc=(0.0, CUP_Y, BEAM_Z),
+        segs=48,
+    )
+    # the beam: one straight bar for the eight arms, with turned ends
+    BX = SLOT_X[7] + 0.03
+    beam = Builder()
+    beam.cuboid(-BX, BX, CUP_Y - 0.008, CUP_Y + 0.008, BEAM_Z - 0.012, BEAM_Z + 0.002, bevel=0.0045, segs=5, val=0.5)
+    beam.obj('beam', P, smooth=True)
+    for sx in (-1, 1):
+        ellipsoid('beam_end', 0.0095, 0.0095, 0.0095, (sx * (BX + 0.006), CUP_Y, BEAM_Z - 0.005), P)
+        # two scrolled brackets each side, from the stem out under the beam (S curves ending in a curl)
+        for reach, low in ((0.12, 0.066), (0.21, 0.05)):
+            pts = [
+                (sx * 0.008, CUP_Y, low),
+                (sx * reach * 0.35, CUP_Y, low - 0.012),
+                (sx * reach * 0.7, CUP_Y, low + 0.002),
+                (sx * reach * 0.92, CUP_Y, BEAM_Z - 0.03),
+                (sx * reach, CUP_Y, BEAM_Z - 0.009),
+            ]
+            tube('scroll', pts, 0.0042, P)
+            tube('curl', [(sx * reach * 0.35 - sx * 0.004, CUP_Y, low - 0.012), (sx * reach * 0.28, CUP_Y, low - 0.002), (sx * reach * 0.36, CUP_Y, low + 0.004), (sx * reach * 0.41, CUP_Y, low - 0.004)], 0.0034, P)
+    # the arms: eight turned spindles of one height, each with a drip pan that holds a glass oil cup
+    for i, x in enumerate(SLOT_X):
+        h = CUP_Z0 - BEAM_Z - 0.004
+        lathe('arm', [(0.0, 0.0), (0.0075, 0.0), (0.0075, 0.002), (0.0045, 0.005), (0.004, h * 0.45), (0.0068, h * 0.6), (0.004, h * 0.75), (0.0045, h), (0.0, h)], P, loc=(x, CUP_Y, BEAM_Z + 0.002), segs=32)
+        lathe('pan', [(0.0, 0.0), (0.012, 0.0), (0.022, 0.003), (0.0245, 0.0055), (0.0232, 0.006), (0.0205, 0.0042), (0.0, 0.0042)], P, loc=(x, CUP_Y, CUP_Z0 - 0.0042), segs=48)
+        oils.append(glass_cup(i, x, CUP_Y, 0.0168))
+    shamash_socket(SHAMASH_X, SH_Y, P)
+
+elif DESIGN == 'modern':
+    P = M['brass_polished']
+    # the bridge: a thin polished plate with eight round openings, the glass tulips hung through them
+    BX0, BX1 = SLOT_X[0] - 0.04, SHAMASH_X + 0.026
+    bar_b = Builder()
+    bar_b.cuboid(BX0, BX1, CUP_Y - 0.026, CUP_Y + 0.026, BAR_Z - 0.005, BAR_Z, bevel=0.0016, segs=3, val=0.5)
+    bar = bar_b.obj('bridge', P, smooth=False)
+    holes = Builder()
+    for x in SLOT_X:
+        o_ = [(x + math.cos(2 * math.pi * k / 40) * 0.0205, CUP_Y + math.sin(2 * math.pi * k / 40) * 0.0205) for k in range(40)]
+        va = [holes.bm.verts.new((px_, py_, BAR_Z - 0.02)) for (px_, py_) in o_]
+        vb = [holes.bm.verts.new((px_, py_, BAR_Z + 0.02)) for (px_, py_) in o_]
+        holes.bm.faces.new(list(reversed(va)))
+        holes.bm.faces.new(vb)
+        for k in range(40):
+            j = (k + 1) % 40
+            holes.bm.faces.new([va[k], va[j], vb[j], vb[k]])
+    boolean_cut(bar, holes)
+    # the legs: two polished bands bent into arches, the bridge resting on their crowns
+    for x in (BX0 + 0.05, BX1 - 0.05):
+        band = Builder()
+        n_ = 24
+        outer, inner = [], []
+        for k in range(n_ + 1):
+            a = math.pi * k / n_
+            outer.append((x + math.cos(a) * 0.044, (BAR_Z - 0.005) * math.sin(a)))
+            inner.append((x + math.cos(a) * 0.038, (BAR_Z - 0.011) * math.sin(a)))
+        ring = outer + list(reversed(inner))
+        prism(band, ring, CUP_Y - 0.02, CUP_Y + 0.02)
+        band.obj('leg', P, smooth=False)
+    for i, x in enumerate(SLOT_X):
+        # a tulip of clear glass: a round bottom, a waist, a flared lip that rests on the bridge
+        h = CUP_H
+        lip = BAR_Z - CUP_Z0 + 0.0018
+        prof = [(0.0, 0.0), (0.008, 0.0008), (0.0135, 0.0045), (0.0165, 0.011), (0.0172, 0.02), (0.0168, 0.032), (0.0182, lip - 0.003), (0.0225, lip), (0.0228, lip + 0.0016), (0.0195, lip + 0.002), (0.0188, h - 0.001), (0.0184, h), (0.017, h - 0.0008), (0.0172, lip), (0.0152, 0.032), (0.0156, 0.02), (0.0148, 0.011), (0.012, 0.0055), (0.007, 0.0028), (0.0, 0.0022)]
+        lathe(f'cup_{i}', prof, M['cupglass'], loc=(x, CUP_Y, CUP_Z0), segs=48)
+        oz = OIL_Z - CUP_Z0
+        o = lathe(f'oil_{i}', [(0.0, 0.0024), (0.0068, 0.003), (0.0118, 0.0057), (0.0146, 0.0112), (0.0154, 0.02), (0.015, 0.032), (0.0168, oz), (0.0, oz)], M['oil'], loc=(x, CUP_Y, CUP_Z0), segs=48)
+        oils.append([o] + floating_wick(i, x, CUP_Y))
+    # the shamash: a tall polished rod out of the bridge's right end, a plain cup on top
+    hh = SH_POST_TOP - BAR_Z
+    lathe('shamash_rod', [(0.0, 0.0), (0.009, 0.0), (0.009, 0.0025), (0.0052, 0.0045), (0.0046, hh), (0.0, hh)], P, loc=(SHAMASH_X, SH_Y, BAR_Z), segs=32)
+    lathe('shamash_cup', [(0.0, 0.0), (0.0095, 0.0), (0.0095, 0.016), (0.0078, 0.016), (0.0078, 0.003), (0.0, 0.003)], P, loc=(SHAMASH_X, SH_Y, SH_POST_TOP), segs=40, cap=False)
+
+SHAMASH_PARTS = shamash_candle(SHAMASH_X, SH_Y)
 
 # the oil, in a small glass cruet with a cork, at the left of the sill
 BOTTLE = (-0.312, 0.33)
@@ -950,7 +1217,7 @@ def flame(name, x, y, z_foot, h, r):
 
 for i, x in enumerate(SLOT_X):
     flame(f'light_{i}', x, CUP_Y, FLAME_Z, OIL_FLAME_H, 0.0042)
-flame('light_s', SHAMASH_X, CUP_Y, SH_WICK, SH_FLAME_H, 0.0048)
+flame('light_s', SHAMASH_X, SH_Y, SH_WICK, SH_FLAME_H, 0.0048)
 
 # the night: a street lamp on the house opposite, just out of sight below, lights its stones from beneath
 lamp_d = bpy.data.lights.new('lamp', 'POINT')
@@ -1094,15 +1361,15 @@ for name, lo, sh, foot, h in flames:
     info['slots'].append({'name': name, 'foot': a, 'tip': b, 'pxPerCm': math.dist(a, c), 'mirror': px(m), 'mirrorTip': px(m + Vector((0, 0, h)))})
 # the boxes of the picture each cup (with its oil) and the shamash candle occupy
 for i, x in enumerate(SLOT_X):
-    info['slots'][i]['box'] = bbox([(x + dx, CUP_Y + dy, z) for dx in (-0.021, 0.021) for dy in (-0.021, 0.021) for z in (CUP_Z0 - 0.002, CUP_Z0 + CUP_H + 0.003)])
-info['slots'][8]['box'] = bbox([(SHAMASH_X + dx, CUP_Y + dy, z) for dx in (-0.01, 0.01) for dy in (-0.01, 0.01) for z in (SH_POST_TOP + 0.004, SH_WICK + 0.002)])
-info['shamash'] = {'foot': px((SHAMASH_X, CUP_Y, TAPER_FOOT)), 'wick': px((SHAMASH_X, CUP_Y, SH_WICK)), 'rim': px((SHAMASH_X, CUP_Y - 0.0175, SH_SOCKET))}
+    info['slots'][i]['box'] = bbox([(x + dx, CUP_Y + dy, z) for dx in (-CUP_R, CUP_R) for dy in (-CUP_R, CUP_R) for z in (CUP_Z0 - 0.002, CUP_Z0 + CUP_H + 0.003)])
+info['slots'][8]['box'] = bbox([(SHAMASH_X + dx, SH_Y + dy, z) for dx in (-0.01, 0.01) for dy in (-0.01, 0.01) for z in (SH_POST_TOP + 0.004, SH_WICK + 0.002)])
+info['shamash'] = {'foot': px((SHAMASH_X, SH_Y, TAPER_FOOT)), 'wick': px((SHAMASH_X, SH_Y, SH_WICK)), 'rim': px((SHAMASH_X, SH_Y - 0.0175, SH_SOCKET))}
 info['window'] = bbox([(OWIN[0], OPP_Y, OWIN[2]), (OWIN[1], OPP_Y, OWIN[3])])
 info['horizon'] = px((0, OPP_Y, OPP_TOP + 0.09))[1]
 # the casement's middle stile, where the leaves meet: no reflection shows on it
 info['stile'] = [px((-0.022, GLASS_Y, 0.1))[0], px((0.022, GLASS_Y, 0.1))[0]]
 # the shamash's socket with its candle (what to cover while it is carried)
-info['socket'] = bbox([(SHAMASH_X + dx, CUP_Y + dy, z) for dx in (-0.019, 0.019) for dy in (-0.019, 0.019) for z in (SH_POST_TOP - 0.002, SH_WICK + 0.004)])
+info['socket'] = bbox([(SHAMASH_X + dx, SH_Y + dy, z) for dx in (-0.019, 0.019) for dy in (-0.019, 0.019) for z in (SH_POST_TOP - 0.002, SH_WICK + 0.004)])
 with open(os.path.join(args.out, 'scene.json'), 'w') as f:
     json.dump(info, f, indent=1)
 

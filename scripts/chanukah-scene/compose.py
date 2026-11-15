@@ -41,7 +41,11 @@ DETAIL_MAX = 2.0  # the detail ratio is stored halved (the card adds the sharpen
 
 
 def load(name):
-    a = np.load(os.path.join(args.src, name + '.npy')).astype(np.float32)
+    f = os.path.join(args.src, name + '.npy')
+    # a quick look at a design renders only the night passes: the day falls back to the night
+    if not os.path.exists(f) and name in FALLBACK:
+        f = os.path.join(args.src, FALLBACK[name] + '.npy')
+    a = np.load(f).astype(np.float32)
     # the card's frame: a little tighter than the render, so the chanukiah is the larger part of it
     k = a.shape[1] / info['size'][0]
     x0, y0, w, h = (round(v * k) for v in CROP)
@@ -88,6 +92,7 @@ def save(img, path, q=82, lossless=False):
     return os.path.getsize(path)
 
 
+FALLBACK = {'day_full': 'night_full', 'day_empty': 'night_empty'}
 info = json.load(open(os.path.join(args.src, 'scene.json')))
 # the crop of the render the card shows, in render pixels (x, y, w, h): multiples of 6, so the light passes
 # (half resolution) and the light tiles (a third) crop on whole pixels

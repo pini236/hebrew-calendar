@@ -268,8 +268,10 @@ body::before {
   display: block;
   pointer-events: none;
 }
-/* over the open tab, hanging from the bar's top edge */
+/* over the open tab, hanging from the bar's top edge: the canvas starts exactly at the bar's outer
+   edge (over its 1px border), so nothing of the ribbon can show above the bar, even as it drops in */
 .silk-tab {
+  top: -1px;
   left: calc(50% - var(--silk-half));
 }
 

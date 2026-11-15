@@ -305,7 +305,7 @@ export default function App() {
         </div>
         {TABS.map((t) => (
           <button key={t.id} className={`tabbtn ${tab === t.id ? 'on' : ''}`} aria-current={tab === t.id ? 'page' : undefined} onClick={() => showTab(t.id)}>
-            {tab === t.id && <SilkRibbon className="silk-tab" width={13} length={15} segments={7} sub={3} strips={2} sheen={0.6} scroll={0.3} />}
+            {tab === t.id && <SilkRibbon className="silk-tab" width={12} length={10} segments={6} sub={3} strips={2} sheen={0.6} scroll={0.3} />}
             <Icon name={t.icon} size={24} />
             <span>{tabLabel(t.id)}</span>
           </button>

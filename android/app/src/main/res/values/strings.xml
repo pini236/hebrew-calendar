@@ -4,5 +4,9 @@
     <string name="title_activity_main">לוח יהודי</string>
     <string name="package_name">com.luachyehudi.app</string>
     <string name="custom_url_scheme">com.luachyehudi.app</string>
-    <string name="widget_desc">תאריך עברי, הזמן הבא ושבת הקרובה</string>
+    <string name="widget_desc">התאריך העברי, הזמן הבא עם ספירה לאחור, ושעות כניסת השבת ויציאתה</string>
+    <string name="widget_count">בעוד %s</string>
+    <string name="widget_in">כניסה</string>
+    <string name="widget_out">יציאה</string>
+    <string name="widget_empty">פתחו את האפליקציה כדי לעדכן את הלוח</string>
 </resources>

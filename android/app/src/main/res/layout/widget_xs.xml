@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Smallest size (2×1½ and below on launchers with small cells): the date and the next zman.
+     Same page in every size: paper, a hairline edge, the ribbon, the Hebrew date drawn in Frank Ruhl Libre
+     (a bitmap, WidgetDraw), everything else in the phone's own sans. Colours: values/widget_colors.xml
+     and values-night; LuachWidgetProvider sets them again in code so light and dark never mix. -->
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@android:id/background"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/widget_paper"
+    android:clipToOutline="true"
+    android:layoutDirection="rtl">
+
+    <ImageView
+        android:id="@+id/w_paper"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:importantForAccessibility="no"
+        android:scaleType="fitXY"
+        android:src="@drawable/widget_paper" />
+
+    <ImageView
+        android:id="@+id/w_edge"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:importantForAccessibility="no"
+        android:scaleType="fitXY"
+        android:src="@drawable/widget_edge" />
+
+    <ImageView
+        android:id="@+id/w_ribbon"
+        android:layout_width="10dp"
+        android:layout_height="18dp"
+        android:layout_gravity="top|right"
+        android:layout_marginRight="14dp"
+        android:importantForAccessibility="no"
+        android:src="@drawable/widget_ribbon" />
+
+    <LinearLayout
+        android:id="@+id/w_content"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical"
+        android:paddingLeft="14dp"
+        android:paddingRight="14dp"
+        android:paddingTop="20dp"
+        android:paddingBottom="12dp">
+        <ImageView
+            android:id="@+id/w_date"
+            android:layout_width="match_parent"
+            android:layout_height="28dp"
+            android:scaleType="fitEnd" />
+        <FrameLayout
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1" />
+        <LinearLayout
+            android:id="@+id/w_next"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+            <TextView
+                android:id="@+id/w_next_name"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:includeFontPadding="false"
+                android:maxLines="1"
+                android:ellipsize="end"
+                android:gravity="start"
+                android:textColor="@color/widget_muted"
+                android:textSize="12sp" />
+            <TextView
+                android:id="@+id/w_next_time"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:includeFontPadding="false"
+                android:maxLines="1"
+                android:ellipsize="end"
+                android:gravity="start"
+                android:textColor="@color/widget_ink"
+                android:textSize="26sp"
+                android:fontFamily="sans-serif-medium"
+                android:fontFeatureSettings="tnum"
+                android:layout_marginTop="1dp" />
+            <Chronometer
+                android:id="@+id/w_count"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:includeFontPadding="false"
+                android:fontFamily="sans-serif-medium"
+                android:fontFeatureSettings="tnum"
+                android:textColor="@color/widget_ribbon_ink"
+                android:textSize="12sp" />
+        </LinearLayout>
+    </LinearLayout>
+
+    <TextView
+        android:id="@+id/w_empty"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:gravity="center"
+        android:padding="16dp"
+        android:text="@string/widget_empty"
+        android:textColor="@color/widget_ink"
+        android:textSize="13sp"
+        android:visibility="gone" />
+</FrameLayout>

@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Home-screen widget, light: a diary page. The app's paper-and-ink ramp (src/styles.css),
+     bottle green for the Hebrew date (as on the icon), saffron for the ribbon and "now", red only for yom tov.
+     LuachWidgetProvider reads the same names from values-night for the dark page. -->
+<resources>
+    <color name="widget_paper">#FFFAF6EC</color>
+    <color name="widget_edge">#FFDFDCD2</color>
+    <color name="widget_line">#1A1D1C19</color>
+    <color name="widget_ink">#FF1D1C19</color>
+    <color name="widget_muted">#FF6C685F</color>
+    <color name="widget_date">#FF1E5A45</color>
+    <color name="widget_ribbon">#FFE3A73A</color>
+    <color name="widget_ribbon_ink">#FF8A5807</color>
+    <color name="widget_chag">#FFB0281F</color>
+</resources>

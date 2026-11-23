@@ -5,7 +5,7 @@
 
 איפה מגדירים סודות: במאגר ב־GitHub ← **Settings** ← **Secrets and variables** ← **Actions** ← **New repository secret**.
 
-> **מזהה האפליקציה** הוא `com.luachyehudi.app`, ואותו מזהה משמש בשתי החנויות. אחרי ההעלאה הראשונה אי אפשר לשנות אותו.
+> **מזהה האפליקציה** ב־Google Play הוא `com.rooftopaistudio.luachyehudi`, וב־App Store `com.luachyehudi.app`. אחרי ההעלאה הראשונה אי אפשר לשנות אותו.
 > כדי לבחור מזהה אחר, משנים אותו לפני ההעלאה הראשונה ב־`capacitor.config.ts`, ב־`android/app/build.gradle` (namespace ו־applicationId) וב־`ios/App/App.xcodeproj/project.pbxproj` (PRODUCT_BUNDLE_IDENTIFIER).
 
 ---

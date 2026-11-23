@@ -2,8 +2,8 @@
 <resources>
     <string name="app_name">לוח יהודי</string>
     <string name="title_activity_main">לוח יהודי</string>
-    <string name="package_name">com.luachyehudi.app</string>
-    <string name="custom_url_scheme">com.luachyehudi.app</string>
+    <string name="package_name">com.rooftopaistudio.luachyehudi</string>
+    <string name="custom_url_scheme">com.rooftopaistudio.luachyehudi</string>
     <string name="widget_desc">התאריך העברי, הזמן הבא עם ספירה לאחור, ושעות כניסת השבת ויציאתה</string>
     <string name="widget_count">בעוד %s</string>
     <string name="widget_in">כניסה</string>

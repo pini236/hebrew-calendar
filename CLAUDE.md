@@ -1,7 +1,7 @@
 # לוח יהודי / לוח עברי
 
 Hebrew–Gregorian calendar with zmanim. React 19 + TypeScript + Vite; PWA plus Android/iOS apps via Capacitor 8.
-Name: "לוח יהודי" on Google Play/Android/web, "לוח עברי" on the App Store/iPhone (src/lib/brand.ts). App id `com.luachyehudi.app`.
+Name: "לוח יהודי" on Google Play/Android/web, "לוח עברי" on the App Store/iPhone (src/lib/brand.ts). App id: `com.rooftopaistudio.luachyehudi` on Google Play (the Java package stays `com.luachyehudi.app`), `com.luachyehudi.app` on the App Store.
 
 - All UI text is Hebrew and right-to-left. The owner reads Hebrew: reply to him in Hebrew.
 - Zmanim come from kosher-zmanim (KosherJava); calendar, holidays, candle lighting from @hebcal/core. Never hand-write astronomy.
